@@ -1,16 +1,9 @@
-import express from "express";
-import cors from "cors";
+import { app, start } from "./app";
+import { populateCollections } from "./populate-db";
 
-const app = express();
+start(app);
 
-app.use(cors());
-
-app.get("/", (req, res) => {
-  res.send("Hello world!");
-});
-
-const PORT = 80;
-
-app.listen(PORT, () => {
-  console.log(`Server listening on port ${PORT}`);
+app.get("/test", async (req, res) => {
+  await populateCollections();
+  res.send("done");
 });

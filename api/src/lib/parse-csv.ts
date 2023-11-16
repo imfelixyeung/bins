@@ -35,7 +35,11 @@ export const parseCsv = async <Headers extends readonly string[]>(options: {
       csvStream
         .pipe(csv({ headers }))
         // eslint-disable-next-line @typescript-eslint/no-unsafe-argument
-        .on("data", (data) => results.push(data))
+        .on("data", (data) => {
+          if (results.length % 10000 === 0)
+            console.debug(`Parsed ${results.length} rows`);
+          return results.push(data);
+        })
         .on("end", () => resolve(results))
         .on("error", (error) => reject(error));
     });

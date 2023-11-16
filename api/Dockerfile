@@ -12,6 +12,8 @@ RUN pnpm install
 # copy app
 COPY . .
 
+ENV NODE_OPTIONS="--max-old-space-size=4096"
+
 
 # Development target
 FROM base as dev
