@@ -3,8 +3,8 @@
   "module": "src/index.ts",
   "type": "module",
   "scripts": {
-    "start": "pnpm run migration:run tsx src/index.ts",
-    "dev": "pnpm run migration:run tsx --watch src/index.ts",
+    "start": "pnpm run migration:run && tsx src/index.ts",
+    "dev": "pnpm run migration:run && tsx --watch src/index.ts",
     "migration:generate": "drizzle-kit generate:pg --schema=./src/db/schema.ts",
     "migration:run": "tsx scripts/migrate.ts"
   },
