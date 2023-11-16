@@ -1,9 +1,10 @@
 import { app, start } from "./app";
-import { populateCollections } from "./populate-db";
+import { populateCollections, populatePremises } from "./populate-db";
 
 start(app);
 
-app.get("/test", async (req, res) => {
+app.get("/populate", async (req, res) => {
+  await populatePremises();
   await populateCollections();
   res.send("done");
 });

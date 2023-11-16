@@ -45,7 +45,7 @@ export const populateCollections = async () => {
   data.forEach((row) => (row.date = transformDate(row.date)));
 
   // split into chunks of 1000
-  const chunks = _.chunk(data, 100000);
+  const chunks = _.chunk(data, 1000);
 
   // const result = await Promise.all(
   //   chunks.map((chunk) =>

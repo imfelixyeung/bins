@@ -14,7 +14,7 @@ export const premises = pgTable("premises", {
 export const collections = pgTable(
   "collections",
   {
-    id: bigserial("id", { mode: "bigint" }).primaryKey(),
+    id: bigserial("id", { mode: "number" }).primaryKey(),
     premiseId: text("premise_id").notNull(),
     binColour: text("bin_colour").notNull(),
     date: date("date").notNull(),
