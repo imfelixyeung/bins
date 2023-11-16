@@ -16,7 +16,7 @@ COPY . .
 # Development target
 FROM base as dev
 EXPOSE 80
-CMD ["sh", "-c", "pnpm run migration:run && pnpm run dev"]
+CMD ["pnpm", "run", "dev"]
 
 
 # Production target
@@ -24,4 +24,4 @@ FROM base as prod
 
 # start app as production mode
 EXPOSE 80
-CMD ["sh", "-c", "pnpm run migration:run && pnpm run start"]
+CMD ["pnpm", "run", "start"]
