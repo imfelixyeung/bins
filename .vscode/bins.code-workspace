@@ -1,0 +1,16 @@
+{
+  "folders": [
+    {
+      "name": "bins",
+      "path": "../"
+    },
+    {
+      "name": "api",
+      "path": "../api"
+    },
+    {
+      "name": "web",
+      "path": "../web"
+    }
+  ]
+}
