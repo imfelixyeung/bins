@@ -8,7 +8,7 @@ export const premises = pgTable("premises", {
   addressStreet: text("address_street"),
   addressLocality: text("address_locality"),
   addressCity: text("address_city"),
-  addressPostCode: text("address_post_code").notNull(),
+  addressPostCode: text("address_post_code"),
 });
 
 export const collections = pgTable("collections", {
