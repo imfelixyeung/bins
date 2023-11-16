@@ -1,0 +1,42 @@
+version: "3.7"
+
+services:
+  db:
+    image: postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: dev
+    volumes:
+      - ./data/dev/db:/var/lib/postgresql/data
+
+  api:
+    build:
+      context: ./api
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    environment:
+      - DB_URL=postgres://postgres:postgres@db:5432/dev
+    ports:
+      - 3001:80
+    depends_on:
+      - db
+    volumes:
+      - ./api:/app
+      - /app/node_modules
+
+  web:
+    build:
+      context: ./web
+      dockerfile: Dockerfile
+      target: dev
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - 3000:80
+    volumes:
+      - ./web:/app
+      - /app/node_modules
