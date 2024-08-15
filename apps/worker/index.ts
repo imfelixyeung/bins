@@ -1,4 +1,4 @@
-import { execa } from "execa";
+import { $ } from "execa";
 import schedule from "node-schedule";
 import express from "express";
 import PQueue from "p-queue";
@@ -34,7 +34,7 @@ const run = async () => {
 
   try {
     // run the ./scripts/update.sh script
-    const { stdout, stderr, exitCode } = await execa`./scripts/update.sh`;
+    const { stdout, stderr, exitCode } = await $`./scripts/update.sh`;
     const end = new Date();
     status = {
       running: false,
