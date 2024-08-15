@@ -37,3 +37,8 @@ RUN apk add sed
 WORKDIR /app/apps/worker
 
 CMD ["pnpm", "run", "start"]
+
+
+
+FROM base as migration
+CMD [ "sh", "-c", "pnpm --filter @repo/db run migrate" ]
