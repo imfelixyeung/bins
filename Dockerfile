@@ -41,4 +41,4 @@ CMD ["pnpm", "run", "start"]
 
 
 FROM base as migration
-CMD [ "sh", "-c", "pnpm --filter @repo/db run migrate" ]
+CMD [ "sh", "-c", "pnpm --filter @repo/database run migrate" ]
