@@ -35,6 +35,9 @@ importers:
       '@repo/database':
         specifier: workspace:*
         version: link:../../packages/database
+      '@tanstack/query-core':
+        specifier: ^5.51.21
+        version: 5.51.21
       '@tanstack/react-query':
         specifier: ^5.51.23
         version: 5.51.23(react@19.0.0-rc-f994737d14-20240522)
