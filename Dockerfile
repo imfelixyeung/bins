@@ -1,4 +1,4 @@
-FROM node:20-alpine AS base
+FROM node:22.6.0-alpine AS base
 
 # install pnpm
 RUN npm install -g pnpm
@@ -28,4 +28,4 @@ FROM base AS worker
 
 WORKDIR /app/apps/worker
 
-CMD ["sh"]
+CMD ["pnpm", "run", "start"]

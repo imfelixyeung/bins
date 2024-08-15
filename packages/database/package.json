@@ -4,9 +4,27 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "generate": "drizzle-kit generate",
+    "studio": "dotenv drizzle-kit studio",
+    "push": "dotenv drizzle-kit push:pg",
+    "migrate": "dotenv tsx src/migrate.ts"
   },
   "keywords": [],
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "dependencies": {
+    "@t3-oss/env-core": "^0.11.0",
+    "dotenv-cli": "^7.4.2",
+    "drizzle-orm": "^0.33.0",
+    "pg": "^8.12.0",
+    "postgres": "^3.4.4",
+    "zod": "^3.23.8"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/pg": "^8.11.6",
+    "drizzle-kit": "^0.24.0",
+    "tsx": "^4.17.0"
+  }
 }
