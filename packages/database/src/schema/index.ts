@@ -1,3 +1,4 @@
+import { relations } from "drizzle-orm";
 import {
   integer,
   pgTable,
@@ -24,6 +25,10 @@ export const premisesTable = pgTable("dm_premises", {
     .defaultNow(),
 });
 
+export const premisesRelation = relations(premisesTable, ({ many }) => ({
+  jobs: many(jobsTable),
+}));
+
 export const jobsTable = pgTable("dm_jobs", {
   id: serial("id").primaryKey(),
 
@@ -31,3 +36,10 @@ export const jobsTable = pgTable("dm_jobs", {
   bin: text("bin").notNull(),
   date: date("date").notNull(),
 });
+
+export const jobsRelation = relations(jobsTable, ({ one }) => ({
+  premises: one(premisesTable, {
+    fields: [jobsTable.premisesId],
+    references: [premisesTable.id],
+  }),
+}));
