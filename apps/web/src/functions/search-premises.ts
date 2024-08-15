@@ -13,5 +13,7 @@ export const searchPremises = unstable_cache(
     });
 
     return result;
-  }
+  },
+  ["searchPremises"],
+  { revalidate: 60 }
 );

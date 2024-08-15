@@ -14,5 +14,7 @@ export const searchJobs = unstable_cache(
     });
 
     return result;
-  }
+  },
+  ["searchJobs"],
+  { revalidate: 60 }
 );
