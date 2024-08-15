@@ -1,1 +1,0 @@
-ALTER TABLE "collections" ADD CONSTRAINT "collections_premise_id_bin_colour_date_unique" UNIQUE("premise_id","bin_colour","date");
