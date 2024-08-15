@@ -17,6 +17,9 @@ let status: {
     stdout: string;
     stderr: string;
     exitCode?: number | undefined;
+    error?: {
+      message: string;
+    };
   };
 } = {
   running: false,
@@ -29,23 +32,39 @@ const run = async () => {
     running: true,
   };
 
-  // run the ./scripts/update.sh script
-  const { stdout, stderr, exitCode } = await execa`./scripts/update.sh`;
+  try {
+    // run the ./scripts/update.sh script
+    const { stdout, stderr, exitCode } = await execa`./scripts/update.sh`;
+    const end = new Date();
+    status = {
+      running: false,
+      lastRun: {
+        start,
+        end,
+        duration: end.getTime() - start.getTime(),
+        stdout,
+        stderr,
+        exitCode,
+      },
+    };
 
-  const end = new Date();
-  status = {
-    running: false,
-    lastRun: {
-      start,
-      end,
-      duration: end.getTime() - start.getTime(),
-      stdout,
-      stderr,
-      exitCode,
-    },
-  };
-
-  logger.info("Finished update script");
+    logger.info("Finished update script");
+  } catch (error) {
+    const end = new Date();
+    status = {
+      running: false,
+      lastRun: {
+        start,
+        end,
+        duration: end.getTime() - start.getTime(),
+        stdout: "",
+        stderr: "",
+        error: {
+          message: error instanceof Error ? error.message : error,
+        },
+      },
+    };
+  }
 };
 
 const queueRun = async () => {
@@ -59,8 +78,20 @@ const queueRun = async () => {
 // also allow the status to be queried
 const app = express();
 app.post("/update", async (req, res) => {
-  queueRun();
-  res.send("OK");
+  try {
+    queueRun();
+  } catch (error) {
+    res.status(500).json({
+      error: true,
+      message: "Error triggering update",
+    });
+    return;
+  }
+
+  res.json({
+    success: true,
+    message: "Update triggered",
+  });
 });
 
 app.get("/status", async (req, res) => {
