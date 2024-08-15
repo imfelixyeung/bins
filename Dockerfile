@@ -16,6 +16,9 @@ FROM base AS web
 
 WORKDIR /app/apps/web
 
+# bypass type checking in build
+ENV DATABASE_URL="postgres://postgres:postgres@db:5432/db"
+
 EXPOSE 3000
 
 RUN pnpm run build
