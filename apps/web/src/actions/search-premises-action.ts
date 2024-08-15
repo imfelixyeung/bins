@@ -1,0 +1,11 @@
+"use server";
+
+import { z } from "zod";
+import { actionClient } from ".";
+import { searchPremises } from "@/functions/search-premises";
+
+export const searchPremisesAction = actionClient
+  .schema(z.object({ postcode: z.string() }))
+  .action(async ({ parsedInput: { postcode } }) => {
+    return searchPremises({ postcode });
+  });

@@ -18,3 +18,6 @@ export const searchJobs = unstable_cache(
   ["searchJobs"],
   { revalidate: 60 }
 );
+
+// takes the non-null non-undefined awaited return type of searchJobs
+export type ReturnedJobs = NonNullable<Awaited<ReturnType<typeof searchJobs>>>;
