@@ -34,7 +34,7 @@ const run = async () => {
 
   try {
     // run the ./scripts/update.sh script
-    const { stdout, stderr, exitCode } = await $`./scripts/update.sh`;
+    const { stdout, stderr, exitCode } = await $`sh ./scripts/update.sh`;
     const end = new Date();
     status = {
       running: false,
