@@ -7,3 +7,4 @@ Dockerfile
 docker-compose.yaml
 data
 npm-debug.log
+temp

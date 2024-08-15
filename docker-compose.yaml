@@ -19,7 +19,7 @@ services:
       target: worker
     restart: unless-stopped
     environment:
-      - DB_URL=postgres://postgres:postgres@db:5432/db
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
 
@@ -28,6 +28,10 @@ services:
       dockerfile: Dockerfile
       target: web
     restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
+    depends_on:
+      - db
 
   tunnel:
     image: cloudflare/cloudflared

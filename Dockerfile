@@ -26,6 +26,11 @@ CMD ["pnpm", "run", "start"]
 
 FROM base AS worker
 
+# needed to import csv files into postgres
+RUN apk add postgresql-client
+# sed installed doesn't replace hex nulls
+RUN apk add sed
+
 WORKDIR /app/apps/worker
 
 CMD ["pnpm", "run", "start"]
