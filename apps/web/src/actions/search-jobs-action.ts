@@ -7,5 +7,5 @@ import { searchJobs } from "@/functions/search-jobs";
 export const searchJobsAction = actionClient
   .schema(z.object({ premises: z.number() }))
   .action(async ({ parsedInput: { premises } }) => {
-    return searchJobs({ premisesId: premises });
+    return await searchJobs({ premisesId: premises });
   });

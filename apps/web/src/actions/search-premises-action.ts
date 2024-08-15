@@ -7,5 +7,5 @@ import { searchPremises } from "@/functions/search-premises";
 export const searchPremisesAction = actionClient
   .schema(z.object({ postcode: z.string() }))
   .action(async ({ parsedInput: { postcode } }) => {
-    return searchPremises({ postcode });
+    return await searchPremises({ postcode });
   });
