@@ -6,7 +6,7 @@ import { unstable_cache } from "next/cache";
 export const searchPremises = unstable_cache(
   async ({ postcode }: { postcode: string }) => {
     const result = await db.query.premisesTable.findMany({
-      where: eq(premisesTable.addressPostcode, postcode),
+      where: eq(premisesTable.searchPostcode, postcode),
       columns: {
         createdAt: false,
       },

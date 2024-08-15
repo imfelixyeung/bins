@@ -26,7 +26,10 @@ import {
 import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
-  postcode: z.string().min(1, { message: "Postcode is required" }),
+  postcode: z
+    .string()
+    .min(1, { message: "Postcode is required" })
+    .transform((value) => value.trim().replaceAll(" ", "").toUpperCase()),
   premises: z.coerce.number().nullable(),
 });
 

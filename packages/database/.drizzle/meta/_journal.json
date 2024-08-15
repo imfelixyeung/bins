@@ -8,6 +8,13 @@
       "when": 1723742161790,
       "tag": "0000_worthless_rawhide_kid",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1723763928410,
+      "tag": "0001_abnormal_hitman",
+      "breakpoints": true
     }
   ]
 }
