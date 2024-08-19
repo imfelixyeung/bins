@@ -1,3 +1,4 @@
+import { getFullAddress } from "@/functions/format-address";
 import React from "react";
 
 const Address = ({
@@ -12,16 +13,7 @@ const Address = ({
     addressPostcode: string | null;
   };
 }) => {
-  const fullAddress = [
-    data.addressRoom,
-    data.addressNumber,
-    data.addressStreet,
-    data.addressLocality,
-    data.addressCity,
-    data.addressPostcode,
-  ]
-    .filter(Boolean)
-    .join("\n");
+  const fullAddress = getFullAddress(data);
 
   return <div className="whitespace-pre-line">{fullAddress}</div>;
 };
