@@ -1,6 +1,6 @@
 import { db } from "@repo/database/src";
 import { eq } from "@repo/database/src/orm";
-import { premisesTable } from "@repo/database/src/schema";
+import { jobsTable, premisesTable } from "@repo/database/src/schema";
 import { unstable_cache } from "next/cache";
 
 export const searchJobs = unstable_cache(
@@ -10,7 +10,12 @@ export const searchJobs = unstable_cache(
       columns: {
         createdAt: false,
       },
-      with: { jobs: { columns: { id: false, premisesId: false } } },
+      with: {
+        jobs: {
+          columns: { id: false, premisesId: false },
+          orderBy: [jobsTable.date],
+        },
+      },
     });
 
     return result;
