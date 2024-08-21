@@ -60,10 +60,10 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
           </div>
         </section>
       </div>
-      <section>
+      <section className="@container">
         <h2 className="text-2xl font-semibold mt-3">By Bin</h2>
         <div className="mt-3">
-          <div className="flex justify-stretch flex-wrap gap-6">
+          <div className="flex justify-stretch flex-wrap gap-6 flex-col @2xl:flex-row">
             {jobsByBin.map(({ bin, dates }) => (
               <BinDates key={bin} bin={bin} dates={dates} />
             ))}
