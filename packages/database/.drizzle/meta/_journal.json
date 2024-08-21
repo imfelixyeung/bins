@@ -15,6 +15,27 @@
       "when": 1723763928410,
       "tag": "0001_abnormal_hitman",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1724203041345,
+      "tag": "0002_colorful_boomerang",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1724203383978,
+      "tag": "0003_early_bloodstorm",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1724204625692,
+      "tag": "0004_goofy_green_goblin",
+      "breakpoints": true
     }
   ]
 }

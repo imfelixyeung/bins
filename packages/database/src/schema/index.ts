@@ -61,3 +61,15 @@ export const jobsRelation = relations(jobsTable, ({ one }) => ({
     references: [premisesTable.id],
   }),
 }));
+
+export const etagsTable = pgTable("etags", {
+  id: serial("id").primaryKey(),
+  url: text("url").notNull().unique(),
+  etag: text("etag"),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});

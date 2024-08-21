@@ -4,6 +4,8 @@ import express from "express";
 import PQueue from "p-queue";
 import pino from "pino";
 import pinoHttp from "pino-http";
+import etag from "./etag";
+import { urls } from "./data";
 
 const logger = pino();
 
@@ -26,8 +28,35 @@ let status: {
   running: false,
 };
 
+const returnEtagsIfNeedUpdate = async () => {
+  const jobs = await etag.get(urls.jobs);
+  const premises = await etag.get(urls.premises);
+
+  // if any of the etags are null, we need to update
+  if (!jobs.latest || !premises.latest) {
+    return { jobs, premises };
+  }
+
+  // if the etags are the same, we don't need to update
+  if (jobs.latest === jobs.database && premises.latest === premises.database) {
+    return null;
+  }
+
+  // if the etags are different, we need to update
+  return { jobs, premises };
+};
+
 const run = async () => {
   logger.info("Running update script");
+
+  const etags = await returnEtagsIfNeedUpdate();
+  if (!etags) {
+    logger.info("No need to update");
+    return;
+  }
+
+  logger.info({ etags }, "Update required, etags updated");
+
   const start = new Date();
   status = {
     running: true,
@@ -51,6 +80,8 @@ const run = async () => {
     };
 
     logger.info({ start, end, duration }, "Finished update script");
+
+    await Promise.allSettled([etag.set(etags.jobs), etag.set(etags.premises)]);
   } catch (error) {
     logger.error({ error }, "Error running update script");
     const end = new Date();
