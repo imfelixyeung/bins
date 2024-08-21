@@ -1,3 +1,5 @@
+set -e
+
 # make temp directory
 mkdir -p temp
 

@@ -1,4 +1,4 @@
-import { $ } from "execa";
+import { $, Result, ResultPromise } from "execa";
 import schedule from "node-schedule";
 import express from "express";
 import PQueue from "p-queue";
@@ -62,9 +62,17 @@ const run = async () => {
     running: true,
   };
 
+  let result: Result<{}> | null = null;
+
   try {
     // run the ./scripts/update.sh script
-    const { stdout, stderr, exitCode } = await $`sh ./scripts/update.sh`;
+    result = await $`sh ./scripts/update.sh`;
+    const { stdout, stderr, exitCode } = result;
+
+    if (result.exitCode !== 0) {
+      throw new Error("Exit code was not 0");
+    }
+
     const end = new Date();
     const duration = end.getTime() - start.getTime();
     status = {
@@ -91,8 +99,9 @@ const run = async () => {
         start,
         end,
         duration: end.getTime() - start.getTime(),
-        stdout: "",
-        stderr: "",
+        stdout: result?.stdout ?? "",
+        stderr: result?.stderr ?? "",
+        exitCode: result?.exitCode,
         error: {
           message: error instanceof Error ? error.message : error,
         },
