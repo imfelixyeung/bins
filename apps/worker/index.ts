@@ -3,6 +3,7 @@ import schedule from "node-schedule";
 import express from "express";
 import PQueue from "p-queue";
 import pino from "pino";
+import pinoHttp from "pino-http";
 
 const logger = pino();
 
@@ -36,20 +37,22 @@ const run = async () => {
     // run the ./scripts/update.sh script
     const { stdout, stderr, exitCode } = await $`sh ./scripts/update.sh`;
     const end = new Date();
+    const duration = end.getTime() - start.getTime();
     status = {
       running: false,
       lastRun: {
         start,
         end,
-        duration: end.getTime() - start.getTime(),
+        duration,
         stdout,
         stderr,
         exitCode,
       },
     };
 
-    logger.info("Finished update script");
+    logger.info({ start, end, duration }, "Finished update script");
   } catch (error) {
+    logger.error({ error }, "Error running update script");
     const end = new Date();
     status = {
       running: false,
@@ -77,7 +80,11 @@ const queueRun = async () => {
 // create an express server on 3000 so that we can trigger the update manually
 // also allow the status to be queried
 const app = express();
+
+app.use(pinoHttp());
+
 app.post("/update", async (req, res) => {
+  logger.info("Update triggered via API /update");
   try {
     queueRun();
   } catch (error) {
@@ -95,6 +102,7 @@ app.post("/update", async (req, res) => {
 });
 
 app.get("/status", async (req, res) => {
+  logger.info("Status requested /status");
   res.json(status);
 });
 
@@ -103,4 +111,7 @@ app.listen(3000, () => {
 });
 
 // every day at 2:00 AM
-schedule.scheduleJob("0 2 * * *", queueRun);
+schedule.scheduleJob("0 2 * * *", () => {
+  logger.info("Triggering update via cron job");
+  queueRun();
+});
