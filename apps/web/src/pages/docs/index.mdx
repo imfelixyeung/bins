@@ -1,0 +1,25 @@
+# Introduction
+
+## Overview
+
+Welcome to the documentation for the Household Waste Collection API. This API is designed to provide a simple and efficient way to access household waste collection data for premises in Leeds. The data provided by this API is sourced directly from Leeds City Council's Open Data, specifically from the [Household Waste Collections dataset](https://datamillnorth.org/dataset/ep6lz/household-waste-collections).
+
+## Data Source
+
+The underlying data for this API is based on publicly available information from the Leeds City Council, which is published on the [Data Mill North](https://datamillnorth.org/) platform. The dataset includes two CSV files for a list of premises and a list of scheduled jobs. The dataset is continually updated by the council every night to reflect the latest collection schedules and is accessible in its raw format as a set of large CSV files.
+
+This dataset is licensed under the [Open Government Licence v3.0](https://www.nationalarchives.gov.uk/doc/open-government-licence/version/3/), which allows for the free use, modification, and distribution of the data, provided that appropriate attribution is given.
+
+## Purpose of This API
+
+While the original dataset is rich and comprehensive, it is also large and unwieldy, consisting of two large CSV files that can be difficult to work with for developers and users looking for quick access to specific data. Processing these large files can be slow and cumbersome, particularly when you're only interested in a small subset of the data, such as the waste collection schedule for a single premises.
+
+This API was created to address these challenges by providing a developer-friendly interface that mirrors the Leeds City Council's dataset but allows for quick, targeted queries. With this API, you can retrieve detailed information about premises and their associated waste collection schedules without needing to download or parse large CSV files. This streamlined access makes it easier for developers to integrate Leeds waste collection data into their applications, tools, or websites.
+
+## Data Updates
+
+The two CSV files from Leeds City Council's Household Waste Collections dataset are updated every night. Consequently, this API is automatically synced with the latest data at 3:00 AM each night.
+
+## Getting Started
+
+To get started, refer to the [API Reference](/docs/api) where you can find details on how to retrieve premises and job data by postcode or premises ID.

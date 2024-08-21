@@ -1,0 +1,146 @@
+# API Reference
+
+## Endpoints
+
+The base URL for all API requests is `https://bins.felixyeung.com/api`.
+
+### Premises by Postcode
+
+Retrieves a list of premises associated with a given postcode.
+
+- **Endpoint:** `GET /api/premises`
+- **URL:** `https://bins.felixyeung.com/api/premises?postcode=LS62SE`
+- **Query Parameters:**
+  - `postcode` (required): The postcode for which to retrieve the premises. Example: `LS62SE`
+
+#### Example Request
+
+```http
+GET https://bins.felixyeung.com/api/premises?postcode=LS62SE
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "timestamp": "2024-08-21T19:37:52.068Z",
+  "data": [
+    {
+      "id": 884874,
+      "addressRoom": null,
+      "addressNumber": "1",
+      "addressStreet": "SHARP MEWS",
+      "addressLocality": "MEANWOOD",
+      "addressCity": "LEEDS",
+      "addressPostcode": "LS6 2SE",
+      "updatedAt": "2024-08-21T02:01:05.664Z"
+    },
+    {
+      "id": 842278,
+      "addressRoom": null,
+      "addressNumber": "2",
+      "addressStreet": "SHARP MEWS",
+      "addressLocality": "MEANWOOD",
+      "addressCity": "LEEDS",
+      "addressPostcode": "LS6 2SE",
+      "updatedAt": "2024-08-21T02:01:05.664Z"
+    },
+    ...
+  ]
+}
+```
+
+<details>
+  <summary>Response Schema</summary>
+  
+  - `success` (boolean): Indicates whether the request was successful.
+  - `timestamp` (string): The time when the response was generated, in ISO 8601 format.
+  - `data` (array): A list of premises associated with the provided postcode. Each premise object contains:
+    - `id` (integer): The unique identifier for the premises.
+    - `addressRoom` (string|null): First line of address, if applicable.
+    - `addressNumber` (string|null): Second line of address, if applicable.
+    - `addressStreet` (string|null): The name of the street, if applicable.
+    - `addressLocality` (string): The locality or neighborhood of the premises.
+    - `addressCity` (string): The city where the premises are located.
+    - `addressPostcode` (string): The postcode of the premises.
+    - `updatedAt` (string): The last time the premises information was updated, in ISO 8601 format.
+
+</details>
+
+### Jobs by Premises ID
+
+Retrieves a list of scheduled bin collection dates for a specific premises.
+
+- **Endpoint:** `GET /api/jobs`
+- **URL:** `https://bins.felixyeung.com/api/jobs?premises=842289`
+- **Query Parameters:**
+  - `premises` (required): The ID of the premises for which to retrieve the jobs. Example: `842289`
+
+#### Example Request
+
+```http
+GET https://bins.felixyeung.com/api/jobs?premises=842289
+```
+
+#### Response
+
+```json
+{
+  "success": true,
+  "timestamp": "2024-08-21T19:40:26.057Z",
+  "data": {
+    "id": 842289,
+    "addressRoom": null,
+    "addressNumber": "6",
+    "addressStreet": "SHARP MEWS",
+    "addressLocality": "MEANWOOD",
+    "addressCity": "LEEDS",
+    "addressPostcode": "LS6 2SE",
+    "updatedAt": "2024-08-21T02:01:05.664Z",
+    "jobs": [
+      {
+        "bin": "BROWN",
+        "date": "2024-07-26"
+      },
+      {
+        "bin": "GREEN",
+        "date": "2024-07-29"
+      },
+      {
+        "bin": "BLACK",
+        "date": "2024-08-05"
+      },
+      {
+        "bin": "BROWN",
+        "date": "2024-08-09"
+      },
+      ...
+    ]
+  }
+}
+```
+
+<details>
+  <summary>Response Schema</summary>
+  
+  - `success` (boolean): Indicates whether the request was successful.
+  - `timestamp` (string): The time when the response was generated, in ISO 8601 format.
+  - `data` (object): Contains details of the premises and its associated jobs. Fields include:
+    - `id` (integer): The unique identifier for the premises.
+    - `addressRoom` (string|null): First line of address, if applicable.
+    - `addressNumber` (string|null): Second line of address, if applicable.
+    - `addressStreet` (string|null): The name of the street, if applicable.
+    - `addressLocality` (string): The locality or neighborhood of the premises.
+    - `addressCity` (string): The city where the premises are located.
+    - `addressPostcode` (string): The official postcode of the premises.
+    - `updatedAt` (string): The last time the premises information was updated, in ISO 8601 format.
+    - `jobs` (array): A list of job objects, each containing:
+      - `bin` (string): The type of bin scheduled for collection.
+      - `date` (string): The scheduled collection date for the bin, in `YYYY-MM-DD` format.
+
+</details>
+
+## Error Handling
+
+For both endpoints, if the request fails (e.g., due to an invalid postcode or premises ID), the API will return a JSON object containing an error message along with a `success: false` flag. Additional properties may be included in the response object, depending on the error.

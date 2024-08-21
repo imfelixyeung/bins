@@ -1,0 +1,5 @@
+###
+GET https://bins.felixyeung.com/api/premises?postcode=LS62SE
+
+###
+GET https://bins.felixyeung.com/api/jobs?premises=842289
