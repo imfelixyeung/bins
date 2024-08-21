@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
 
 const formSchema = z.object({
   postcode: z
@@ -37,14 +38,16 @@ type FormData = z.infer<typeof formSchema>;
 
 const PremisesSearchForm = () => {
   const router = useRouter();
+  const [postcode, setPostcode] = useQueryState("postcode", {
+    defaultValue: "",
+  });
   const form = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      postcode: "",
+      postcode,
       premises: null,
     },
   });
-  const [postcode, setPostcode] = useState("");
   const { data: premises } = useSearchPremisesQuery({ postcode });
 
   const onSubmit = async (data: FormData) => {
