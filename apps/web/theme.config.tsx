@@ -1,3 +1,4 @@
+import CopyRight from "@/ui/copyright";
 import type { DocsThemeConfig } from "nextra-theme-docs";
 
 export default {
@@ -23,10 +24,6 @@ export default {
     content: null, // hide github
   },
   footer: {
-    text: (
-      <span>
-        © {new Date().getFullYear()} Felix Yeung. All rights reserved.
-      </span>
-    ),
+    text: <CopyRight />,
   },
 } satisfies DocsThemeConfig;
