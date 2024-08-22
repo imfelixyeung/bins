@@ -1,4 +1,4 @@
-import { getFullAddress, getSummaryAddress } from "@/functions/format-address";
+import { getSummaryAddress } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import { capitalCase } from "change-case";
 import { ImageResponse } from "next/og";

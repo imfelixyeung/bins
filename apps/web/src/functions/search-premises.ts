@@ -48,6 +48,7 @@ export const searchPremises = unstable_cache(
       }));
       resultWithParsedInts.sort((a, b) => a.sorter - b.sorter);
 
+      // eslint-disable-next-line no-unused-vars
       return resultWithParsedInts.map(({ sorter: _, ...premise }) => ({
         ...premise,
       }));

@@ -6,8 +6,6 @@ import { capitalCase } from "change-case";
 import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import Copyable from "./copyable";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
