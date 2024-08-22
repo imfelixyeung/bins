@@ -4,6 +4,12 @@ import { GeistSans } from "geist/font/sans";
 import Providers from "./providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
+import { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: { default: "Check your bin dates - Bins", template: "%s - Bins" },
+  description: "Find out when each of your bins are scheduled to be emptied",
+};
 
 export default async function RootLayout({
   children,

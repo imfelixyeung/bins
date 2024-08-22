@@ -1,7 +1,9 @@
 import { buttonVariants } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { getSummaryAddress } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import PremisesJobList from "@/ui/premises-job-list";
+import { capitalCase } from "change-case";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -9,7 +11,20 @@ import { z } from "zod";
 
 const premisesIdSchema = z.coerce.number();
 
-const Hello = async ({ params: { id: _id } }: { params: { id: string } }) => {
+export type PageProps = { params: { id: string } };
+
+export const generateMetadata = async ({ params: { id: _id } }: PageProps) => {
+  const id = premisesIdSchema.parse(_id);
+  const premises = await searchJobs({ premisesId: id });
+
+  if (!premises) notFound();
+
+  const address = capitalCase(getSummaryAddress(premises));
+
+  return { title: `Bin Dates for ${address} at ${premises.addressPostcode}` };
+};
+
+const Page = async ({ params: { id: _id } }: PageProps) => {
   const parsedId = premisesIdSchema.safeParse(_id);
 
   if (!parsedId.success) notFound();
@@ -37,4 +52,4 @@ const Hello = async ({ params: { id: _id } }: { params: { id: string } }) => {
   );
 };
 
-export default Hello;
+export default Page;
