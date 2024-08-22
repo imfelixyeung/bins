@@ -66,13 +66,21 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
       </div>
       <section className="@container">
         <h2 className="text-2xl font-semibold mt-3">By Bin</h2>
-        <div className="mt-3">
-          <div className="flex justify-stretch flex-wrap gap-6 flex-col @2xl:flex-row">
-            {jobsByBin.map(({ bin, dates }) => (
-              <BinDates key={bin} bin={bin} dates={dates} />
-            ))}
+        {jobsByBin.length > 0 ? (
+          <div className="mt-3">
+            <div className="flex justify-stretch flex-wrap gap-6 flex-col @2xl:flex-row">
+              {jobsByBin.map(({ bin, dates }) => (
+                <BinDates key={bin} bin={bin} dates={dates} />
+              ))}
+            </div>
           </div>
-        </div>
+        ) : (
+          <div>
+            <p className="mt-3 text-muted-foreground">
+              It looks like there are no scheduled bin dates for this premises.
+            </p>
+          </div>
+        )}
       </section>
       <section className="@container">
         <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
