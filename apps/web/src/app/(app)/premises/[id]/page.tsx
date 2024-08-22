@@ -1,5 +1,4 @@
 import { buttonVariants } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import { getSummaryAddress } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import AddToRecents from "@/ui/add-to-recents";
@@ -56,11 +55,9 @@ const Page = async ({ params: { id: _id } }: PageProps) => {
       </ClientOnly>
       <h1 className="text-3xl font-semibold">Your Bin Day</h1>
       <div className="mt-8">
-        <Card className="p-8 max-w-3xl">
-          <PremisesJobList data={premises} />
-        </Card>
+        <PremisesJobList data={premises} />
       </div>
-      <div className="mt-6">
+      <div className="mt-16">
         <Link href="/" className={buttonVariants({ variant: "outline" })}>
           Search for another address
         </Link>

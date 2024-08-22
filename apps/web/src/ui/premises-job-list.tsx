@@ -7,14 +7,15 @@ import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import Copyable from "./copyable";
+import { Card } from "@/components/ui/card";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   return (
-    <div className="grow basis-0 bg-gray-100 rounded-lg p-4">
+    <Card className="grow basis-0 p-4">
       <h3 className="text-xl font-semibold flex items-center gap-2">
         {capitalCase(bin)} <Trash2Icon />
       </h3>
-      <ul className="list-disc list-inside mt-3">
+      <ul className="list-disc list-outside ml-5 mt-3">
         {dates.map((date) => {
           // format date to 29 March 2023
           const formattedDate = format(new Date(date), "dd MMMM yyyy");
@@ -25,7 +26,7 @@ const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
           );
         })}
       </ul>
-    </div>
+    </Card>
   );
 };
 
@@ -82,7 +83,7 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
           </div>
         )}
       </section>
-      <section className="@container">
+      <section className="@container max-w-3xl">
         <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
         <p className="text-muted-foreground mt-3">
           You can subscribe to the iCalendar feed for this address to

@@ -68,7 +68,7 @@ const PremisesSearchForm = () => {
             <FormItem>
               <FormLabel>Enter your postcode</FormLabel>
               <FormControl>
-                <Input placeholder="" {...field} />
+                <Input placeholder="" {...field} className="max-w-xs" />
               </FormControl>
               <FormDescription>For example, 'LS2 3AB'</FormDescription>
               <FormMessage />
