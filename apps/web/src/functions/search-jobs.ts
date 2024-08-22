@@ -23,7 +23,7 @@ export const searchJobs = unstable_cache(
             date: true,
             bin: true,
           },
-          orderBy: [jobsTable.date],
+          orderBy: [jobsTable.date, jobsTable.bin, jobsTable.id],
         },
       },
     });

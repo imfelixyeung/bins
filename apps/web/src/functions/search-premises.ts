@@ -23,6 +23,7 @@ export const searchPremises = unstable_cache(
         premisesTable.addressRoom,
         premisesTable.addressNumber,
         premisesTable.addressStreet,
+        premisesTable.id,
       ],
       columns: {
         id: true,
