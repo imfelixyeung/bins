@@ -89,7 +89,7 @@ const PremisesSearchForm = () => {
                     field.onChange(value);
                     onSelectAddress(value);
                   }}
-                  defaultValue={field.value as any}
+                  defaultValue={field.value?.toString() ?? ""}
                 >
                   <FormControl>
                     <SelectTrigger>
