@@ -1,7 +1,7 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { format, startOfWeek, subDays } from "date-fns";
+import { addDays, format, startOfWeek, subDays } from "date-fns";
 import React, { useMemo } from "react";
 
 const SpannedDot = ({ span }: { span: number }) => {
@@ -28,12 +28,16 @@ const DotCalendar = ({
   const now = new Date();
   const today = format(now, "yyyy-MM-dd");
   const start = startOfWeek(subDays(now, 7));
-  const maxDate = data.reduce((max, item) => {
-    if (item.date.getTime() > max.getTime()) {
-      return item.date;
-    }
-    return max;
-  }, now);
+  const end = useMemo(() => {
+    const max = data.reduce((max, item) => {
+      if (item.date.getTime() > max.getTime()) {
+        return item.date;
+      }
+      return max;
+    }, now);
+
+    return new Date(Math.max(max.getTime(), addDays(now, 7).getTime()));
+  }, [data, now]);
 
   const classNamesByDate = useMemo(() => {
     const result: Record<string, string[]> = {};
@@ -47,11 +51,11 @@ const DotCalendar = ({
     return result;
   }, [data]);
 
-  const startToMaxDate = useMemo(() => {
+  const startToEnd = useMemo(() => {
     // an array of dates from now to maxDate
     const dates: { date: string; classNames: string[] }[] = [];
     let date = start;
-    while (date.getTime() <= maxDate.getTime()) {
+    while (date.getTime() <= end.getTime()) {
       const formattedDate = format(date, "yyyy-MM-dd");
       dates.push({
         date: formattedDate,
@@ -60,16 +64,16 @@ const DotCalendar = ({
       date = new Date(date.getTime() + 1000 * 60 * 60 * 24);
     }
     return dates;
-  }, [maxDate, start, classNamesByDate]);
+  }, [end, start, classNamesByDate]);
 
   const firstDotOffset = (start.getDay() + 1) % 7;
-  const lastDotOffset = 6 - ((maxDate.getDay() + 1) % 7);
+  const lastDotOffset = 6 - ((end.getDay() + 1) % 7);
 
   return (
     <div>
       <div className="grid grid-cols-7 gap-1.5 max-w-fit">
         <SpannedDot span={firstDotOffset} />
-        {startToMaxDate.map((date) => (
+        {startToEnd.map((date) => (
           <div
             key={date.date}
             className={cn(
