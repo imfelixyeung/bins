@@ -8,11 +8,21 @@ export const searchJobs = unstable_cache(
     const result = await db.query.premisesTable.findFirst({
       where: eq(premisesTable.id, premisesId),
       columns: {
-        createdAt: false,
+        id: true,
+        addressRoom: true,
+        addressNumber: true,
+        addressStreet: true,
+        addressLocality: true,
+        addressCity: true,
+        addressPostcode: true,
+        updatedAt: true,
       },
       with: {
         jobs: {
-          columns: { id: false, premisesId: false },
+          columns: {
+            date: true,
+            bin: true,
+          },
           orderBy: [jobsTable.date],
         },
       },

@@ -25,7 +25,14 @@ export const searchPremises = unstable_cache(
         premisesTable.addressStreet,
       ],
       columns: {
-        createdAt: false,
+        id: true,
+        addressRoom: true,
+        addressNumber: true,
+        addressStreet: true,
+        addressLocality: true,
+        addressCity: true,
+        addressPostcode: true,
+        updatedAt: true,
       },
     });
 
