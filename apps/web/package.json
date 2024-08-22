@@ -16,6 +16,7 @@
     "@repo/database": "workspace:*",
     "@tanstack/query-core": "^5.51.21",
     "@tanstack/react-query": "^5.51.23",
+    "@vercel/og": "^0.6.2",
     "change-case": "^5.4.4",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.1",

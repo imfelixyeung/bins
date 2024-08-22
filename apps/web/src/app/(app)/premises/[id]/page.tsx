@@ -4,6 +4,7 @@ import { getSummaryAddress } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import PremisesJobList from "@/ui/premises-job-list";
 import { capitalCase } from "change-case";
+import { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import React from "react";
@@ -13,7 +14,9 @@ const premisesIdSchema = z.coerce.number();
 
 export type PageProps = { params: { id: string } };
 
-export const generateMetadata = async ({ params: { id: _id } }: PageProps) => {
+export const generateMetadata = async ({
+  params: { id: _id },
+}: PageProps): Promise<Metadata> => {
   const id = premisesIdSchema.parse(_id);
   const premises = await searchJobs({ premisesId: id });
 
@@ -21,7 +24,16 @@ export const generateMetadata = async ({ params: { id: _id } }: PageProps) => {
 
   const address = capitalCase(getSummaryAddress(premises));
 
-  return { title: `Bin Dates for ${address} at ${premises.addressPostcode}` };
+  return {
+    title: `Bin Dates for ${address} at ${premises.addressPostcode}`,
+    openGraph: {
+      images: [
+        {
+          url: `/api/og/premises/${id}`,
+        },
+      ],
+    },
+  };
 };
 
 const Page = async ({ params: { id: _id } }: PageProps) => {
