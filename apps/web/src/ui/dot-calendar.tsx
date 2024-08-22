@@ -36,7 +36,12 @@ const DotCalendar = ({
       return max;
     }, now);
 
-    return new Date(Math.max(max.getTime(), addDays(now, 7).getTime()));
+    return new Date(
+      Math.min(
+        Math.max(max.getTime(), addDays(now, 7).getTime()),
+        addDays(now, 28).getTime()
+      )
+    );
   }, [data, now]);
 
   const classNamesByDate = useMemo(() => {
