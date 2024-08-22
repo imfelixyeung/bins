@@ -5,6 +5,10 @@ import { isAfter, format } from "date-fns";
 import { capitalCase } from "change-case";
 import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
+import Link from "next/link";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import Copyable from "./copyable";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   return (
@@ -44,8 +48,10 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
       )
   ).map(([bin, dates]) => ({ bin, dates }));
 
+  const ical = `https://bins.felixyeung.com/api/jobs?premises=${data.id}&format=ical`;
+
   return (
-    <div>
+    <div className="flex flex-col gap-8">
       <div className="flex justify-between gap-8 flex-wrap">
         <section>
           <h2 className="text-2xl font-semibold">Address</h2>
@@ -68,6 +74,25 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
               <BinDates key={bin} bin={bin} dates={dates} />
             ))}
           </div>
+        </div>
+      </section>
+      <section className="@container">
+        <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
+        <p className="text-muted-foreground mt-3">
+          You can subscribe to the iCalendar feed for this address to
+          automatically add and update bin dates directly in your preferred
+          calendar app, ensuring you never miss a collection day. For more
+          information on how to subscribe, see the{" "}
+          <Link
+            href="/docs/calendar"
+            className="underline hover:text-foreground active:text-foreground focus:text-foreground transition-colors"
+          >
+            Calendar Subscription
+          </Link>{" "}
+          guide.
+        </p>
+        <div className="mt-3">
+          <Copyable text={ical} />
         </div>
       </section>
     </div>

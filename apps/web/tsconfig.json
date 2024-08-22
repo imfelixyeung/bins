@@ -12,7 +12,8 @@
     },
     "preserveSymlinks": true,
     "declaration": false,
-    "declarationMap": false
+    "declarationMap": false,
+    "lib": ["dom", "dom.iterable", "esnext"]
   },
   "include": [
     "next-env.d.ts",
