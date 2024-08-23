@@ -26,7 +26,7 @@ export const generateMetadata = async ({
   const address = capitalCase(getSummaryAddress(premises));
 
   return {
-    title: `Bin Dates for ${address} at ${premises.addressPostcode}`,
+    title: `Bin Days for ${address} at ${premises.addressPostcode}`,
     openGraph: {
       images: [
         {

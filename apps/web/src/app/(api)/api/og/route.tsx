@@ -4,44 +4,11 @@ import { capitalCase } from "change-case";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-// App router includes @vercel/og.
-// No need to install it.
+import { fonts, loadFont } from "./fonts";
 
-const premisesIdSchema = z.coerce.number();
-
-const boldFontURL = new URL(
-  "https://unpkg.com/geist@1.3.1/dist/fonts/geist-sans/Geist-Bold.ttf"
-);
-
-const semiboldFontURL = new URL(
-  "https://unpkg.com/geist@1.3.1/dist/fonts/geist-sans/Geist-SemiBold.ttf"
-);
-
-const loadFont = async (url: URL) => {
-  const fontData = await fetch(url).then((res) => (res as any).arrayBuffer());
-
-  return fontData;
-};
-
-export async function GET(
-  request: NextRequest,
-  { params: { id: _id } }: { params: { id: string } }
-) {
-  const parsedId = premisesIdSchema.safeParse(_id);
-
-  if (!parsedId.success) return new Response("Not found", { status: 404 });
-
-  const id = parsedId.data;
-
-  const premises = await searchJobs({ premisesId: id });
-
-  if (!premises) return new Response("Not found", { status: 404 });
-
-  const address = capitalCase(getSummaryAddress(premises));
-  const postcode = premises.addressPostcode;
-
-  const boldFont = await loadFont(boldFontURL);
-  const semiboldFont = await loadFont(semiboldFontURL);
+export async function GET() {
+  const boldFont = await loadFont(fonts.geist.bold);
+  const semiboldFont = await loadFont(fonts.geist.semibold);
 
   return new ImageResponse(
     (
@@ -73,10 +40,10 @@ export async function GET(
               <span>Bin Days</span>
             </h1>
           </div>
-          <div tw="flex flex-col w-full px-16 pt-16">
+          <div tw="flex flex-col w-full px-16 pt-8">
             <h2 tw="flex flex-col items-center justify-center font-semibold">
-              <span tw="text-6xl">{address}</span>
-              <span tw="text-5xl mt-3">{postcode}</span>
+              <span tw="text-5xl">Check your scheduled</span>
+              <span tw="text-5xl mt-3">bin collection days</span>
             </h2>
           </div>
         </div>

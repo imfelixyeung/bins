@@ -7,7 +7,7 @@ const Page = () => {
   return (
     <div className="container my-16">
       <section>
-        <h1 className="text-3xl font-semibold">Check your bin day</h1>
+        <h1 className="text-3xl font-semibold">Check your bin days</h1>
         <div className="mt-8">
           <div className="max-w-3xl">
             <Suspense>

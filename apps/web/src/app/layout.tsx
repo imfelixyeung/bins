@@ -7,9 +7,16 @@ import CopyRight from "@/ui/copyright";
 import { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: { default: "Check your bin dates - Bins", template: "%s - Bins" },
+  title: { default: "Check your bin days - Bins", template: "%s - Bins" },
   description: "Find out when each of your bins are scheduled to be emptied",
   metadataBase: new URL("https://bins.felixyeung.com"),
+  openGraph: {
+    images: [
+      {
+        url: "/api/og",
+      },
+    ],
+  },
 };
 
 export default async function RootLayout({

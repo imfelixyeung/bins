@@ -78,7 +78,7 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
         ) : (
           <div>
             <p className="mt-3 text-muted-foreground">
-              It looks like there are no scheduled bin dates for this premises.
+              It looks like there are no scheduled bin days for this premises.
             </p>
           </div>
         )}
@@ -87,7 +87,7 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
         <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
         <p className="text-muted-foreground mt-3">
           You can subscribe to the iCalendar feed for this address to
-          automatically add and update bin dates directly in your preferred
+          automatically add and update bin days directly in your preferred
           calendar app, ensuring you never miss a collection day. For more
           information on how to subscribe, see the{" "}
           <Link
