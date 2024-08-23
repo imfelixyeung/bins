@@ -11,6 +11,18 @@ export const metadata: Metadata = {
   description: "Find out when each of your bins are scheduled to be emptied",
   metadataBase: new URL("https://bins.felixyeung.com"),
   openGraph: {
+    title: "Check your bin days",
+    description: "Find out when each of your bins are scheduled to be emptied",
+    images: [
+      {
+        url: "/api/og",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Check your bin days",
+    description: "Find out when each of your bins are scheduled to be emptied",
     images: [
       {
         url: "/api/og",

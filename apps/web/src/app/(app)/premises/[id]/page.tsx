@@ -27,7 +27,19 @@ export const generateMetadata = async ({
 
   return {
     title: `Bin Days for ${address} at ${premises.addressPostcode}`,
+    description: `View the scheduled bin collection days for ${address} at ${premises.addressPostcode}`,
     openGraph: {
+      title: `Bin Days for ${address} at ${premises.addressPostcode}`,
+      description: `View the scheduled bin collection days for ${address} at ${premises.addressPostcode}`,
+      images: [
+        {
+          url: `/api/og/premises/${id}`,
+        },
+      ],
+    },
+    twitter: {
+      title: `Bin Days for ${address} at ${premises.addressPostcode}`,
+      description: `View the scheduled bin collection days for ${address} at ${premises.addressPostcode}`,
       images: [
         {
           url: `/api/og/premises/${id}`,
