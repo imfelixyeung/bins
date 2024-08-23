@@ -1,9 +1,4 @@
-import { getSummaryAddress } from "@/functions/format-address";
-import { searchJobs } from "@/functions/search-jobs";
-import { capitalCase } from "change-case";
 import { ImageResponse } from "next/og";
-import { NextRequest } from "next/server";
-import { z } from "zod";
 import { fonts, loadFont } from "./fonts";
 
 export async function GET() {
