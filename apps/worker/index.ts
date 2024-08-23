@@ -150,8 +150,8 @@ app.listen(3000, () => {
   console.log("Server listening on port 3000");
 });
 
-// every day at 2:00 AM
-schedule.scheduleJob("0 2 * * *", () => {
+// every day at 3:00 AM
+schedule.scheduleJob("0 3 * * *", () => {
   logger.info("Triggering update via cron job");
   queueRun();
 });
