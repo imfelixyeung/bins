@@ -1,19 +1,22 @@
 "use client";
 
 import { cn } from "@/lib/utils";
-import { addDays, format, startOfWeek, subDays } from "date-fns";
+import { addDays, endOfWeek, format, startOfWeek, subDays } from "date-fns";
 import React, { useMemo } from "react";
 
-const SpannedDot = ({ span }: { span: number }) => {
-  if (span === 0) return null;
+const WeekDays = () => {
+  const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
   return (
-    <div
-      className="flex items-center w-full h-5 rounded-full bg-gray-100"
-      style={{
-        gridColumn: `span ${span}`,
-      }}
-    ></div>
+    <div className="grid grid-cols-7 gap-1.5 max-w-fit bg-gray-100 rounded-sm">
+      {days.map((day, index) => (
+        <div key={index} className="h-5 w-5">
+          <div className="flex h-full w-full justify-center items-center">
+            <div className="text-xs text-muted-foreground">{day}</div>
+          </div>
+        </div>
+      ))}
+    </div>
   );
 };
 
@@ -27,7 +30,7 @@ const DotCalendar = ({
 }) => {
   const now = new Date();
   const today = format(now, "yyyy-MM-dd");
-  const start = startOfWeek(subDays(now, 7));
+  const start = startOfWeek(subDays(now, 7), { weekStartsOn: 1 });
   const end = useMemo(() => {
     const max = data.reduce((max, item) => {
       if (item.date.getTime() > max.getTime()) {
@@ -39,7 +42,7 @@ const DotCalendar = ({
     return new Date(
       Math.min(
         Math.max(max.getTime(), addDays(now, 7).getTime()),
-        addDays(now, 28).getTime()
+        endOfWeek(addDays(now, 28), { weekStartsOn: 1 }).getTime()
       )
     );
   }, [data, now]);
@@ -71,13 +74,10 @@ const DotCalendar = ({
     return dates;
   }, [end, start, classNamesByDate]);
 
-  const firstDotOffset = (start.getDay() + 1) % 7;
-  const lastDotOffset = 6 - ((end.getDay() + 1) % 7);
-
   return (
     <div>
-      <div className="grid grid-cols-7 gap-1.5 max-w-fit">
-        <SpannedDot span={firstDotOffset} />
+      <WeekDays />
+      <div className="grid grid-cols-7 gap-1.5 max-w-fit mt-1.5">
         {startToEnd.map((date) => (
           <div
             key={date.date}
@@ -93,7 +93,6 @@ const DotCalendar = ({
             </div>
           </div>
         ))}
-        <SpannedDot span={lastDotOffset} />
       </div>
     </div>
   );
