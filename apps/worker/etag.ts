@@ -5,16 +5,26 @@
 import { db } from "@repo/database/src";
 import { eq } from "@repo/database/src/orm";
 import { etagsTable } from "@repo/database/src/schema";
+import { fetch, Agent } from "undici";
+import pRetry from "p-retry";
+import logger from "./logger";
 
 const getEtagFromFetch = async (url: string) => {
   try {
-    const response = await fetch(url, { method: "HEAD" });
+    const response = await fetch(url, {
+      method: "HEAD",
+      dispatcher: new Agent({ connect: { timeout: 60_000 } }),
+    });
+
+    if (!response.ok) {
+      throw new Error("Response was not ok");
+    }
 
     const etag = response.headers.get("etag");
     const lastModified = response.headers.get("last-modified");
 
     if (!etag || !lastModified) {
-      return null;
+      throw new Error("Etag or last modified not found");
     }
 
     return {
@@ -22,7 +32,7 @@ const getEtagFromFetch = async (url: string) => {
       lastModified: new Date(lastModified),
     };
   } catch (error) {
-    return null;
+    throw error;
   }
 };
 
@@ -44,8 +54,22 @@ const getEtagFromDb = async (url: string) => {
 };
 
 const checkEtag = async (url: string) => {
-  const etagDatabase = await getEtagFromDb(url);
-  const etagLatest = await getEtagFromFetch(url);
+  const etagDatabase = await pRetry(() => getEtagFromDb(url), {
+    onFailedAttempt: (error) => {
+      logger.warn(
+        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.message})`
+      );
+    },
+    retries: 3,
+  }).catch(() => null);
+  const etagLatest = await pRetry(() => getEtagFromFetch(url), {
+    onFailedAttempt: (error) => {
+      logger.warn(
+        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.message})`
+      );
+    },
+    retries: 3,
+  }).catch(() => null);
 
   return {
     url,

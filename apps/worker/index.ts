@@ -2,12 +2,10 @@ import { $, Result, ResultPromise } from "execa";
 import schedule from "node-schedule";
 import express from "express";
 import PQueue from "p-queue";
-import pino from "pino";
 import pinoHttp from "pino-http";
 import etag from "./etag";
 import { urls } from "./data";
-
-const logger = pino();
+import logger from "./logger";
 
 const queue = new PQueue({ concurrency: 1 });
 
@@ -29,8 +27,10 @@ let status: {
 };
 
 const returnEtagsIfNeedUpdate = async () => {
-  const jobs = await etag.get(urls.jobs);
-  const premises = await etag.get(urls.premises);
+  const [jobs, premises] = await Promise.all([
+    etag.get(urls.jobs),
+    etag.get(urls.premises),
+  ]);
 
   // if latest etags are null, we cant determine if we need to update
   if (!jobs.latest || !premises.latest) {
