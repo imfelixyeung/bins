@@ -18,7 +18,12 @@ export type PageProps = { params: { id: string } };
 export const generateMetadata = async ({
   params: { id: _id },
 }: PageProps): Promise<Metadata> => {
-  const id = premisesIdSchema.parse(_id);
+  const parsedId = premisesIdSchema.safeParse(_id);
+
+  if (!parsedId.success) notFound();
+
+  const id = parsedId.data;
+
   const premises = await searchJobs({ premisesId: id });
 
   if (!premises) notFound();
@@ -33,7 +38,7 @@ export const generateMetadata = async ({
       description: `View the scheduled bin collection days for ${address} at ${premises.addressPostcode}`,
       images: [
         {
-          url: `/api/og/premises/${id}`,
+          url: `/api/og/premises/${parsedId}`,
         },
       ],
     },
@@ -42,7 +47,7 @@ export const generateMetadata = async ({
       description: `View the scheduled bin collection days for ${address} at ${premises.addressPostcode}`,
       images: [
         {
-          url: `/api/og/premises/${id}`,
+          url: `/api/og/premises/${parsedId}`,
         },
       ],
     },
@@ -61,7 +66,7 @@ const Page = async ({ params: { id: _id } }: PageProps) => {
   if (!premises) notFound();
 
   return (
-    <div className="container my-16">
+    <div className="container py-16">
       <ClientOnly>
         <AddToRecents premises={premises} />
       </ClientOnly>
