@@ -32,13 +32,17 @@ const returnEtagsIfNeedUpdate = async () => {
   const jobs = await etag.get(urls.jobs);
   const premises = await etag.get(urls.premises);
 
-  // if any of the etags are null, we need to update
+  // if latest etags are null, we cant determine if we need to update
   if (!jobs.latest || !premises.latest) {
-    return { jobs, premises };
+    logger.warn("Unable to determine if we need to update");
+    return null;
   }
 
   // if the etags are the same, we don't need to update
-  if (jobs.latest === jobs.database && premises.latest === premises.database) {
+  if (
+    jobs.latest.etag === jobs.database?.etag &&
+    premises.latest.etag === premises.database?.etag
+  ) {
     return null;
   }
 
@@ -146,12 +150,16 @@ app.get("/status", async (req, res) => {
   res.json(status);
 });
 
-app.listen(3000, () => {
-  console.log("Server listening on port 3000");
-});
+if (process.env.ONE_SHOT) {
+  queueRun().then(() => process.exit());
+} else {
+  app.listen(3000, () => {
+    console.log("Server listening on port 3000");
+  });
 
-// every day at 3:00 AM
-schedule.scheduleJob("0 3 * * *", () => {
-  logger.info("Triggering update via cron job");
-  queueRun();
-});
+  // every day at 3:00 AM
+  schedule.scheduleJob("0 3 * * *", () => {
+    logger.info("Triggering update via cron job");
+    queueRun();
+  });
+}

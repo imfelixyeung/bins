@@ -9,7 +9,18 @@ import { etagsTable } from "@repo/database/src/schema";
 const getEtagFromFetch = async (url: string) => {
   try {
     const response = await fetch(url, { method: "HEAD" });
-    return response.headers.get("etag");
+
+    const etag = response.headers.get("etag");
+    const lastModified = response.headers.get("last-modified");
+
+    if (!etag || !lastModified) {
+      return null;
+    }
+
+    return {
+      etag,
+      lastModified: new Date(lastModified),
+    };
   } catch (error) {
     return null;
   }
@@ -19,7 +30,17 @@ const getEtagFromDb = async (url: string) => {
   const record = await db.query.etagsTable.findFirst({
     where: eq(etagsTable.url, url),
   });
-  return record?.etag ?? null;
+
+  if (!record) {
+    return null;
+  }
+
+  const { etag, updatedAt } = record;
+
+  return {
+    etag,
+    lastModified: updatedAt,
+  };
 };
 
 const checkEtag = async (url: string) => {
@@ -38,10 +59,13 @@ type EtagResult = Awaited<ReturnType<typeof checkEtag>>;
 const setEtag = async (data: EtagResult) => {
   const { url, latest: etag } = data;
   try {
-    await db.insert(etagsTable).values({ url, etag }).onConflictDoUpdate({
-      target: etagsTable.url,
-      set: { etag },
-    });
+    await db
+      .insert(etagsTable)
+      .values({ url, etag: etag?.etag, updatedAt: etag?.lastModified })
+      .onConflictDoUpdate({
+        target: etagsTable.url,
+        set: { etag: etag?.etag, updatedAt: etag?.lastModified },
+      });
   } catch (error) {
     return;
   }
