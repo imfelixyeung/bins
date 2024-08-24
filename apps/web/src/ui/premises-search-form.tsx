@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,116 +25,156 @@ import {
 } from "@/components/ui/select";
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
+import { cn } from "@/lib/utils";
 
-const formSchema = z.object({
+const postcodeFormSchema = z.object({
   postcode: z
     .string()
     .min(1, { message: "Postcode is required" })
     .transform((value) => value.trim().replaceAll(" ", "").toUpperCase()),
-  premises: z.coerce.number().nullable(),
 });
 
-type FormData = z.infer<typeof formSchema>;
+const premisesFormSchema = z.object({
+  premises: z.coerce.number({
+    invalid_type_error: "Please select an address from the list",
+  }),
+});
+
+type PostcodeFormData = z.infer<typeof postcodeFormSchema>;
+type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
 const PremisesSearchForm = () => {
   const router = useRouter();
   const [postcode, setPostcode] = useQueryState("postcode", {
     defaultValue: "",
   });
-  const form = useForm<FormData>({
-    resolver: zodResolver(formSchema),
+  const addressSelectRef = useRef<HTMLButtonElement>(null);
+  const postcodeForm = useForm<PostcodeFormData>({
+    resolver: zodResolver(postcodeFormSchema),
     defaultValues: {
       postcode,
-      premises: null,
+    },
+  });
+  const premisesForm = useForm<PremisesFormData>({
+    resolver: zodResolver(premisesFormSchema),
+    defaultValues: {
+      premises: undefined,
     },
   });
   const { data: premises } = useSearchPremisesQuery({ postcode });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmitPostcode = async (data: PostcodeFormData) => {
     setPostcode(data.postcode);
   };
 
-  const onSelectAddress = (premisesId: string) => {
-    router.push(`/premises/${premisesId}`);
+  const onSubmitPremises = async (data: PremisesFormData) => {
+    router.push(`/premises/${data.premises}`);
   };
 
-  return (
-    <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-        <FormField
-          control={form.control}
-          name="postcode"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Enter your postcode</FormLabel>
-              <FormControl>
-                <Input placeholder="" {...field} className="max-w-xs" />
-              </FormControl>
-              <FormDescription>For example, 'LS2 3AB'</FormDescription>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
-        <Button type="submit">Lookup</Button>
+  useEffect(() => {
+    if (premises) {
+      addressSelectRef.current?.focus();
+    }
+  }, [premises]);
 
-        {premises && (
+  return (
+    <>
+      <Form {...postcodeForm}>
+        <form
+          onSubmit={postcodeForm.handleSubmit(onSubmitPostcode)}
+          className="space-y-8"
+        >
           <FormField
-            control={form.control}
-            name="premises"
+            control={postcodeForm.control}
+            name="postcode"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Address</FormLabel>
-                <Select
-                  onValueChange={(value) => {
-                    field.onChange(value);
-                    onSelectAddress(value);
-                  }}
-                  defaultValue={field.value?.toString() ?? ""}
-                >
-                  <FormControl>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select an address from the list" />
-                    </SelectTrigger>
-                  </FormControl>
-                  <SelectContent>
-                    {/* <SelectItem value="m@example.com">m@example.com</SelectItem>
-                  <SelectItem value="m@google.com">m@google.com</SelectItem>
-                  <SelectItem value="m@support.com">m@support.com</SelectItem> */}
-
-                    {premises.data?.map((premises) => {
-                      const {
-                        addressRoom,
-                        addressNumber,
-                        addressStreet,
-                        addressLocality,
-                        addressCity,
-                        addressPostcode,
-                      } = premises;
-                      const fullAddress = [
-                        addressRoom,
-                        addressNumber,
-                        addressStreet,
-                        addressLocality,
-                        addressCity,
-                        addressPostcode,
-                      ]
-                        .filter(Boolean)
-                        .join("\n");
-                      return (
-                        <SelectItem value={premises.id.toString()}>
-                          {fullAddress}
-                        </SelectItem>
-                      );
-                    })}
-                  </SelectContent>
-                </Select>
+                <FormLabel>Enter your postcode</FormLabel>
+                <FormControl>
+                  <Input placeholder="" {...field} className={cn("max-w-xs")} />
+                </FormControl>
+                <FormDescription>For example, 'LS2 3AB'</FormDescription>
                 <FormMessage />
               </FormItem>
             )}
           />
-        )}
-      </form>
-    </Form>
+          <Button
+            type="button"
+            variant={postcode ? "outline" : "default"}
+            onClick={
+              premises ? postcodeForm.handleSubmit(onSubmitPostcode) : undefined
+            }
+          >
+            Lookup
+          </Button>
+        </form>
+      </Form>
+      {premises && (
+        <Form {...premisesForm}>
+          <form
+            onSubmit={premisesForm.handleSubmit(onSubmitPremises)}
+            className="space-y-8 mt-16"
+          >
+            <>
+              <FormField
+                control={premisesForm.control}
+                name="premises"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Address</FormLabel>
+                    <Select
+                      onValueChange={(value) => {
+                        field.onChange(value);
+                      }}
+                      defaultValue={field.value?.toString() ?? ""}
+                    >
+                      <FormControl>
+                        <SelectTrigger ref={addressSelectRef}>
+                          <SelectValue placeholder="Select an address from the list" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        {/* <SelectItem value="m@example.com">m@example.com</SelectItem>
+                  <SelectItem value="m@google.com">m@google.com</SelectItem>
+                  <SelectItem value="m@support.com">m@support.com</SelectItem> */}
+
+                        {premises.data?.map((premises) => {
+                          const {
+                            addressRoom,
+                            addressNumber,
+                            addressStreet,
+                            addressLocality,
+                            addressCity,
+                            addressPostcode,
+                          } = premises;
+                          const fullAddress = [
+                            addressRoom,
+                            addressNumber,
+                            addressStreet,
+                            addressLocality,
+                            addressCity,
+                            addressPostcode,
+                          ]
+                            .filter(Boolean)
+                            .join("\n");
+                          return (
+                            <SelectItem value={premises.id.toString()}>
+                              {fullAddress}
+                            </SelectItem>
+                          );
+                        })}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <Button type="submit">Confirm Address</Button>
+            </>
+          </form>
+        </Form>
+      )}
+    </>
   );
 };
 

@@ -5,7 +5,7 @@ import React, { Suspense } from "react";
 
 const Page = () => {
   return (
-    <div className="container my-16">
+    <div className="container py-16">
       <section>
         <h1 className="text-3xl font-semibold">Check your bin days</h1>
         <div className="mt-8">
