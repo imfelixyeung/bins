@@ -1,6 +1,6 @@
 set -e
 
-TEMP_DIR=temp-jobs
+TEMP_DIR=temp/jobs
 
 # make temp directory
 mkdir -p $TEMP_DIR

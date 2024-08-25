@@ -5,4 +5,4 @@ SET DateStyle TO 'ISO', "DMY";
 DELETE FROM dm_jobs;
 
 -- copy data from csv files to dm_jobs table
-\copy dm_jobs (premises_id, bin, date) FROM './temp_jobs/dm_jobs.csv' delimiter ',' CSV NULL AS '';
+\copy dm_jobs (premises_id, bin, date) FROM './temp/jobs/dm_jobs.csv' delimiter ',' CSV NULL AS '';

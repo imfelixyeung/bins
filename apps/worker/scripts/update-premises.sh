@@ -1,6 +1,6 @@
 set -e
 
-TEMP_DIR=temp-premises
+TEMP_DIR=temp/premises
 
 # make temp directory
 mkdir -p $TEMP_DIR
