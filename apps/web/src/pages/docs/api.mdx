@@ -144,3 +144,41 @@ GET https://bins.felixyeung.com/api/jobs?premises=842289
 ## Error Handling
 
 For both endpoints, if the request fails (e.g., due to an invalid postcode or premises ID), the API will return a JSON object containing an error message along with a `success: false` flag. Additional properties may be included in the response object, depending on the error.
+
+## Rate Limits
+
+To ensure fair usage and maintain optimal performance, the Household Waste Collection API enforces rate limits on all API requests. These limits control the number of requests that can be made within a specified time frame.
+
+### Current Rate Limit
+
+At the time of writing, the API allows 10 requests within a 10-second timeframe. This means you can make up to 10 requests every 10 seconds without being rate limited.
+
+### How Rate Limits Work
+
+Each API request includes several headers that provide information about your current rate limit status. These headers allow you to monitor and manage your API usage effectively.
+
+### Rate Limit Headers
+
+When you make a request to the API, the following headers are included in the response:
+
+- **`X-RateLimit-Success`**: Indicates whether the request was successful (true) or denied due to rate limiting (false).
+- **`X-RateLimit-Limit`**: The maximum number of requests allowed within the current time window.
+- **`X-RateLimit-Remaining`**: The number of requests you have remaining in the current time window.
+- **`X-RateLimit-Reset`**: The time (milliseconds elapsed since the epoch) when the current rate limit window will reset.
+
+### Example Response Headers
+
+```http
+X-RateLimit-Success: true
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 7
+X-RateLimit-Reset: 1724634840000
+```
+
+### Managing Your Usage
+
+To avoid hitting the rate limit, monitor the `X-RateLimit-Remaining` header. If this value is low, consider reducing the frequency of your requests until the `X-RateLimit-Reset` time. Once the rate limit window resets, your `X-RateLimit-Remaining` count will be replenished.
+
+If you exceed the rate limit, subsequent requests will be denied until the rate limit resets. In such cases, the `X-RateLimit-Success` header will return `false`.
+
+By staying within the rate limits, you can ensure continued access to the API without interruptions.

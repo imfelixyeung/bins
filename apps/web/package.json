@@ -17,6 +17,8 @@
     "@tanstack/query-core": "^5.51.21",
     "@tanstack/react-query": "^5.51.23",
     "@uidotdev/usehooks": "^2.4.1",
+    "@upstash/ratelimit": "^2.0.1",
+    "@upstash/redis": "^1.34.0",
     "@vercel/og": "^0.6.2",
     "change-case": "^5.4.4",
     "class-variance-authority": "^0.7.0",
