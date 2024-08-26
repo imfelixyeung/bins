@@ -65,6 +65,7 @@ export const middleware = async (
   response.headers.set("X-RateLimit-Limit", limit.toString());
   response.headers.set("X-RateLimit-Remaining", remaining.toString());
   response.headers.set("X-RateLimit-Reset", reset.toString());
+  response.headers.set("Cache-Control", "public, max-age=3600");
 
   return response;
 };
