@@ -30,6 +30,8 @@ services:
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
+      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
+      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
     depends_on:
       - db
 
