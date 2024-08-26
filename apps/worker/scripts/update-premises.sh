@@ -16,7 +16,7 @@ sed -i 's/\x00//g' $TEMP_DIR/dm_premises.csv
 echo "Nulls replaced!"
 
 # run the update.sql script with psql
-psql $DATABASE_URL -f scripts/update-premises.sql
+psql $DATABASE_URL -v ON_ERROR_STOP=1 -f scripts/update-premises.sql
 
 # remove the temp files
 rm -rf $TEMP_DIR
