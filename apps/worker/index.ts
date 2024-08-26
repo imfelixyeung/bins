@@ -9,7 +9,7 @@ import logger from "./logger";
 
 const queue = new PQueue({ concurrency: 1 });
 
-let status: {
+type Status = {
   running: boolean;
   lastRun?: {
     start: Date;
@@ -22,55 +22,45 @@ let status: {
       message: string;
     };
   };
+};
+
+let status: {
+  jobs: Status;
+  premises: Status;
 } = {
-  running: false,
+  jobs: {
+    running: false,
+  },
+  premises: {
+    running: false,
+  },
 };
 
-const returnEtagsIfNeedUpdate = async () => {
-  const [jobs, premises] = await Promise.all([
-    etag.get(urls.jobs),
-    etag.get(urls.premises),
-  ]);
+const updateDataset = async (dataset: "jobs" | "premises") => {
+  const datasetLogger = logger.child({ dataset });
+  const url = urls[dataset];
+  const urlEtag = await etag.get(url);
 
-  // if latest etags are null, we cant determine if we need to update
-  if (!jobs.latest || !premises.latest) {
-    logger.warn("Unable to determine if we need to update");
+  datasetLogger.info({ urlEtag }, "Checking if dataset needs updating");
+
+  if (!urlEtag.latest) {
+    datasetLogger.warn("Unable to determine if we need to update");
     return null;
   }
 
-  // if the etags are the same, we don't need to update
-  if (
-    jobs.latest.etag === jobs.database?.etag &&
-    premises.latest.etag === premises.database?.etag
-  ) {
+  if (urlEtag.latest.etag === urlEtag.database?.etag) {
+    datasetLogger.info("Dataset unchanged, no need to update");
     return null;
   }
 
-  // if the etags are different, we need to update
-  return { jobs, premises };
-};
-
-const run = async () => {
-  logger.info("Running update script");
-
-  const etags = await returnEtagsIfNeedUpdate();
-  if (!etags) {
-    logger.info("No need to update");
-    return;
-  }
-
-  logger.info({ etags }, "Update required, etags updated");
+  datasetLogger.info("Dataset updated, updating");
 
   const start = new Date();
-  status = {
-    running: true,
-  };
-
   let result: Result<{}> | null = null;
 
   try {
     // run the ./scripts/update.sh script
-    result = await $`sh ./scripts/update.sh`;
+    result = await $`sh ./scripts/update-${dataset}.sh`;
     const { stdout, stderr, exitCode } = result;
 
     if (result.exitCode !== 0) {
@@ -79,7 +69,7 @@ const run = async () => {
 
     const end = new Date();
     const duration = end.getTime() - start.getTime();
-    status = {
+    status[dataset] = {
       running: false,
       lastRun: {
         start,
@@ -91,13 +81,13 @@ const run = async () => {
       },
     };
 
-    logger.info({ start, end, duration }, "Finished update script");
+    datasetLogger.info({ start, end, duration }, "Finished update script");
 
-    await Promise.allSettled([etag.set(etags.jobs), etag.set(etags.premises)]);
+    await etag.set(urlEtag);
   } catch (error) {
-    logger.error({ error }, "Error running update script");
+    datasetLogger.error({ error }, "Error running update script");
     const end = new Date();
-    status = {
+    status[dataset] = {
       running: false,
       lastRun: {
         start,
@@ -112,6 +102,15 @@ const run = async () => {
       },
     };
   }
+};
+
+const run = async () => {
+  logger.info("Run triggered");
+
+  await updateDataset("premises").catch(() => null);
+  await updateDataset("jobs").catch(() => null);
+
+  logger.info("Finished run");
 };
 
 const queueRun = async () => {
@@ -151,7 +150,9 @@ app.get("/status", async (req, res) => {
 });
 
 if (process.env.ONE_SHOT) {
-  queueRun().then(() => process.exit());
+  queueRun()
+    .then(async () => console.log(status))
+    .then(() => process.exit());
 } else {
   app.listen(3000, () => {
     console.log("Server listening on port 3000");
