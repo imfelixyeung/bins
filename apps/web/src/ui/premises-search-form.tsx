@@ -99,7 +99,7 @@ const PremisesSearchForm = () => {
             )}
           />
           <Button
-            type="button"
+            type="submit"
             variant={postcode ? "outline" : "default"}
             onClick={
               premises ? postcodeForm.handleSubmit(onSubmitPostcode) : undefined
