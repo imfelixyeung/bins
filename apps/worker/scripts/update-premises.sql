@@ -23,7 +23,11 @@ BEGIN
     DELETE FROM dm_premises;
 
     -- copy data from staging
-    INSERT INTO dm_premises (id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode) SELECT id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode FROM staging_dm_premises;
+    INSERT INTO dm_premises
+      (id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode)
+    SELECT
+      id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode
+    FROM staging_dm_premises;
 
   END IF;
 END $$;

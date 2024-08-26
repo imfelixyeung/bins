@@ -20,7 +20,11 @@ BEGIN
     DELETE FROM dm_jobs;
 
     -- copy data from staging
-    INSERT INTO dm_jobs (premises_id, bin, date) SELECT premises_id, bin, date FROM staging_dm_jobs;
+    INSERT INTO dm_jobs
+      (premises_id, bin, date)
+    SELECT
+      premises_id, bin, date
+    FROM staging_dm_jobs;
 
   END IF;
 END $$;
