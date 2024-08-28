@@ -8,7 +8,7 @@ const WeekDays = () => {
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
   return (
-    <div className="grid grid-cols-7 gap-1.5 max-w-fit bg-gray-100 rounded-sm">
+    <div className="grid grid-cols-7 gap-1.5 max-w-fit bg-gray-100 dark:bg-gray-800 rounded-sm">
       {days.map((day, index) => (
         <div key={index} className="h-5 w-5">
           <div className="flex h-full w-full justify-center items-center">
@@ -82,7 +82,7 @@ const DotCalendar = ({
           <div
             key={date.date}
             className={cn(
-              "h-5 w-5 rounded-full bg-gray-300",
+              "h-5 w-5 rounded-full bg-gray-300 dark:bg-gray-600",
               date.date === today && "ring-2 ring-offset-1 ring-blue-600"
             )}
           >

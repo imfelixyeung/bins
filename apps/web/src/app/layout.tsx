@@ -5,6 +5,7 @@ import Providers from "./providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
 import { Metadata } from "next";
+import ThemeSwitch from "@/ui/theme-switch";
 
 export const metadata: Metadata = {
   title: { default: "Check your bin days - Bins", template: "%s - Bins" },
@@ -108,8 +109,9 @@ export default async function RootLayout({
                 </ul>
               </div>
             </div>
-            <div className="container text-muted-foreground mt-3">
+            <div className="container text-muted-foreground mt-6 flex items-center justify-between gap-3">
               <CopyRight />
+              <ThemeSwitch />
             </div>
           </footer>
         </Providers>
