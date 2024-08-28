@@ -7,28 +7,55 @@ import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import Copyable from "./copyable";
-import { Card } from "@/components/ui/card";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
+import { cva } from "class-variance-authority";
+import { cn } from "@/lib/utils";
+
+const supportedBins = ["BLACK", "GREEN", "BROWN"] as const;
+type SupportedBin = (typeof supportedBins)[number];
+
+const binStyles = cva("py-5 rounded-t-lg", {
+  variants: {
+    bin: {
+      BLACK: "bg-gray-900 text-gray-50",
+      GREEN: "bg-green-600 text-gray-50",
+      BROWN: "bg-amber-900 text-gray-50",
+    },
+  },
+});
+
+const isSupportedBin = (bin: string): bin is SupportedBin => {
+  return supportedBins.includes(bin as SupportedBin);
+};
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
+  const style = binStyles({ bin: isSupportedBin(bin) ? bin : null });
+
   return (
-    <Card className="grow basis-0 p-4">
-      <h3 className="text-xl font-semibold flex items-center gap-2">
-        {capitalCase(bin)} <Trash2Icon />
-      </h3>
-      <ul className="list-disc list-outside ml-5 mt-3">
-        {dates.map((date) => {
-          // format date to 29 March 2023
-          const formattedDate = format(new Date(date), "dd MMMM yyyy");
-          return (
-            <li key={date}>
-              <time dateTime={date}>{formattedDate}</time>
-            </li>
-          );
-        })}
-      </ul>
+    <Card className="grow basis-0">
+      <CardHeader className={cn(style)}>
+        <h3 className="text-xl font-semibold flex items-center gap-2">
+          {capitalCase(bin)} <Trash2Icon />
+        </h3>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <ul className="list-disc list-outside ml-5 mt-3">
+          {dates.map((date) => {
+            // format date to 29 March 2023
+            const formattedDate = format(new Date(date), "dd MMMM yyyy");
+            return (
+              <li key={date}>
+                <time dateTime={date}>{formattedDate}</time>
+              </li>
+            );
+          })}
+        </ul>
+      </CardContent>
     </Card>
   );
 };
+
+const preferredBinOrder = ["BLACK", "GREEN", "BROWN"];
 
 const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
   const now = new Date();
@@ -45,7 +72,12 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
         },
         {} as Record<string, ReturnedJobs["jobs"][number]["date"][]>
       )
-  ).map(([bin, dates]) => ({ bin, dates }));
+  )
+    .map(([bin, dates]) => ({ bin, dates }))
+    .sort(
+      ({ bin: a }, { bin: b }) =>
+        preferredBinOrder.indexOf(a) - preferredBinOrder.indexOf(b)
+    );
 
   const ical = `https://bins.felixyeung.com/api/jobs?premises=${data.id}&format=ical`;
 
