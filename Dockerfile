@@ -36,6 +36,8 @@ RUN apk add sed
 
 WORKDIR /app/apps/worker
 
+RUN pnpm run build
+
 CMD ["pnpm", "run", "start"]
 
 
