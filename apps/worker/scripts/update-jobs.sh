@@ -10,6 +10,10 @@ wget "https://opendata.leeds.gov.uk/downloads/bins/dm_jobs.csv" -O $TEMP_DIR/dm_
 
 # cp ../../$TEMP_DIR/dm_jobs.csv $TEMP_DIR/dm_jobs.csv
 
+# remove duplicate lines
+awk '!seen[$0]++' $TEMP_DIR/dm_jobs.csv > $TEMP_DIR/dm_jobs.csv.unique
+mv $TEMP_DIR/dm_jobs.csv.unique $TEMP_DIR/dm_jobs.csv
+
 # replace nulls with empty string
 sed -i 's/\x00//g' $TEMP_DIR/dm_jobs.csv
 

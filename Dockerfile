@@ -33,6 +33,7 @@ FROM base AS worker
 RUN apk add postgresql-client
 # sed installed doesn't replace hex nulls
 RUN apk add sed
+RUN apk add awk
 
 WORKDIR /app/apps/worker
 
