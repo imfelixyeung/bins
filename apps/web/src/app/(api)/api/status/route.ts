@@ -23,3 +23,5 @@ export const GET: any = async () => {
     );
   }
 };
+
+export const dynamic = "force-dynamic";
