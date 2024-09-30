@@ -109,7 +109,15 @@ const PremisesSearchForm = () => {
           </Button>
         </form>
       </Form>
-      {premises && (
+      {premises && premises.data && premises.data.length === 0 && (
+        <div className="mt-8">
+          <p className="text-lg">
+            Oops, we couldn't find any addresses matching your postcode of{" "}
+            {postcode}
+          </p>
+        </div>
+      )}
+      {premises && premises.data && premises.data.length > 0 && (
         <Form {...premisesForm}>
           <form
             onSubmit={premisesForm.handleSubmit(onSubmitPremises)}

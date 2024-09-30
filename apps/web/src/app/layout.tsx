@@ -42,7 +42,7 @@ export default async function RootLayout({
       <body>
         <Providers>
           <div className="min-h-[100dvh]">
-            <header className="border-b py-4">
+            <header className="border-b h-14 flex flex-col justify-center">
               <nav className="container">
                 <Link href="/" className="text-xl font-bold">
                   Bins
