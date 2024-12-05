@@ -25,7 +25,8 @@ export const middleware = async (
     return NextResponse.next();
   }
 
-  const ip = request.ip ?? request.headers.get("X-Forwarded-For") ?? "no-ip";
+  const ip = request.headers.get("X-Forwarded-For") ?? "no-ip";
+  console.log({ ip });
 
   const ratelimitResult = await ratelimit.limit(ip).catch((error) => {
     return error instanceof Error ? error : new Error(error);
