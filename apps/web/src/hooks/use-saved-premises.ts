@@ -26,6 +26,7 @@ const defaultLocalStorage: LocalStorage = {
 };
 
 export const useSavedPremises = () => {
+  const MAX_SAVED_PREMISES = 10;
   const [localPremises, saveLocalPremises] = useLocalStorage<LocalStorage>(
     "bins__saved_premises",
     defaultLocalStorage
@@ -61,7 +62,7 @@ export const useSavedPremises = () => {
     const newPremisesArray = [
       newPremises,
       ...premises.filter((p) => p.id !== newPremises.id),
-    ].slice(0, 10);
+    ].slice(0, MAX_SAVED_PREMISES);
 
     saveLocalPremises({
       premises: newPremisesArray,

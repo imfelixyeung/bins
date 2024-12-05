@@ -79,3 +79,28 @@ export const getSummaryAddress = (data: {
 
   return fullAddress;
 };
+
+export const getTwoLineFullAddress = (data: {
+  addressRoom?: string | null | undefined;
+  addressNumber?: string | null | undefined;
+  addressStreet?: string | null | undefined;
+  addressLocality?: string | null | undefined;
+  addressCity?: string | null | undefined;
+  addressPostcode?: string | null | undefined;
+}) => {
+  const twoLineAddress = [
+    data.addressRoom ? capitalCase(data.addressRoom) : data.addressRoom,
+    data.addressNumber ? capitalCase(data.addressNumber) : data.addressNumber,
+    data.addressStreet ? capitalCase(data.addressStreet) : data.addressStreet,
+    "\n",
+    data.addressLocality
+      ? capitalCase(data.addressLocality)
+      : data.addressLocality,
+    data.addressCity ? capitalCase(data.addressCity) : data.addressCity,
+    data.addressPostcode?.toUpperCase(),
+  ]
+    .filter(Boolean)
+    .join(" ");
+
+  return twoLineAddress;
+};

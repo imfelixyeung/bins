@@ -3,30 +3,46 @@
 import { useSavedPremises } from "@/hooks/use-saved-premises";
 import Link from "next/link";
 import React from "react";
-import Address from "./address";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { MapPinHouseIcon, XIcon } from "lucide-react";
+import { getTwoLineFullAddress } from "@/functions/format-address";
 
 const RecentPremises = () => {
-  const { premises, removeAll } = useSavedPremises();
+  const { premises, remove, removeAll } = useSavedPremises();
 
   if (premises.length === 0) return null;
 
   return (
     <>
       <section className="mt-16">
-        <h2 className="text-2xl font-semibold">Recent Searches</h2>
+        <h2 className="text-lg font-medium text-center">Recents</h2>
         <div className="mt-3">
-          <div className="flex gap-3">
+          <div className="flex gap-3 flex-col">
             {premises.map((premises) => {
+              const [line1, line2] =
+                getTwoLineFullAddress(premises).split("\n");
               return (
                 <div key={premises.id}>
-                  <Card>
-                    <Link href={`/premises/${premises.id}`}>
-                      <CardContent className="pt-6">
-                        <Address data={premises} />
-                      </CardContent>
+                  <Card className="flex gap-3 items-center px-3 py-3 relative hover:shadow-md transition-shadow group">
+                    <div className="size-10 rounded-full flex items-center justify-center border shrink-0 bg-gradient-to-b from-foreground/0 to to-foreground/10">
+                      <MapPinHouseIcon size={20} />
+                    </div>
+                    <Link
+                      href={`/premises/${premises.id}`}
+                      className="after:absolute after:inset-0 grow"
+                    >
+                      <h3 className="font-medium">{line1}</h3>
+                      <p className="text-sm">{line2}</p>
                     </Link>
+                    <button
+                      className="p-2 opacity-50 md:opacity-30 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
+                      title="remove from recents"
+                      onClick={() => remove(premises.id)}
+                    >
+                      <div className="sr-only">Remove</div>
+                      <XIcon size={16} />
+                    </button>
                   </Card>
                 </div>
               );

@@ -34,6 +34,8 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { CheckIcon, HouseIcon, SearchIcon } from "lucide-react";
 import { getPresentableFullAddress } from "@/functions/format-address";
+import ClientOnly from "./client-only";
+import RecentPremises from "./recent-premises";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -96,7 +98,7 @@ const PremisesSearchForm = () => {
       <Form {...postcodeForm}>
         <form
           onSubmit={postcodeForm.handleSubmit(onSubmitPostcode)}
-          className="flex gap-2"
+          className="flex gap-3"
         >
           <FormField
             control={postcodeForm.control}
@@ -144,7 +146,7 @@ const PremisesSearchForm = () => {
         <Form {...premisesForm}>
           <form
             onSubmit={premisesForm.handleSubmit(onSubmitPremises)}
-            className="mt-4 flex gap-2"
+            className="mt-4 flex gap-3"
           >
             <>
               <FormField
@@ -188,6 +190,9 @@ const PremisesSearchForm = () => {
           </form>
         </Form>
       )}
+      <ClientOnly>
+        <RecentPremises />
+      </ClientOnly>
     </Card>
   );
 };
