@@ -38,7 +38,7 @@ export const getPresentableFullAddress = (data: {
       ? capitalCase(data.addressLocality)
       : data.addressLocality,
     data.addressCity ? capitalCase(data.addressCity) : data.addressCity,
-    data.addressPostcode,
+    data.addressPostcode?.toUpperCase(),
   ]
     .filter(Boolean)
     .join("\n");

@@ -33,6 +33,7 @@ import { useQueryState } from "nuqs";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import { CheckIcon, HouseIcon, SearchIcon } from "lucide-react";
+import { getPresentableFullAddress } from "@/functions/format-address";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -165,27 +166,11 @@ const PremisesSearchForm = () => {
                       </FormControl>
                       <SelectContent>
                         {premises.data?.map((premises) => {
-                          const {
-                            addressRoom,
-                            addressNumber,
-                            addressStreet,
-                            addressLocality,
-                            addressCity,
-                            addressPostcode,
-                          } = premises;
-                          const fullAddress = [
-                            addressRoom,
-                            addressNumber,
-                            addressStreet,
-                            addressLocality,
-                            addressCity,
-                            addressPostcode,
-                          ]
-                            .filter(Boolean)
-                            .join("\n");
+                          const address = getPresentableFullAddress(premises);
+
                           return (
                             <SelectItem value={premises.id.toString()}>
-                              {fullAddress}
+                              {address}
                             </SelectItem>
                           );
                         })}
