@@ -32,8 +32,10 @@ const RecentPremises = () => {
                       href={`/premises/${premises.id}`}
                       className="after:absolute after:inset-0 grow"
                     >
-                      <h3 className="font-medium">{line1}</h3>
-                      <p className="text-sm">{line2}</p>
+                      <h3 className="font-medium line-clamp-2">{line1}</h3>
+                      <p className="text-sm line-clamp-2 text-muted-foreground">
+                        {line2}
+                      </p>
                     </Link>
                     <button
                       className="p-2 opacity-50 md:opacity-30 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
