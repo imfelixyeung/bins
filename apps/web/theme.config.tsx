@@ -4,11 +4,10 @@ import { useConfig, type DocsThemeConfig } from "nextra-theme-docs";
 export default {
   logo: <b>Bins Docs</b>,
   project: {
-    link: "https://github.com/felixyeungdev/bins",
+    link: "https://github.com/imfelixyeung/bins",
     icon: null, // hide github
   },
-  docsRepositoryBase:
-    "https://github.com/felixyeungdev/bins/tree/main/apps/web",
+  docsRepositoryBase: "https://github.com/imfelixyeung/bins/tree/main/apps/web",
   head: () => {
     const frontMatter = useConfig();
     const { title } = frontMatter;
