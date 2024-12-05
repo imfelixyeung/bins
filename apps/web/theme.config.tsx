@@ -1,5 +1,5 @@
 import CopyRight from "@/ui/copyright";
-import type { DocsThemeConfig } from "nextra-theme-docs";
+import { useConfig, type DocsThemeConfig } from "nextra-theme-docs";
 
 export default {
   logo: <b>Bins Docs</b>,
@@ -9,10 +9,16 @@ export default {
   },
   docsRepositoryBase:
     "https://github.com/felixyeungdev/bins/tree/main/apps/web",
-  useNextSeoProps() {
-    return {
-      titleTemplate: "%s - Bins Docs",
-    };
+  head: () => {
+    const frontMatter = useConfig();
+    const { title } = frontMatter;
+    const fullTitle = `${title} - Bins Docs`;
+    return (
+      <>
+        <title>{fullTitle}</title>
+        <meta property="og:title" content={fullTitle} />
+      </>
+    );
   },
   toc: {
     backToTop: true,
@@ -24,6 +30,6 @@ export default {
     content: null, // hide github
   },
   footer: {
-    text: <CopyRight />,
+    content: <CopyRight />,
   },
 } satisfies DocsThemeConfig;
