@@ -32,7 +32,13 @@ import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
-import { CheckIcon, HouseIcon, SearchIcon } from "lucide-react";
+import {
+  CheckIcon,
+  HouseIcon,
+  SearchIcon,
+  Trash2Icon,
+  TrashIcon,
+} from "lucide-react";
 import { getPresentableFullAddress } from "@/functions/format-address";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
@@ -88,11 +94,19 @@ const PremisesSearchForm = () => {
   }, [premises]);
 
   return (
-    <Card className="max-w-lg relative px-4 pb-6 pt-8 w-full">
+    <Card className="max-w-lg relative px-4 pb-6 pt-8 w-full group/search">
       <div className="absolute -top-3 inset-x-0 flex items-center justify-center">
         <div className="flex text-sm text-foreground/80 items-center gap-1 border px-2 rounded-full h-6 bg-background">
           <HouseIcon size={12} />
           <span>Address Loopup</span>
+        </div>
+      </div>
+      <div className="absolute -top-5 inset-x-0 -z-10 text-muted-foreground scale-90 translate-y-5 group-hover/search:translate-y-0 group-focus-within/search:translate-y-0 group-hover/search:scale-100 group-focus-within/search:scale-100 transition-transform duration-500">
+        <div className="absolute left-6 -rotate-12">
+          <TrashIcon className="stroke-[1.5]" />
+        </div>
+        <div className="absolute right-12 rotate-[6deg]">
+          <Trash2Icon className="stroke-[1.5]" />
         </div>
       </div>
       <Form {...postcodeForm}>
