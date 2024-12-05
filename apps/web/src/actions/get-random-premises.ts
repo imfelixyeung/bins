@@ -3,6 +3,7 @@
 import { db } from "@repo/database/src";
 import { sql } from "@repo/database/src/orm";
 import { unstable_cache } from "next/cache";
+import { actionClient } from ".";
 
 export const getRandomPremisesInternal = async () => {
   const now = performance.now();
@@ -19,6 +20,14 @@ export const getRandomPremisesInternal = async () => {
   return result;
 };
 
-export const getRandomPremises = unstable_cache(getRandomPremisesInternal, [], {
-  revalidate: 1,
+export const getCachedRandomPremises = unstable_cache(
+  getRandomPremisesInternal,
+  [],
+  {
+    revalidate: 1,
+  }
+);
+
+export const getRandomPremises = actionClient.action(async () => {
+  return await getCachedRandomPremises();
 });

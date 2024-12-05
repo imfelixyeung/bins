@@ -90,7 +90,10 @@ const PremisesSearchForm = () => {
   };
 
   const onSupriseMe = async () => {
-    const premises = await getRandomPremises();
+    const result = await getRandomPremises();
+    if (!result) return;
+
+    const premises = result.data;
     if (!premises || !premises.addressPostcode) return;
 
     setPostcode(premises.addressPostcode);
