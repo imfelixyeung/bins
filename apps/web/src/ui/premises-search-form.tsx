@@ -34,6 +34,7 @@ import { cn } from "@/lib/utils";
 import { Card } from "@/components/ui/card";
 import {
   CheckIcon,
+  DicesIcon,
   HouseIcon,
   SearchIcon,
   Trash2Icon,
@@ -42,6 +43,7 @@ import {
 import { getPresentableFullAddress } from "@/functions/format-address";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
+import { getRandomPremises } from "@/actions/get-random-premises";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -85,6 +87,15 @@ const PremisesSearchForm = () => {
 
   const onSubmitPremises = async (data: PremisesFormData) => {
     router.push(`/premises/${data.premises}`);
+  };
+
+  const onSupriseMe = async () => {
+    const premises = await getRandomPremises();
+    if (!premises || !premises.addressPostcode) return;
+
+    setPostcode(premises.addressPostcode);
+    postcodeForm.setValue("postcode", premises.addressPostcode);
+    premisesForm.setValue("premises", premises.id);
   };
 
   useEffect(() => {
@@ -204,6 +215,19 @@ const PremisesSearchForm = () => {
           </form>
         </Form>
       )}
+      <ClientOnly>
+        <div className="flex justify-center mt-6">
+          <Button
+            className="gap-3"
+            variant="ghost"
+            size="sm"
+            onClick={onSupriseMe}
+          >
+            <DicesIcon size={20} />
+            Suprise Me
+          </Button>
+        </div>
+      </ClientOnly>
       <ClientOnly>
         <RecentPremises />
       </ClientOnly>
