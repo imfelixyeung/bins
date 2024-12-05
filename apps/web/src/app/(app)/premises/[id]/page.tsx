@@ -13,12 +13,11 @@ import { z } from "zod";
 
 const premisesIdSchema = z.coerce.number();
 
-export type PageProps = { params: { id: string } };
+export type PageProps = { params: Promise<{ id: string }> };
 
-export const generateMetadata = async ({
-  params: { id: _id },
-}: PageProps): Promise<Metadata> => {
-  const parsedId = premisesIdSchema.safeParse(_id);
+export const generateMetadata = async (props: PageProps): Promise<Metadata> => {
+  const params = await props.params;
+  const parsedId = premisesIdSchema.safeParse(params.id);
 
   if (!parsedId.success) notFound();
 
@@ -54,7 +53,11 @@ export const generateMetadata = async ({
   };
 };
 
-const Page = async ({ params: { id: _id } }: PageProps) => {
+const Page = async (props: PageProps) => {
+  const params = await props.params;
+
+  const { id: _id } = params;
+
   const parsedId = premisesIdSchema.safeParse(_id);
 
   if (!parsedId.success) notFound();

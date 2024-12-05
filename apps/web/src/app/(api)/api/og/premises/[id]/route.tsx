@@ -25,8 +25,12 @@ const loadFont = async (url: URL) => {
 
 export async function GET(
   request: NextRequest,
-  { params: { id: _id } }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
+
+  const { id: _id } = params;
+
   const parsedId = premisesIdSchema.safeParse(_id);
 
   if (!parsedId.success) return new Response("Not found", { status: 404 });
