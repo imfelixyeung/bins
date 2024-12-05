@@ -101,7 +101,7 @@ const PremisesSearchForm = () => {
           <span>Address Loopup</span>
         </div>
       </div>
-      <div className="absolute -top-5 inset-x-0 -z-10 text-muted-foreground scale-90 translate-y-5 group-hover/search:translate-y-0 group-focus-within/search:translate-y-0 group-hover/search:scale-100 group-focus-within/search:scale-100 transition-transform duration-500">
+      <div className="absolute -top-5 inset-x-0 -z-10 text-muted-foreground scale-90 translate-y-5 group-hover/search:translate-y-0 group-focus-within/search:translate-y-0 group-hover/search:scale-100 group-focus-within/search:scale-100 transition-transform duration-500 motion-reduce:scale-100 motion-reduce:translate-y-0">
         <div className="absolute left-6 -rotate-12">
           <TrashIcon className="stroke-[1.5]" />
         </div>
