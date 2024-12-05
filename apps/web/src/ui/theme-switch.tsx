@@ -31,7 +31,9 @@ const ThemeSwitch = () => {
       </SelectTrigger>
       <SelectContent>
         {themes.map((themeId) => (
-          <SelectItem value={themeId}>{capitalCase(themeId)}</SelectItem>
+          <SelectItem key={themeId} value={themeId}>
+            {capitalCase(themeId)}
+          </SelectItem>
         ))}
       </SelectContent>
     </Select>

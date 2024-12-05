@@ -199,7 +199,10 @@ const PremisesSearchForm = () => {
                           const address = getPresentableFullAddress(premises);
 
                           return (
-                            <SelectItem value={premises.id.toString()}>
+                            <SelectItem
+                              key={premises.id}
+                              value={premises.id.toString()}
+                            >
                               {address}
                             </SelectItem>
                           );

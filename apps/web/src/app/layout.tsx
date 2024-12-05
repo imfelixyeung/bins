@@ -38,7 +38,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(GeistSans.variable)}>
+    <html lang="en" className={cn(GeistSans.variable)} suppressHydrationWarning>
       <body>
         <Providers>
           <div className="min-h-[100dvh]">
