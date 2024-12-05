@@ -93,23 +93,31 @@ export default async function RootLayout({
                   .
                 </p>
               </div>
-              <div>
+              <div className="flex flex-col md:items-end md:text-end">
                 <p className="font-bold text-lg">For Developers</p>
                 <ul>
                   <li>
-                    <Link href="/docs" rel="noreferrer" className="">
+                    <Link
+                      href="/docs"
+                      rel="noreferrer"
+                      className="hover:underline"
+                    >
                       About
                     </Link>
                   </li>
                   <li>
-                    <Link href="/docs/api" rel="noreferrer" className="">
+                    <Link
+                      href="/docs/api"
+                      rel="noreferrer"
+                      className="hover:underline"
+                    >
                       API Reference
                     </Link>
                   </li>
                 </ul>
               </div>
             </div>
-            <div className="container text-muted-foreground mt-6 flex items-center justify-between gap-3">
+            <div className="container text-muted-foreground mt-6 flex items-center justify-between gap-3 flex-wrap-reverse">
               <CopyRight />
               <ThemeSwitch />
             </div>
