@@ -1,5 +1,10 @@
 "use client";
 
+/**
+ * new form styles inspired by:
+ * https://dub.co/
+ */
+
 import React, { useEffect, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -26,6 +31,8 @@ import {
 import { useRouter } from "next/navigation";
 import { useQueryState } from "nuqs";
 import { cn } from "@/lib/utils";
+import { Card } from "@/components/ui/card";
+import { CheckIcon, HouseIcon, SearchIcon } from "lucide-react";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -78,22 +85,34 @@ const PremisesSearchForm = () => {
   }, [premises]);
 
   return (
-    <>
+    <Card className="max-w-lg relative px-4 pb-6 pt-8 w-full">
+      <div className="absolute -top-3 inset-x-0 flex items-center justify-center">
+        <div className="flex text-sm text-foreground/80 items-center gap-1 border px-2 rounded-full h-6 bg-background">
+          <HouseIcon size={12} />
+          <span>Address Loopup</span>
+        </div>
+      </div>
       <Form {...postcodeForm}>
         <form
           onSubmit={postcodeForm.handleSubmit(onSubmitPostcode)}
-          className="space-y-8"
+          className="flex gap-2"
         >
           <FormField
             control={postcodeForm.control}
             name="postcode"
             render={({ field }) => (
-              <FormItem>
-                <FormLabel>Enter your postcode</FormLabel>
+              <FormItem className="space-y-0 grow">
+                <FormLabel className="sr-only">Enter your postcode</FormLabel>
                 <FormControl>
-                  <Input placeholder="" {...field} className={cn("max-w-xs")} />
+                  <Input
+                    placeholder="Postcode eg. LS2 3AB"
+                    {...field}
+                    className={cn("")}
+                  />
                 </FormControl>
-                <FormDescription>For example, 'LS2 3AB'</FormDescription>
+                <FormDescription className="sr-only">
+                  For example, 'LS2 3AB'
+                </FormDescription>
                 <FormMessage />
               </FormItem>
             )}
@@ -101,11 +120,14 @@ const PremisesSearchForm = () => {
           <Button
             type="submit"
             variant={postcode ? "outline" : "default"}
+            size="icon"
+            className="size-10 shrink-0"
             onClick={
               premises ? postcodeForm.handleSubmit(onSubmitPostcode) : undefined
             }
           >
-            Lookup
+            <SearchIcon size={16} />
+            <div className="sr-only">Lookup</div>
           </Button>
         </form>
       </Form>
@@ -121,15 +143,15 @@ const PremisesSearchForm = () => {
         <Form {...premisesForm}>
           <form
             onSubmit={premisesForm.handleSubmit(onSubmitPremises)}
-            className="space-y-8 mt-16"
+            className="mt-4 flex gap-2"
           >
             <>
               <FormField
                 control={premisesForm.control}
                 name="premises"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Address</FormLabel>
+                  <FormItem className="space-y-0 grow">
+                    <FormLabel className="sr-only">Address</FormLabel>
                     <Select
                       onValueChange={(value) => {
                         field.onChange(value);
@@ -142,10 +164,6 @@ const PremisesSearchForm = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {/* <SelectItem value="m@example.com">m@example.com</SelectItem>
-                  <SelectItem value="m@google.com">m@google.com</SelectItem>
-                  <SelectItem value="m@support.com">m@support.com</SelectItem> */}
-
                         {premises.data?.map((premises) => {
                           const {
                             addressRoom,
@@ -177,12 +195,15 @@ const PremisesSearchForm = () => {
                   </FormItem>
                 )}
               />
-              <Button type="submit">Confirm Address</Button>
+              <Button type="submit" size="icon" className="size-10 shrink-0">
+                <CheckIcon size={16} />
+                <span className="sr-only">Confirm Address</span>
+              </Button>
             </>
           </form>
         </Form>
       )}
-    </>
+    </Card>
   );
 };
 

@@ -13,18 +13,12 @@ const Page = () => {
         <p className="text-muted-foreground text-xl">
           Check when your bins are scheduled to be emptied.
         </p>
-      </section>
-      <section className="py-16">
-        <h2 className="text-2xl font-semibold">Search for your address</h2>
-        <div className="mt-8">
-          <div className="max-w-3xl">
-            <Suspense>
-              <PremisesSearchForm />
-            </Suspense>
+        <Suspense>
+          <div className="w-full flex justify-center mt-16">
+            <PremisesSearchForm />
           </div>
-        </div>
+        </Suspense>
       </section>
-
       <ClientOnly>
         <RecentPremises />
       </ClientOnly>
