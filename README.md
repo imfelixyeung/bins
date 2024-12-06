@@ -1,81 +1,47 @@
-# Turborepo starter
+# Bins API
 
-This is an official starter Turborepo.
+Get Leeds waste collection data via API
 
-## Using this example
+![image](https://files.felixyeung.com/cms/uploads/images/github-bins-hero.png)
 
-Run the following command:
+## Features
 
-```sh
-npx create-turbo@latest
-```
+- Search premises by postcode
+- Get premises' scheduled waste collection dates
+- Recent premises
+- Suprise Me with a random premises
+- API for searching premises and getting collection dates
 
-## What's inside?
+## API Reference
 
-This Turborepo includes the following packages/apps:
+Available at [https://bins.felixyeung.com/docs/api](https://bins.felixyeung.com/docs/api)
 
-### Apps and Packages
+## Tech Stack
 
-- `docs`: a [Next.js](https://nextjs.org/) app
-- `web`: another [Next.js](https://nextjs.org/) app
-- `@repo/ui`: a stub React component library shared by both `web` and `docs` applications
-- `@repo/eslint-config`: `eslint` configurations (includes `eslint-config-next` and `eslint-config-prettier`)
-- `@repo/typescript-config`: `tsconfig.json`s used throughout the monorepo
+- [Next.js](https://nextjs.org/) - web framework
+- [TypeScript](https://www.typescriptlang.org/) - language
+- [Tailwind CSS](https://tailwindcss.com/) - styling
+- [Node.js](https://nodejs.org/) - backend runtime
+- [PostgreSQL](https://www.postgresql.org/) - database
+- [Drizzle ORM](https://orm.drizzle.team/) - database orm
+- [Upstash Redis](https://upstash.com/) - rate limiting
+- [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) - secure reverse proxy
 
-Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
+## Environment Variables
 
-### Utilities
+To run this project, you will need to add the following environment variables to your .env file
 
-This Turborepo has some additional tools already setup for you:
+`TUNNEL_TOKEN` - your Cloudflare Tunnel's token
 
-- [TypeScript](https://www.typescriptlang.org/) for static type checking
-- [ESLint](https://eslint.org/) for code linting
-- [Prettier](https://prettier.io) for code formatting
+## Running
 
-### Build
+### Prerequisites
 
-To build all apps and packages, run the following command:
+- Docker
+- Docker Compose
 
-```
-cd my-turborepo
-pnpm build
-```
+### Setup
 
-### Develop
+Create your .env file as per the [Environment Variables](#environment-variables) section
 
-To develop all apps and packages, run the following command:
-
-```
-cd my-turborepo
-pnpm dev
-```
-
-### Remote Caching
-
-Turborepo can use a technique known as [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching) to share cache artifacts across machines, enabling you to share build caches with your team and CI/CD pipelines.
-
-By default, Turborepo will cache locally. To enable Remote Caching you will need an account with Vercel. If you don't have an account you can [create one](https://vercel.com/signup), then enter the following commands:
-
-```
-cd my-turborepo
-npx turbo login
-```
-
-This will authenticate the Turborepo CLI with your [Vercel account](https://vercel.com/docs/concepts/personal-accounts/overview).
-
-Next, you can link your Turborepo to your Remote Cache by running the following command from the root of your Turborepo:
-
-```
-npx turbo link
-```
-
-## Useful Links
-
-Learn more about the power of Turborepo:
-
-- [Tasks](https://turbo.build/repo/docs/core-concepts/monorepos/running-tasks)
-- [Caching](https://turbo.build/repo/docs/core-concepts/caching)
-- [Remote Caching](https://turbo.build/repo/docs/core-concepts/remote-caching)
-- [Filtering](https://turbo.build/repo/docs/core-concepts/monorepos/filtering)
-- [Configuration Options](https://turbo.build/repo/docs/reference/configuration)
-- [CLI Usage](https://turbo.build/repo/docs/reference/command-line-reference)
+Run `docker compose up` to start the project

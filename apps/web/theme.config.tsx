@@ -5,7 +5,6 @@ export default {
   logo: <b>Bins Docs</b>,
   project: {
     link: "https://github.com/imfelixyeung/bins",
-    icon: null, // hide github
   },
   docsRepositoryBase: "https://github.com/imfelixyeung/bins/tree/main/apps/web",
   head: () => {
@@ -22,11 +21,9 @@ export default {
   toc: {
     backToTop: true,
   },
-  editLink: {
-    component: null, // hide github
-  },
+  editLink: {},
   feedback: {
-    content: null, // hide github
+    labels: "documentation",
   },
   footer: {
     content: <CopyRight />,
