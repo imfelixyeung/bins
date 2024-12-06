@@ -11,6 +11,7 @@ Get Leeds waste collection data via API
 - Recent premises
 - Suprise Me with a random premises
 - API for searching premises and getting collection dates
+- iCal integration
 
 ## API Reference
 
