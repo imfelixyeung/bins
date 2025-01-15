@@ -13,17 +13,16 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "@libsql/client": "^0.14.0",
     "@t3-oss/env-core": "^0.11.1",
     "dotenv-cli": "^8.0.0",
     "drizzle-orm": "^0.38.3",
-    "pg": "^8.13.1",
-    "postgres": "^3.4.5",
     "zod": "^3.24.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/pg": "^8.11.10",
+    "@types/node": "^22.10.6",
     "drizzle-kit": "^0.30.1",
     "tsx": "^4.19.2"
   }

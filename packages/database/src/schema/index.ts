@@ -1,15 +1,7 @@
 import { relations } from "drizzle-orm";
-import {
-  integer,
-  pgTable,
-  text,
-  date,
-  timestamp,
-  serial,
-  index,
-} from "drizzle-orm/pg-core";
+import { integer, sqliteTable, text, index } from "drizzle-orm/sqlite-core";
 
-export const premisesTable = pgTable(
+export const premisesTable = sqliteTable(
   "dm_premises",
   {
     id: integer("id").primaryKey(),
@@ -23,12 +15,12 @@ export const premisesTable = pgTable(
     // used for searching
     searchPostcode: text("search_postcode"),
 
-    createdAt: timestamp("created_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
-    updatedAt: timestamp("updated_at", { withTimezone: true })
-      .notNull()
-      .defaultNow(),
+    createdAt: text("created_at")
+      .$defaultFn(() => new Date().toISOString())
+      .notNull(),
+    updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+      () => new Date()
+    ),
   },
   (table) => ({
     searchPostcodeIndex: index("search_postcode_index").on(
@@ -41,14 +33,14 @@ export const premisesRelation = relations(premisesTable, ({ many }) => ({
   jobs: many(jobsTable),
 }));
 
-export const jobsTable = pgTable(
+export const jobsTable = sqliteTable(
   "dm_jobs",
   {
-    id: serial("id").primaryKey(),
+    id: integer("id").primaryKey(),
 
     premisesId: integer("premises_id").notNull(),
     bin: text("bin").notNull(),
-    date: date("date").notNull(),
+    date: text("date").notNull(),
   },
   (table) => ({
     premisesIdIndex: index("jobs_premises_id_index").on(table.premisesId),
@@ -62,14 +54,14 @@ export const jobsRelation = relations(jobsTable, ({ one }) => ({
   }),
 }));
 
-export const etagsTable = pgTable("etags", {
-  id: serial("id").primaryKey(),
+export const etagsTable = sqliteTable("etags", {
+  id: integer("id").primaryKey(),
   url: text("url").notNull().unique(),
   etag: text("etag"),
-  createdAt: timestamp("created_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-  updatedAt: timestamp("updated_at", { withTimezone: true })
-    .notNull()
-    .defaultNow(),
+  createdAt: text("created_at")
+    .$defaultFn(() => new Date().toISOString())
+    .notNull(),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$onUpdate(
+    () => new Date()
+  ),
 });
