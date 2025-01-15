@@ -25,7 +25,9 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
     "@types/express": "^4.17.21",
+    "@types/node": "^22.10.6",
     "esbuild": "^0.23.1"
   }
 }
