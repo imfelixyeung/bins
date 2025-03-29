@@ -1,12 +1,7 @@
 import { ReturnedJobs } from "@/functions/search-jobs";
 import React, { useMemo } from "react";
 import DotCalendar from "./dot-calendar";
-
-const binToClassName: Record<string, string> = {
-  BLACK: "bg-gray-900/90",
-  BROWN: "bg-amber-900/90",
-  GREEN: "bg-green-600/90",
-};
+import { binToClassName } from "@/data/bin-colours";
 
 const DotCalendarBins = ({ data }: { data: ReturnedJobs["jobs"] }) => {
   const transformedData = useMemo(() => {

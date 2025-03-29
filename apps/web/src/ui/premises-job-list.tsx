@@ -10,6 +10,7 @@ import Copyable from "./copyable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
+import PremisesWidget from "./premises-widget";
 
 const supportedBins = ["BLACK", "GREEN", "BROWN"] as const;
 type SupportedBin = (typeof supportedBins)[number];
@@ -132,6 +133,12 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
         </p>
         <div className="mt-3">
           <Copyable text={ical} />
+        </div>
+      </section>
+      <section className="@container max-w-3xl">
+        <h2 className="text-2xl font-semibold mt-3">Widget</h2>
+        <div className="mt-3">
+          <PremisesWidget data={data.jobs} />
         </div>
       </section>
     </div>
