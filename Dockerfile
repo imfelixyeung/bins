@@ -1,4 +1,4 @@
-FROM node:22.6.0-alpine AS base
+FROM node:22.19-alpine AS base
 
 # install pnpm
 RUN npm install -g pnpm
