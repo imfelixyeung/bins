@@ -7,7 +7,9 @@
     "generate": "drizzle-kit generate",
     "studio": "dotenv drizzle-kit studio",
     "push": "dotenv drizzle-kit push:pg",
-    "migrate": "dotenv tsx src/migrate.ts"
+    "migrate": "dotenv tsx src/migrate.ts",
+    "build:migrate": "esbuild src/migrate.ts --bundle --platform=node --target=node22 --outfile=dist/migrate.js",
+    "start:migrate": "dotenv node dist/migrate.js"
   },
   "keywords": [],
   "author": "",
@@ -25,6 +27,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/pg": "^8.11.10",
     "drizzle-kit": "^0.30.1",
+    "esbuild": "^0.23.1",
     "tsx": "^4.19.2"
   }
 }

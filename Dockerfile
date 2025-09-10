@@ -27,21 +27,38 @@ CMD ["pnpm", "run", "start"]
 
 
 
-FROM base AS worker
-
-# needed to import csv files into postgres
-RUN apk add postgresql-client
-# sed installed doesn't replace hex nulls
-RUN apk add sed
-RUN apk add gawk
+FROM base AS worker-builder
 
 WORKDIR /app/apps/worker
 
 RUN pnpm run build
 
-CMD ["pnpm", "run", "start"]
+
+
+FROM node:22.19-alpine as worker 
+
+COPY --from=worker-builder /app/apps/worker/package.json .
+COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
+
+CMD [ "sh", "-c", "node dist/index.js" ]
 
 
 
-FROM base as migration
-CMD [ "sh", "-c", "pnpm --filter @repo/database run migrate" ]
+FROM base as migration-builder
+
+WORKDIR /app/packages/database
+
+RUN pnpm run build:migrate
+
+RUN cat ./dist/migrate.js
+
+
+
+FROM node:22.19-alpine as migration
+WORKDIR /app/packages/database
+
+COPY --from=migration-builder /app/packages/database/package.json .
+COPY --from=migration-builder /app/packages/database/.drizzle/ ./.drizzle/
+COPY --from=migration-builder /app/packages/database/dist/migrate.js ./dist/migrate.js
+
+CMD [ "sh", "-c", "node dist/migrate.js" ]
