@@ -4,6 +4,5 @@ import { db, queryClient } from ".";
 (async () => {
   await migrate(db, { migrationsFolder: "./.drizzle" });
   await queryClient.end();
+  console.log("Migrations complete!");
 })();
-
-console.log("Migrations complete!");
