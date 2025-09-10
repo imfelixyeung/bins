@@ -95,9 +95,57 @@ const setEtag = async (data: EtagResult) => {
   }
 };
 
+/**
+ * executes the function if the url etag has changed, otherwise do nothing
+ *
+ * @param url
+ * @param func
+ * @returns
+ */
+const runEtag = async <
+  URL extends string,
+  FuncReturn,
+  Func extends (url: URL) => Promise<FuncReturn>,
+>(
+  url: URL,
+  func: Func
+): Promise<FuncReturn | null> => {
+  const etagLogger = logger.child({ name: "etag-runner" });
+
+  etagLogger.info({ url }, "Checking etag has changed");
+  const etag = await checkEtag(url);
+
+  if (!etag.latest) {
+    etagLogger.warn("Unable to determine if we need to update");
+    return null;
+  }
+
+  if (etag.latest.etag === etag.database?.etag) {
+    etagLogger.info("Etag unchanged, no need to update");
+    return null;
+  }
+
+  etagLogger.info("Etag updated, updating");
+
+  const result = await func(url).catch((error) =>
+    error instanceof Error ? error : new Error(error)
+  );
+
+  if (result instanceof Error) {
+    etagLogger.error(result, "Error running function");
+    throw result;
+  }
+
+  etagLogger.info("Function ran successfully, committing etag");
+
+  await setEtag(etag);
+  return result;
+};
+
 const etag = {
   get: checkEtag,
   set: setEtag,
+  run: runEtag,
 };
 
 export default etag;

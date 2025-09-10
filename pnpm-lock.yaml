@@ -186,6 +186,9 @@ importers:
       pino-http:
         specifier: ^10.2.0
         version: 10.4.0
+      textlinestream:
+        specifier: ^1.1.1
+        version: 1.1.1
       tsx:
         specifier: ^4.17.0
         version: 4.19.3
@@ -196,6 +199,9 @@ importers:
       '@types/express':
         specifier: ^4.17.21
         version: 4.17.21
+      '@types/node-schedule':
+        specifier: ^2.1.8
+        version: 2.1.8
       esbuild:
         specifier: ^0.23.1
         version: 0.23.1
@@ -2990,6 +2996,12 @@ packages:
     dependencies:
       '@types/unist': 3.0.3
     dev: false
+
+  /@types/node-schedule@2.1.8:
+    resolution: {integrity: sha512-k00g6Yj/oUg/CDC+MeLHUzu0+OFxWbIqrFfDiLi6OPKxTujvpv29mHGM8GtKr7B+9Vv92FcK/8mRqi1DK5f3hA==}
+    dependencies:
+      '@types/node': 22.13.14
+    dev: true
 
   /@types/node@22.13.14:
     resolution: {integrity: sha512-Zs/Ollc1SJ8nKUAgc7ivOEdIBM8JAKgrqqUYi2J997JuKO7/tpQC+WCetQ1sypiKCQWHdvdg9wBNpUPEWZae7w==}
@@ -10052,6 +10064,10 @@ packages:
   /text-table@0.2.0:
     resolution: {integrity: sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==}
     dev: true
+
+  /textlinestream@1.1.1:
+    resolution: {integrity: sha512-iBHbi7BQxrFmwZUQJsT0SjNzlLLsXhvW/kg7EyOMVMBIrlnj/qYofwo1LVLZi+3GbUEo96Iu2eqToI2+lZoAEQ==}
+    dev: false
 
   /thenify-all@1.6.0:
     resolution: {integrity: sha512-RNxQH/qI8/t3thXJDwcstUO4zeqo64+Uy/+sNVRBx4Xn2OX+OZ9oP+iJnNFqplFra2ZUVeKCSa2oVWi3T4uVmA==}

@@ -6,6 +6,8 @@ import pinoHttp from "pino-http";
 import etag from "./etag";
 import { urls } from "./data";
 import logger from "./logger";
+import { updatePremises } from "./update/premises";
+import { updateJobs } from "./update/jobs";
 
 const queue = new PQueue({ concurrency: 1 });
 
@@ -97,7 +99,7 @@ const updateDataset = async (dataset: "jobs" | "premises") => {
         stderr: result?.stderr ?? "",
         exitCode: result?.exitCode,
         error: {
-          message: error instanceof Error ? error.message : error,
+          message: error instanceof Error ? error.message : String(error),
         },
       },
     };
@@ -107,8 +109,8 @@ const updateDataset = async (dataset: "jobs" | "premises") => {
 const run = async () => {
   logger.info("Run triggered");
 
-  await updateDataset("premises").catch(() => null);
-  await updateDataset("jobs").catch(() => null);
+  await updatePremises().catch(() => null);
+  await updateJobs().catch(() => null);
 
   logger.info("Finished run");
 };
