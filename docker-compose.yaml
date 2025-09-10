@@ -35,6 +35,8 @@ services:
       - RAPID_API_PROXY_SECRET=${RAPID_API_PROXY_SECRET}
     depends_on:
       - db
+    ports:
+      - 3000:3000
 
   tunnel:
     image: cloudflare/cloudflared

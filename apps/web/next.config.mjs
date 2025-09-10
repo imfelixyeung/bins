@@ -1,7 +1,9 @@
 import nextra from "nextra";
 
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+const nextConfig = {
+  output: "standalone",
+};
 
 const withNextra = nextra({
   theme: "nextra-theme-docs",
