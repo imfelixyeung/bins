@@ -48,7 +48,7 @@ services:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
 
   migration:
-    build: registry.digitalocean.com/felixyeung/bins:migration
+    image: registry.digitalocean.com/felixyeung/bins:migration
     restart: "no"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
