@@ -54,6 +54,10 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+    deploy:
+      restart_policy:
+        condition: none
+
 
 
 secrets:
