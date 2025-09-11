@@ -15,7 +15,6 @@ services:
 
   worker:
     image: bins-worker
-    pull_policy: never
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
@@ -24,7 +23,6 @@ services:
 
   web:
     image: bins-web
-    pull_policy: never
     restart: unless-stopped
     secrets:
       - upstash_redis_rest_url
@@ -51,7 +49,6 @@ services:
 
   migration:
     build: bins-migration
-    pull_policy: never
     restart: "no"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
