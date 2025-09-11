@@ -14,9 +14,8 @@ services:
       - "56432:5432"
 
   worker:
-    build:
-      dockerfile: Dockerfile
-      target: worker
+    image: bins-worker
+    pull_policy: never
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
@@ -24,9 +23,8 @@ services:
       - db
 
   web:
-    build:
-      dockerfile: Dockerfile
-      target: web
+    image: bins-web
+    pull_policy: never
     restart: unless-stopped
     secrets:
       - upstash_redis_rest_url
@@ -52,9 +50,8 @@ services:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
 
   migration:
-    build:
-      dockerfile: Dockerfile
-      target: migration
+    build: bins-migration
+    pull_policy: never
     restart: "no"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
