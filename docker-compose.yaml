@@ -28,11 +28,15 @@ services:
       dockerfile: Dockerfile
       target: web
     restart: unless-stopped
+    secrets:
+      - upstash_redis_rest_url
+      - upstash_redis_rest_token
+      - rapid_api_proxy_secret
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-      - UPSTASH_REDIS_REST_URL=${UPSTASH_REDIS_REST_URL}
-      - UPSTASH_REDIS_REST_TOKEN=${UPSTASH_REDIS_REST_TOKEN}
-      - RAPID_API_PROXY_SECRET=${RAPID_API_PROXY_SECRET}
+      - UPSTASH_REDIS_REST_URL_FILE=/run/secrets/upstash_redis_rest_url
+      - UPSTASH_REDIS_REST_TOKEN_FILE=/run/secrets/upstash_redis_rest_token
+      - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
     depends_on:
       - db
     ports:
@@ -41,9 +45,11 @@ services:
   tunnel:
     image: cloudflare/cloudflared
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    command: tunnel --no-autoupdate run
+    secrets:
+      - tunnel_token
     environment:
-      - TUNNEL_TOKEN=${TUNNEL_TOKEN}
+      - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
 
   migration:
     build:
@@ -54,3 +60,14 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+
+secrets:
+  tunnel_token:
+   external: true
+  upstash_redis_rest_url:
+   external: true
+  upstash_redis_rest_token:
+   external: true
+  rapid_api_proxy_secret:
+   external: true
+   
