@@ -12,6 +12,9 @@ services:
       - ./data/prod/db:/var/lib/postgresql/data
     ports:
       - "56432:5432"
+    networks:
+      - default
+
 
   worker:
     image: registry.digitalocean.com/felixyeung/bins:worker
@@ -20,6 +23,9 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+    networks:
+      - default
+
 
   web:
     image: registry.digitalocean.com/felixyeung/bins:web
@@ -37,6 +43,9 @@ services:
       - db
     ports:
       - 3000:3000
+    networks:
+      - default
+
 
   tunnel:
     image: cloudflare/cloudflared
@@ -46,6 +55,9 @@ services:
       - tunnel_token
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
+    networks:
+      - default
+
 
   migration:
     image: registry.digitalocean.com/felixyeung/bins:migration
@@ -54,6 +66,9 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+    networks:
+      - default
+
 
 secrets:
   tunnel_token:
@@ -65,3 +80,6 @@ secrets:
   rapid_api_proxy_secret:
    external: true
    
+networks:
+  default:
+    driver: bridge
