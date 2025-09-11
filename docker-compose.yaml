@@ -12,6 +12,8 @@ services:
       - db-data:/var/lib/postgresql/data
     ports:
       - "56432:5432"
+    networks:
+      - default
 
 
   worker:
@@ -21,6 +23,8 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+    networks:
+      - default
 
 
   web:
@@ -39,6 +43,8 @@ services:
       - db
     ports:
       - 3000:3000
+    networks:
+      - default
 
 
   tunnel:
@@ -49,6 +55,8 @@ services:
       - tunnel_token
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
+    networks:
+      - default
 
 
   migration:
@@ -58,6 +66,8 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
+    networks:
+      - default
 
 
 secrets:
@@ -72,3 +82,7 @@ secrets:
 
 volumes:
   db-data:
+
+networks:
+  default:
+    driver: bridge
