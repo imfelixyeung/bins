@@ -14,7 +14,7 @@ services:
       - "56432:5432"
 
   worker:
-    image: bins-worker
+    image: registry.digitalocean.com/felixyeung/bins:worker
     restart: unless-stopped
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
@@ -22,7 +22,7 @@ services:
       - db
 
   web:
-    image: bins-web
+    image: registry.digitalocean.com/felixyeung/bins:web
     restart: unless-stopped
     secrets:
       - upstash_redis_rest_url
@@ -48,7 +48,7 @@ services:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
 
   migration:
-    build: bins-migration
+    build: registry.digitalocean.com/felixyeung/bins:migration
     restart: "no"
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
