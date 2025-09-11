@@ -10,8 +10,6 @@ services:
       POSTGRES_DB: db
     volumes:
       - db-data:/var/lib/postgresql/data
-    networks:
-      - default
 
 
   worker:
@@ -21,8 +19,6 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
-    networks:
-      - default
 
 
   web:
@@ -39,8 +35,6 @@ services:
       - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
     depends_on:
       - db
-    networks:
-      - default
 
 
   tunnel:
@@ -51,8 +45,6 @@ services:
       - tunnel_token
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
-    networks:
-      - default
 
 
   migration:
@@ -62,8 +54,6 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
-    networks:
-      - default
 
 
 secrets:
@@ -78,7 +68,3 @@ secrets:
 
 volumes:
   db-data:
-
-networks:
-  default:
-    driver: overlay
