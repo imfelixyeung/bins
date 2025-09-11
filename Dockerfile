@@ -25,7 +25,7 @@ RUN pnpm run build
 
 
 
-FROM nodejs as web
+FROM nodejs AS web
 WORKDIR /app/apps/web
 
 ENV NODE_ENV=production
@@ -49,7 +49,7 @@ RUN pnpm run build
 
 
 
-FROM nodejs as worker 
+FROM nodejs AS worker 
 WORKDIR /app/apps/worker
 
 COPY --from=worker-builder /app/apps/worker/package.json .
@@ -59,7 +59,7 @@ CMD [ "sh", "-c", "node dist/index.js" ]
 
 
 
-FROM base as migration-builder
+FROM base AS migration-builder
 WORKDIR /app/packages/database
 
 RUN pnpm run build:migrate
@@ -68,7 +68,7 @@ RUN cat ./dist/migrate.js
 
 
 
-FROM nodejs as migration
+FROM nodejs AS migration
 WORKDIR /app/packages/database
 
 COPY --from=migration-builder /app/packages/database/package.json .
