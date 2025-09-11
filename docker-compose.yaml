@@ -9,7 +9,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: db
     volumes:
-      - ./data/prod/db:/var/lib/postgresql/data
+      - db-data:/var/lib/postgresql/data
     ports:
       - "56432:5432"
     networks:
@@ -79,7 +79,10 @@ secrets:
    external: true
   rapid_api_proxy_secret:
    external: true
-   
+
+volumes:
+  db-data:
+
 networks:
   default:
     driver: bridge
