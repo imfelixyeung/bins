@@ -11,7 +11,6 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
 
-
   worker:
     image: registry.digitalocean.com/felixyeung/bins:worker
     restart: unless-stopped
@@ -19,7 +18,6 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
     depends_on:
       - db
-
 
   web:
     image: registry.digitalocean.com/felixyeung/bins:web
@@ -33,9 +31,9 @@ services:
       - UPSTASH_REDIS_REST_URL_FILE=/run/secrets/upstash_redis_rest_url
       - UPSTASH_REDIS_REST_TOKEN_FILE=/run/secrets/upstash_redis_rest_token
       - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
+      - SKIP_SITEMAP=""
     depends_on:
       - db
-
 
   tunnel:
     image: cloudflare/cloudflared
@@ -45,7 +43,6 @@ services:
       - tunnel_token
     environment:
       - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
-
 
   migration:
     image: registry.digitalocean.com/felixyeung/bins:migration
@@ -58,17 +55,15 @@ services:
       restart_policy:
         condition: none
 
-
-
 secrets:
   tunnel_token:
-   external: true
+    external: true
   upstash_redis_rest_url:
-   external: true
+    external: true
   upstash_redis_rest_token:
-   external: true
+    external: true
   rapid_api_proxy_secret:
-   external: true
+    external: true
 
 volumes:
   db-data:

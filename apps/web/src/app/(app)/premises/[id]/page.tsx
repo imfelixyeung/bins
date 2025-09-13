@@ -86,4 +86,6 @@ const Page = async (props: PageProps) => {
   );
 };
 
+export const revalidate = 3600;
+
 export default Page;
