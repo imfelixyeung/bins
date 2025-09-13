@@ -31,7 +31,7 @@ services:
       - UPSTASH_REDIS_REST_URL_FILE=/run/secrets/upstash_redis_rest_url
       - UPSTASH_REDIS_REST_TOKEN_FILE=/run/secrets/upstash_redis_rest_token
       - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
-      - SKIP_SITEMAP=""
+      - SKIP_SITEMAP=
     depends_on:
       - db
 

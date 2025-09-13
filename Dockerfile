@@ -42,7 +42,7 @@ COPY --from=web-builder /app/apps/web/docker-entrypoint.sh ./
 
 EXPOSE 3000
 ENV PORT=3000
-ENV SKIP_SITEMAP=""
+ENV SKIP_SITEMAP=
 
 RUN chmod +x ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
