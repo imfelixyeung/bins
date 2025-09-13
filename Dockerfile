@@ -27,6 +27,10 @@ RUN pnpm run build
 
 
 FROM nodejs AS web
+
+# install bash
+RUN apk update && apk add bash
+
 WORKDIR /app/apps/web
 
 ENV NODE_ENV=production
@@ -34,12 +38,18 @@ ENV NODE_ENV=production
 COPY --from=web-builder /app/apps/web/public ./public
 COPY --from=web-builder /app/apps/web/.next/standalone ./
 COPY --from=web-builder /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=web-builder /app/apps/web/docker-entrypoint.sh ./
+COPY --from=web-builder /app/apps/web/docker-entrypoint-basic.sh ./
 
 EXPOSE 3000
 ENV PORT=3000
 ENV SKIP_SITEMAP=""
 
-CMD [ "sh", "-c", "node apps/web/server.js" ]
+RUN chmod +x ./docker-entrypoint.sh
+RUN chmod +x ./docker-entrypoint-basic.sh
+ENTRYPOINT ["./docker-entrypoint.sh"]
+
+CMD [ "node", "apps/web/server.js" ]
 
 
 
@@ -57,7 +67,7 @@ WORKDIR /app/apps/worker
 COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
 
-CMD [ "sh", "-c", "node dist/index.js" ]
+CMD [ "node", "dist/index.js" ]
 
 
 
@@ -77,4 +87,4 @@ COPY --from=migration-builder /app/packages/database/package.json .
 COPY --from=migration-builder /app/packages/database/.drizzle/ ./.drizzle/
 COPY --from=migration-builder /app/packages/database/dist/migrate.js ./dist/migrate.js
 
-CMD [ "sh", "-c", "node dist/migrate.js" ]
+CMD [ "node", "dist/migrate.js" ]

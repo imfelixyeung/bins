@@ -8,3 +8,13 @@ docker-compose.yaml
 data
 npm-debug.log
 temp
+
+.env
+apps/web/.env
+apps/worker/.env
+packages/database/.env
+
+scripts
+.turbo
+.vscode
+test
