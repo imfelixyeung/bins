@@ -1,18 +1,24 @@
 import { BASE_URL } from "@/app/config";
-import { getPremisesSitemapPages } from "@/lib/sitemap";
+import { getPremisesSitemapPage, getPremisesSitemapPages } from "@/lib/sitemap";
 import type { MetadataRoute } from "next";
 
 export const revalidate = 5;
 
-const sitemap = async (): Promise<MetadataRoute.Sitemap> => {
+export const generateSitemaps = async () => {
   const pages = await getPremisesSitemapPages();
+  return pages;
+};
 
-  return pages.map((page) => ({
-    url: new URL(
-      `/premises/chunks/sitemap/${page.id}.xml`,
-      BASE_URL
-    ).toString(),
-    lastModified: new Date(),
+const sitemap = async ({
+  id,
+}: {
+  id: number;
+}): Promise<MetadataRoute.Sitemap> => {
+  const pagePremises = await getPremisesSitemapPage(id);
+
+  return pagePremises.map(({ id, updatedAt }) => ({
+    url: new URL(`/premises/${id}`, BASE_URL).toString(),
+    lastModified: updatedAt,
   }));
 };
 
