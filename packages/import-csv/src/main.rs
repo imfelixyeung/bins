@@ -4,8 +4,47 @@ use futures_util::StreamExt;
 #[tokio::main]
 async fn main() {
     // connect to database
-    // let mut client =
-    //     postgres::Client::connect("host=localhost user=postgres", postgres::NoTls).unwrap();
+    let (db, connection) = tokio_postgres::connect(
+        "host=localhost user=postgres password=postgres dbname=db port=56432 connect_timeout=5",
+        tokio_postgres::NoTls,
+    )
+    .await
+    .unwrap();
+
+    // The connection object performs the actual communication with the database,
+    // so spawn it off to run on its own.
+    tokio::spawn(async move {
+        if let Err(e) = connection.await {
+            eprintln!("connection error: {}", e);
+        }
+    });
+
+    for row in db.query("SELECT 1;", &[]).await.unwrap() {
+        let id: i32 = row.get(0);
+
+        println!("found person: {}", id);
+    }
+
+    let db_table = "dm_premises";
+    let staging_db_table = format!("staging_{table}", table = db_table);
+
+    db.batch_execute("SET DateStyle TO 'ISO', 'DMY';")
+        .await
+        .unwrap();
+    db.batch_execute(format!("DROP TABLE IF EXISTS {staging_db_table};",).as_str())
+        .await
+        .unwrap();
+    db.batch_execute(
+        format!("CREATE TEMP TABLE {staging_db_table} AS TABLE {db_table} WITH NO DATA;").as_str(),
+    )
+    .await
+    .unwrap();
+
+    let statement = format!(
+        "INSERT INTO {staging_db_table} (id, address_room, address_number, address_street, address_locality, address_city, address_postcode) VALUES ($1, $2, $3, $4, $5, $6, $7)"
+    );
+
+    let prepared_staging_insert = db.prepare(statement.as_str()).await.unwrap();
 
     // request the csv file
     let request_url = format!(
@@ -77,9 +116,7 @@ async fn main() {
         for result in reader.records() {
             let record = result.expect("error reading record");
 
-            // println!("{:?}", record);
-
-            let premises_id = record.get(0).unwrap();
+            let premises_id: i32 = record.get(0).unwrap().parse().unwrap();
             let address_room = record.get(1).unwrap();
             let address_number = record.get(2).unwrap();
             let address_street = record.get(3).unwrap();
@@ -87,22 +124,79 @@ async fn main() {
             let address_city = record.get(5).unwrap();
             let address_postcode = record.get(6).unwrap();
 
-            // println!(
-            //     "{},{},{},{},{},{},{}",
-            //     premises_id,
-            //     address_room,
-            //     address_number,
-            //     address_street,
-            //     address_locality,
-            //     address_city,
-            //     address_postcode
-            // );
+            db.query(
+                &prepared_staging_insert,
+                &[
+                    &premises_id,
+                    &address_room,
+                    &address_number,
+                    &address_street,
+                    &address_locality,
+                    &address_city,
+                    &address_postcode,
+                ],
+            )
+            .await
+            .unwrap();
         }
 
         // if counter == 10 {
         //     break;
-        // };
+        // }
     }
+
+    println!("Setting search postcode");
+    db.batch_execute(
+        format!("UPDATE {staging_db_table} SET search_postcode = upper(replace(address_postcode, ' ', ''));").as_str(),
+    )
+    .await
+    .unwrap();
+
+    for column in [
+        "address_room",
+        "address_number",
+        "address_street",
+        "address_locality",
+        "address_city",
+        "address_postcode",
+    ] {
+        println!("Replacing nulls for {column}");
+        db.batch_execute(
+            format!("UPDATE {staging_db_table} SET {column} = NULL WHERE {column} = '';").as_str(),
+        )
+        .await
+        .unwrap();
+    }
+
+    println!("Replacing production table");
+    db.batch_execute(
+        format!(
+            "
+        BEGIN TRANSACTION;
+        DO $$
+        BEGIN
+        IF (SELECT COUNT(*) FROM {staging_db_table}) > 0 THEN
+
+            -- delete all rows from {db_table}
+            DELETE FROM {db_table};
+
+            -- copy data from staging
+            INSERT INTO {db_table}
+            (id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode)
+            SELECT
+            id, address_room, address_number, address_street, address_locality, address_city, address_postcode, search_postcode
+            FROM {staging_db_table};
+
+        END IF;
+        END $$;
+        COMMIT TRANSACTION;
+        
+        "
+        )
+        .as_str(),
+    )
+    .await
+    .unwrap();
 
     println!("Done!");
 }
