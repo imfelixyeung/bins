@@ -1,3 +1,5 @@
+use tokio_postgres::types::Type;
+
 use crate::sync::DatabaseSync;
 // use
 mod sync;
@@ -31,12 +33,56 @@ async fn main() {
             "address_city".to_string(),
             "address_postcode".to_string(),
         ],
+        csv_columns: vec![
+            "id".to_string(),
+            "address_room".to_string(),
+            "address_number".to_string(),
+            "address_street".to_string(),
+            "address_locality".to_string(),
+            "address_city".to_string(),
+            "address_postcode".to_string(),
+        ],
+        csv_column_schema: vec![
+            Type::INT8,
+            Type::TEXT,
+            Type::TEXT,
+            Type::TEXT,
+            Type::TEXT,
+            Type::TEXT,
+            Type::TEXT,
+        ],
+        copy_columns: vec![
+            "id".to_string(),
+            "address_room".to_string(),
+            "address_number".to_string(),
+            "address_street".to_string(),
+            "address_locality".to_string(),
+            "address_city".to_string(),
+            "address_postcode".to_string(),
+            "search_postcode".to_string(),
+        ],
     };
 
-    premises.prepare(&db).await;
-    premises.fetch(&db).await;
-    premises.postprocess(&db).await;
-    premises.commit(&db).await;
+    premises.process(&db).await;
+
+    let jobs = sync::DatabaseSyncJobs {
+        csv_url: "https://opendata.leeds.gov.uk/downloads/bins/dm_jobs.csv".to_string(),
+        table_name: "dm_jobs".to_string(),
+        nullable_columns: vec![],
+        csv_columns: vec![
+            "premises_id".to_string(),
+            "bin".to_string(),
+            "date".to_string(),
+        ],
+        csv_column_schema: vec![Type::INT8, Type::TEXT, Type::DATE],
+        copy_columns: vec![
+            "premises_id".to_string(),
+            "bin".to_string(),
+            "date".to_string(),
+        ],
+    };
+
+    jobs.process(&db).await;
 
     println!("Done!");
 }
