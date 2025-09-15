@@ -64,8 +64,9 @@ pub trait DatabaseSync {
                     }
                     &Type::TEXT => Box::new(val.to_string()) as Box<dyn ToSql + Sync>,
                     &Type::DATE => {
-                        // Example format: "2025-09-15"
-                        let parsed = NaiveDate::parse_from_str(val, "%Y-%m-%d").unwrap();
+                        // Format: "mm/dd/yy"
+                        println!("{val}");
+                        let parsed = NaiveDate::parse_from_str(val, "%d/%m/%y").unwrap();
                         Box::new(parsed) as Box<dyn ToSql + Sync>
                     }
                     _ => unreachable!(),
