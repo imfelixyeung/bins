@@ -18,7 +18,7 @@ const binStyles = cva("py-5 rounded-t-lg", {
   variants: {
     bin: {
       BLACK: "bg-gray-900 text-gray-50",
-      GREEN: "bg-green-600 text-gray-50",
+      GREEN: "bg-green-700 text-gray-50",
       BROWN: "bg-amber-900 text-gray-50",
     },
   },
