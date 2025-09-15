@@ -93,7 +93,7 @@ pub trait DatabaseSync {
         // get the byte stream
         let mut stream = response.bytes_stream();
 
-        let mut counter = 0;
+        let mut counter = 1;
 
         // hold content that were not processed from previous loop
         let mut previous_content: Vec<u8> = vec![];
@@ -147,10 +147,6 @@ pub trait DatabaseSync {
                 db.query(&prepared_staging_insert, &param_refs)
                     .await
                     .unwrap();
-            }
-
-            if counter == 10 {
-                break;
             }
         }
     }
