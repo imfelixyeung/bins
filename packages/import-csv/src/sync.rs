@@ -78,7 +78,7 @@ pub trait DatabaseSync {
         let prepared_staging_insert = self.row_insert_statement(&db).await;
 
         let request_url = self.csv_url();
-        println!("Fetching {}", request_url);
+        log::info!("Fetching {}", request_url);
 
         let client = reqwest::Client::new();
         let response = client
@@ -87,7 +87,7 @@ pub trait DatabaseSync {
             .await
             .expect("Unable to fetch csv file");
 
-        println!("Fetch finished");
+        log::info!("Fetch finished");
 
         // get the byte stream
         let mut stream = response.bytes_stream();
@@ -111,7 +111,7 @@ pub trait DatabaseSync {
                 content.splice(0..0, previous_content);
             }
 
-            println!("Chunk {} size: {}", counter, content.len());
+            log::debug!("Chunk {} size: {}", counter, content.len());
             counter += 1;
 
             let lines: Vec<_> = content
@@ -155,7 +155,7 @@ pub trait DatabaseSync {
 
         let staging_db_table = self.staging_table_name();
         for column in self.nullable_columns().iter() {
-            println!("Replacing nulls for {column}");
+            log::info!("Replacing nulls for {}", column);
             db.batch_execute(
                 format!("UPDATE {staging_db_table} SET {column} = NULL WHERE {column} = '';")
                     .as_str(),
@@ -172,7 +172,7 @@ pub trait DatabaseSync {
 
         let columns = self.copy_columns().join(", ");
 
-        println!("Replacing production table");
+        log::info!("Replacing production table");
         db.batch_execute(
             format!(
                 "
@@ -242,7 +242,7 @@ impl DatabaseSync for DatabaseSyncPremises {
 
     async fn postprocess_custom(&self, db: &tokio_postgres::Client) {
         let staging_db_table = self.staging_table_name();
-        println!("Setting search postcode");
+        log::info!("Setting search postcode");
         db.batch_execute(
         format!("UPDATE {staging_db_table} SET search_postcode = upper(replace(address_postcode, ' ', ''));")
             .as_str(),

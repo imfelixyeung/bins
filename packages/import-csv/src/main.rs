@@ -6,6 +6,8 @@ mod sync;
 
 #[tokio::main]
 async fn main() {
+    env_logger::init();
+
     // connect to database
     let (db, connection) = tokio_postgres::connect(
         "host=localhost user=postgres password=postgres dbname=db port=56432 connect_timeout=5",
@@ -84,5 +86,5 @@ async fn main() {
 
     jobs.process(&db).await;
 
-    println!("Done!");
+    log::info!("Done!");
 }
