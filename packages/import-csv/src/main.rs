@@ -1,6 +1,6 @@
-use tokio_postgres::types::Type;
-
 use crate::sync::DatabaseSync;
+use std::env;
+use tokio_postgres::types::Type;
 // use
 mod sync;
 
@@ -9,7 +9,7 @@ async fn main() {
     env_logger::init();
 
     // Read arguments
-    let args: Vec<String> = std::env::args().collect();
+    let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
         log::error!("Usage: {} <premises|jobs>", args[0]);
@@ -24,13 +24,13 @@ async fn main() {
         }
     };
 
+    // Read database connection info from environment variables
+    let db_url = env::var("DATABASE_URL").unwrap_or_else(|_| "localhost".to_string());
+
     // connect to database
-    let (db, connection) = tokio_postgres::connect(
-        "host=localhost user=postgres password=postgres dbname=db port=56432 connect_timeout=5",
-        tokio_postgres::NoTls,
-    )
-    .await
-    .unwrap();
+    let (db, connection) = tokio_postgres::connect(&db_url, tokio_postgres::NoTls)
+        .await
+        .unwrap();
 
     // The connection object performs the actual communication with the database,
     // so spawn it off to run on its own.
