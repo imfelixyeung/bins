@@ -13,6 +13,7 @@ temp
 apps/web/.env
 apps/web/.next
 apps/worker/.env
+apps/worker/temp
 packages/database/.env
 packages/import-csv/target
 packages/import-csv/temp
