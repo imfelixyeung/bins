@@ -14,6 +14,8 @@ apps/web/.env
 apps/web/.next
 apps/worker/.env
 packages/database/.env
+packages/import-csv/target
+packages/import-csv/temp
 
 scripts
 .turbo

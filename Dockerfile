@@ -1,4 +1,5 @@
 FROM node:22.19-alpine AS nodejs
+FROM rust:1.89.0-slim-bullseye AS rustlang
 FROM nodejs AS base
 
 # install pnpm
@@ -50,6 +51,20 @@ ENTRYPOINT ["./docker-entrypoint.sh"]
 CMD [ "node", "apps/web/server.js" ]
 
 
+FROM rustlang AS worker-bin-builder
+
+RUN apt update \
+  && apt upgrade -y \
+  && apt install -y pkg-config libssl-dev
+
+COPY ./packages/import-csv /app/packages/import-csv
+WORKDIR /app/packages/import-csv
+
+RUN cargo update
+RUN cargo build --release
+
+CMD [ "./target/release/import-csv" ]
+
 
 FROM base AS worker-builder
 WORKDIR /app/apps/worker
@@ -64,6 +79,7 @@ WORKDIR /app/apps/worker
 
 COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
+COPY --from=worker-bin-builder /app/packages/import-csv/target/release/import-csv .
 
 CMD [ "node", "dist/index.js" ]
 
