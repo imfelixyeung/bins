@@ -1,5 +1,5 @@
 FROM node:22.19-alpine AS nodejs
-FROM rust:1.89.0-slim-bullseye AS rustlang
+FROM rust:1.89.0-alpine AS rustlang
 FROM nodejs AS base
 
 # install pnpm
@@ -53,9 +53,8 @@ CMD [ "node", "apps/web/server.js" ]
 
 FROM rustlang AS worker-bin-builder
 
-RUN apt update \
-  && apt upgrade -y \
-  && apt install -y pkg-config libssl-dev
+RUN apk update \
+  && apk add pkgconfig libressl-dev musl-dev
 
 COPY ./packages/import-csv /app/packages/import-csv
 WORKDIR /app/packages/import-csv
@@ -79,7 +78,7 @@ WORKDIR /app/apps/worker
 
 COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
-COPY --from=worker-bin-builder /app/packages/import-csv/target/release/import-csv .
+COPY --from=worker-bin-builder /app/packages/import-csv/target/release/import-csv ./bin/import-csv
 
 CMD [ "node", "dist/index.js" ]
 
