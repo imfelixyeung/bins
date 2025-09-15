@@ -26,7 +26,7 @@ const ThemeSwitch = () => {
 
   return (
     <Select value={theme} onValueChange={setTheme}>
-      <SelectTrigger className="max-w-min gap-2">
+      <SelectTrigger className="max-w-min gap-2" aria-label="Pick a theme">
         <SelectValue placeholder="Theme" />
       </SelectTrigger>
       <SelectContent>
