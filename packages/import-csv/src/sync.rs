@@ -1,6 +1,6 @@
 use bytes::Buf;
 use chrono::NaiveDate;
-use csv::StringRecord;
+use csv::{ReaderBuilder, StringRecord};
 use futures_util::StreamExt;
 use tokio_postgres::types::{ToSql, Type};
 
@@ -152,7 +152,9 @@ pub trait DatabaseSync {
                 })
                 .collect();
 
-            let mut reader = csv::Reader::from_reader(current_content.reader());
+            let mut reader = ReaderBuilder::new()
+                .has_headers(false)
+                .from_reader(current_content.reader());
 
             for result in reader.records() {
                 let record = result.expect("error reading record");
