@@ -104,12 +104,11 @@ const setEtag = async (data: EtagResult) => {
  */
 const runEtag = async <
   URL extends string,
-  FuncReturn,
-  Func extends (url: URL) => Promise<FuncReturn>,
+  Func extends (url: URL) => Promise<any>,
 >(
   url: URL,
   func: Func
-): Promise<FuncReturn | null> => {
+): Promise<Awaited<ReturnType<Func>> | null> => {
   const etagLogger = logger.child({ name: "etag-runner" });
 
   etagLogger.info({ url }, "Checking etag has changed");
