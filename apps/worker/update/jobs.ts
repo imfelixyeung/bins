@@ -9,5 +9,5 @@ export const updateJobs = async () =>
     } catch (error) {
       throw error;
     }
-    return;
+    return true;
   });

@@ -9,5 +9,5 @@ export const updatePremises = async () =>
     } catch (error) {
       throw error;
     }
-    return;
+    return true;
   });

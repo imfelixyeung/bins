@@ -8,6 +8,7 @@ import { urls } from "./data";
 import logger from "./logger";
 import { updatePremises } from "./update/premises";
 import { updateJobs } from "./update/jobs";
+import { vacuumFull } from "./db";
 
 const queue = new PQueue({ concurrency: 1 });
 
@@ -109,8 +110,12 @@ const updateDataset = async (dataset: "jobs" | "premises") => {
 const run = async () => {
   logger.info("Run triggered");
 
-  await updatePremises().catch(() => null);
-  await updateJobs().catch(() => null);
+  const premisesUpdated = await updatePremises().catch(() => null);
+  const jobsUpdated = await updateJobs().catch(() => null);
+
+  if (premisesUpdated || jobsUpdated) {
+    await vacuumFull().catch(() => null);
+  }
 
   logger.info("Finished run");
 };
