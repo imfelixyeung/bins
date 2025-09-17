@@ -92,14 +92,27 @@ pub trait DatabaseSync {
         // get the byte stream
         let mut stream = response.bytes_stream();
 
-        let mut counter = 1;
+        let mut item_counter = 1;
+        let mut row_counter = 0;
 
         // hold content that were not processed from previous loop
         let mut previous_content: Vec<u8> = vec![];
 
-        while let Some(item) = stream.next().await {
+        let mut item_content: Vec<u8>;
+        let mut is_last = false;
+
+        loop {
+            match stream.next().await {
+                Some(item) => {
+                    item_content = item.expect("unknown item").to_vec();
+                }
+                None => {
+                    item_content = Vec::new();
+                    is_last = true;
+                }
+            }
+
             // get the current chunk and convert into vector of u8
-            let item_content = item.expect("unknown item").to_vec();
             let mut content: Vec<_> = item_content
                 .iter()
                 .filter(|x| x != &&0x0)
@@ -111,8 +124,8 @@ pub trait DatabaseSync {
                 content.splice(0..0, previous_content);
             }
 
-            log::debug!("Chunk {} size: {}", counter, content.len());
-            counter += 1;
+            log::debug!("Chunk {} size: {}", item_counter, content.len());
+            item_counter += 1;
 
             let lines: Vec<_> = content
                 .split(|b| b == &0xA)
@@ -124,7 +137,13 @@ pub trait DatabaseSync {
             // previous_content = &last_line.to_vec();
             previous_content = last_line.clone();
 
-            let current_content: Vec<_> = Vec::from(&lines[..lines.len() - 1])
+            let lines_end = if is_last {
+                lines.len()
+            } else {
+                lines.len() - 1
+            };
+
+            let current_content: Vec<_> = Vec::from(&lines[..lines_end])
                 .iter()
                 .flat_map(|slice| {
                     let mut new = slice.to_vec();
@@ -146,8 +165,15 @@ pub trait DatabaseSync {
                 db.query(&prepared_staging_insert, &param_refs)
                     .await
                     .unwrap();
+                row_counter += 1;
             }
+
+            if is_last {
+                break;
+            };
         }
+
+        log::info!("Found {} rows", row_counter);
     }
 
     async fn postprocess(&self, db: &tokio_postgres::Client) {
