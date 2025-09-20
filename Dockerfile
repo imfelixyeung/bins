@@ -2,29 +2,34 @@ FROM node:22.19-alpine AS nodejs
 FROM rust:1.89.0-alpine AS rustlang
 FROM nodejs AS base
 
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+
 # install pnpm
 RUN corepack enable pnpm
 
-# set working directory
 WORKDIR /app
 
-COPY ./packages/typescript-config/package.json ./packages/typescript-config/package.json
-COPY ./packages/database/package.json ./packages/database/package.json
-COPY ./packages/eslint-config/package.json ./packages/eslint-config/package.json
-COPY ./apps/web/package.json ./apps/web/package.json
-COPY ./apps/worker/package.json ./apps/worker/package.json
-COPY ./package.json ./package.json
-COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
-COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
-COPY ./turbo.json ./turbo.json
-
-RUN pnpm install --frozen-lockfile
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install -g turbo@^2
 
 COPY . .
 
+RUN turbo prune web worker --docker
 
 
-FROM base AS web-builder
+
+FROM base AS installer
+
+WORKDIR /app
+
+COPY --from=base /app/out/json .
+RUN --mount=type=cache,id=pnpm,target=/pnpm/store pnpm install --frozen-lockfile
+
+COPY --from=base /app/out/full .
+
+
+
+FROM installer AS web-builder
 WORKDIR /app/apps/web
 
 # bypass type checking in build
@@ -76,7 +81,7 @@ RUN cargo build --release
 CMD [ "./target/release/import-csv" ]
 
 
-FROM base AS worker-builder
+FROM installer AS worker-builder
 WORKDIR /app/apps/worker
 
 
@@ -95,7 +100,7 @@ CMD [ "node", "dist/index.js" ]
 
 
 
-FROM base AS migration-builder
+FROM installer AS migration-builder
 WORKDIR /app/packages/database
 
 RUN pnpm run build:migrate
