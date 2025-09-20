@@ -38,7 +38,7 @@ export default async function RootLayout({
       <body>
         <Layout
           navbar={navbar}
-          pageMap={await getPageMap()}
+          pageMap={await getPageMap("/docs")}
           docsRepositoryBase="https://github.com/imfelixyeung/bins/tree/main/apps/web"
           footer={footer}
           feedback={{
