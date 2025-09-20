@@ -10,24 +10,24 @@
   },
   "dependencies": {
     "@repo/database": "workspace:*",
-    "dotenv-cli": "^7.4.2",
-    "execa": "^9.3.1",
-    "express": "^4.19.2",
+    "dotenv-cli": "^10.0.0",
+    "execa": "^9.6.0",
+    "express": "^5.1.0",
     "node-schedule": "^2.1.1",
-    "p-queue": "^8.0.1",
-    "p-retry": "^6.2.0",
-    "pino": "^9.3.2",
-    "pino-http": "^10.2.0",
+    "p-queue": "^8.1.1",
+    "p-retry": "^7.0.0",
+    "pino": "^9.11.0",
+    "pino-http": "^10.5.0",
     "textlinestream": "^1.1.1",
-    "tsx": "^4.17.0",
-    "undici": "^6.19.8"
+    "tsx": "^4.20.5",
+    "undici": "^7.16.0"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/express": "^4.17.21",
+    "@types/express": "^5.0.3",
     "@types/node-schedule": "^2.1.8",
-    "esbuild": "^0.23.1"
+    "esbuild": "^0.25.10"
   }
 }

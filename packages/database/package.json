@@ -15,19 +15,19 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@t3-oss/env-core": "^0.11.1",
-    "dotenv-cli": "^8.0.0",
-    "drizzle-orm": "^0.38.3",
-    "pg": "^8.13.1",
-    "postgres": "^3.4.5",
-    "zod": "^3.24.1"
+    "@t3-oss/env-core": "^0.13.8",
+    "dotenv-cli": "^10.0.0",
+    "drizzle-orm": "^0.44.5",
+    "pg": "^8.16.3",
+    "postgres": "^3.4.7",
+    "zod": "^4.1.11"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
-    "@types/pg": "^8.11.10",
-    "drizzle-kit": "^0.30.1",
-    "esbuild": "^0.23.1",
-    "tsx": "^4.19.2"
+    "@types/pg": "^8.15.5",
+    "drizzle-kit": "^0.31.4",
+    "esbuild": "^0.25.10",
+    "tsx": "^4.20.5"
   }
 }
