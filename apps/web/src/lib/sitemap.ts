@@ -2,7 +2,7 @@ import { db } from "@repo/database/src";
 import { asc } from "@repo/database/src/orm";
 import { premisesTable } from "@repo/database/src/schema";
 
-const PAGE_SIZE = 1000;
+const PAGE_SIZE = 50_000;
 
 export const shouldSkipSitemapGeneration = () => {
   return !!process.env.SKIP_SITEMAP;
