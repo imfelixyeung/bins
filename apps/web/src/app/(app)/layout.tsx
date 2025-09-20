@@ -1,6 +1,7 @@
 import { cn } from "@/lib/utils";
 import "@/app/globals.css";
 import { GeistSans } from "geist/font/sans";
+import { GeistMono } from "geist/font/mono";
 import Providers from "../providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
@@ -38,7 +39,11 @@ export default async function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={cn(GeistSans.variable)} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={cn(GeistSans.variable, GeistMono.variable)}
+      suppressHydrationWarning
+    >
       <body>
         <Providers>
           <div className="min-h-dvh">
