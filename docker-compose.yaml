@@ -34,7 +34,12 @@ services:
       - "traefik.http.routers.bins.priority=10"
       # - "traefik.http.routers.bins.entrypoints=web"
       # - "traefik.http.routers.bins.service=bins-service"
-      - "traefik.http.routers.bins.middlewares=bins-api-ratelimit"
+      - "traefik.http.routers.bins.middlewares=bins-ratelimit"
+
+      # rate limit api and add cors headers
+      - "traefik.http.routers.bins-api-cors.rule=HostRegexp(`.*`) && PathPrefix(`/api`)"
+      - "traefik.http.routers.bins-api-cors.priority=15"
+      - "traefik.http.routers.bins-api-cors.middlewares=bins-ratelimit,bins-api-cors"
 
     secrets:
       - rapid_api_proxy_secret
@@ -72,9 +77,11 @@ services:
       - "--providers.docker"
       - "--log.level=INFO"
     labels:
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=10"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=100"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=10s"
+      - "traefik.http.middlewares.bins-ratelimit.ratelimit.average=10"
+      - "traefik.http.middlewares.bins-ratelimit.ratelimit.burst=100"
+      - "traefik.http.middlewares.bins-ratelimit.ratelimit.period=10s"
+      - "traefik.http.middlewares.bins-api-cors.headers.customresponseheaders.access-control-allow-origin=*"
+
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
