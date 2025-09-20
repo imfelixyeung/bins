@@ -30,11 +30,7 @@ export const premisesTable = pgTable(
       .notNull()
       .defaultNow(),
   },
-  (table) => ({
-    searchPostcodeIndex: index("search_postcode_index").on(
-      table.searchPostcode
-    ),
-  })
+  (table) => [index("search_postcode_index").on(table.searchPostcode)]
 );
 
 export const premisesRelation = relations(premisesTable, ({ many }) => ({
@@ -50,9 +46,7 @@ export const jobsTable = pgTable(
     bin: text("bin").notNull(),
     date: date("date").notNull(),
   },
-  (table) => ({
-    premisesIdIndex: index("jobs_premises_id_index").on(table.premisesId),
-  })
+  (table) => [index("jobs_premises_id_index").on(table.premisesId)]
 );
 
 export const jobsRelation = relations(jobsTable, ({ one }) => ({
