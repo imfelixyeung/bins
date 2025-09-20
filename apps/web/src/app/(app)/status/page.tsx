@@ -11,6 +11,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import Link from "next/link";
+import { connection } from "next/server";
+import { unstable_cache as cache } from "next/cache";
 
 const datasets = [
   {
@@ -25,18 +27,30 @@ const datasets = [
   },
 ];
 
-const Page = async () => {
-  const etags = await db.query.etagsTable.findMany({
-    where: inArray(
-      etagsTable.url,
-      datasets.map((d) => d.url)
-    ),
-  });
+const getData = cache(
+  async () => {
+    const etags = await db.query.etagsTable.findMany({
+      where: inArray(
+        etagsTable.url,
+        datasets.map((d) => d.url)
+      ),
+    });
 
-  const datasetsData = datasets.map((d) => ({
-    ...d,
-    etag: etags.find((e) => e.url === d.url),
-  }));
+    const datasetsData = datasets.map((d) => ({
+      ...d,
+      etag: etags.find((e) => e.url === d.url),
+    }));
+
+    return datasetsData;
+  },
+  [],
+  { revalidate: 5 }
+);
+
+const Page = async () => {
+  await connection();
+
+  const datasetsData = await getData();
 
   return (
     <div className="container my-16">
