@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
-import "./globals.css";
+import "@/app/globals.css";
 import { GeistSans } from "geist/font/sans";
-import Providers from "./providers";
+import Providers from "../providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
 import { Metadata } from "next";

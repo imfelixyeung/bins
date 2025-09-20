@@ -150,7 +150,7 @@ const PremisesSearchForm = () => {
           />
           <Button
             type="submit"
-            variant={postcode ? "outline-solid" : "default"}
+            variant={postcode ? "outline" : "default"}
             size="icon"
             className="size-10 shrink-0"
             onClick={

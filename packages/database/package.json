@@ -20,7 +20,7 @@
     "drizzle-orm": "^0.38.3",
     "pg": "^8.13.1",
     "postgres": "^3.4.5",
-    "zod": "^4.1.9"
+    "zod": "^3.24.1"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
