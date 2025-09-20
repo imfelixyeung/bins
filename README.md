@@ -25,21 +25,22 @@ Available at [https://bins.felixyeung.com/docs/api](https://bins.felixyeung.com/
 - [Node.js](https://nodejs.org/) - backend runtime
 - [PostgreSQL](https://www.postgresql.org/) - database
 - [Drizzle ORM](https://orm.drizzle.team/) - database orm
-- [Upstash Redis](https://upstash.com/) - rate limiting
+- [Rust](https://www.rust-lang.org/) - memory efficient csv processing
+- [Traefik](https://traefik.io/) - reverse proxy and rate limiting
 - [Cloudflare Tunnels](https://developers.cloudflare.com/cloudflare-one/connections/connect-networks/) - secure reverse proxy
 
 ## Environment Variables
 
-To run this project, you will need to add the following environment variables to your .env file
+To run this project, you will need to create the following secrets to docker
 
-`TUNNEL_TOKEN` - your Cloudflare Tunnel's token
+`tunnel_token` - your Cloudflare Tunnel's token
 
 ## Running
 
 ### Prerequisites
 
 - Docker
-- Docker Compose
+- Docker Stack
 
 ### Setup
 
