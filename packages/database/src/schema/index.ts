@@ -60,6 +60,9 @@ export const etagsTable = pgTable("etags", {
   id: serial("id").primaryKey(),
   url: text("url").notNull().unique(),
   etag: text("etag"),
+  checkedAt: timestamp("checked_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
   createdAt: timestamp("created_at", { withTimezone: true })
     .notNull()
     .defaultNow(),

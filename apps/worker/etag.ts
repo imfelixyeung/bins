@@ -11,6 +11,7 @@ import logger from "./logger";
 
 const getEtagFromFetch = async (url: string) => {
   try {
+    const now = new Date();
     const response = await fetch(url, {
       method: "HEAD",
       dispatcher: new Agent({ connect: { timeout: 60_000 } }),
@@ -30,6 +31,7 @@ const getEtagFromFetch = async (url: string) => {
     return {
       etag,
       lastModified: new Date(lastModified),
+      checkedAt: now,
     };
   } catch (error) {
     throw error;
@@ -82,13 +84,27 @@ type EtagResult = Awaited<ReturnType<typeof checkEtag>>;
 
 const setEtag = async (data: EtagResult) => {
   const { url, latest: etag } = data;
+
+  if (!etag) {
+    throw new Error("Expected latest etag to be set");
+  }
+
   try {
     await db
       .insert(etagsTable)
-      .values({ url, etag: etag?.etag, updatedAt: etag?.lastModified })
+      .values({
+        url,
+        etag: etag.etag,
+        updatedAt: etag.lastModified,
+        checkedAt: etag.checkedAt,
+      })
       .onConflictDoUpdate({
         target: etagsTable.url,
-        set: { etag: etag?.etag, updatedAt: etag?.lastModified },
+        set: {
+          etag: etag.etag,
+          updatedAt: etag.lastModified,
+          checkedAt: etag.checkedAt,
+        },
       });
   } catch (error) {
     return;
@@ -121,6 +137,7 @@ const runEtag = async <
 
   if (etag.latest.etag === etag.database?.etag) {
     etagLogger.info("Etag unchanged, no need to update");
+    await setEtag(etag);
     return null;
   }
 
