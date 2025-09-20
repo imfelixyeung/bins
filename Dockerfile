@@ -52,10 +52,15 @@ WORKDIR /app/apps/web
 
 ENV NODE_ENV=production
 
-COPY --from=web-builder /app/apps/web/public ./apps/web/public
-COPY --from=web-builder /app/apps/web/.next/standalone ./
-COPY --from=web-builder /app/apps/web/.next/static ./apps/web/.next/static
-COPY --from=web-builder /app/apps/web/docker-entrypoint.sh ./
+# Don't run production as root (https://turborepo.com/docs/guides/tools/docker)
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+USER nextjs
+
+COPY --from=web-builder --chown=nextjs:nodejs /app/apps/web/public ./apps/web/public
+COPY --from=web-builder --chown=nextjs:nodejs /app/apps/web/.next/standalone ./
+COPY --from=web-builder --chown=nextjs:nodejs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=web-builder --chown=nextjs:nodejs /app/apps/web/docker-entrypoint.sh ./
 
 EXPOSE 3000
 ENV PORT=3000
