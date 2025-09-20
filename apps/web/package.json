@@ -40,7 +40,6 @@
     "zod": "^3.24.1"
   },
   "devDependencies": {
-    "@headlessui/react": "^2.2.0",
     "@modelcontextprotocol/sdk": "^1.18.0",
     "@radix-ui/react-primitive": "^2.0.1",
     "@repo/eslint-config": "workspace:*",
