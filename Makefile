@@ -36,3 +36,7 @@ deploy-local: image-build image-tag ## Build and deploys the application
 
 deploy: registry-pull ## Pull latest images and deploys the application
 	docker stack deploy $(DOCKER_STACK_DEPLOY_FLAGS) --with-registry-auth -c docker-compose.yaml $(DOCKER_STACK_NAME)
+
+
+remove: ## shuts down the application
+	-docker stack rm $(DOCKER_STACK_NAME) || true
