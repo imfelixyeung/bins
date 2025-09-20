@@ -151,34 +151,23 @@ To ensure fair usage and maintain optimal performance, the Household Waste Colle
 
 ### Current Rate Limit
 
-At the time of writing, the API allows 10 requests within a 10-second timeframe. This means you can make up to 10 requests every 10 seconds without being rate limited.
+At the time of writing, the API allows **10 requests within a 10-second window per client IP**.  
+Short bursts of up to **100 requests** are tolerated before throttling takes effect.
+
+In practice, this means you can normally make up to 10 requests every 10 seconds, but if your requests come in a very short burst, the API may still accept them up to a maximum of 100 before returning errors.
 
 ### How Rate Limits Work
 
-Each API request includes several headers that provide information about your current rate limit status. These headers allow you to monitor and manage your API usage effectively.
+The rate limiting is enforced at the edge by Traefik. Unlike some APIs, no `X-RateLimit-*` headers are sent on successful requests. Instead, when the limit is exceeded, the API responds with:
 
-### Rate Limit Headers
+- **`429 Too Many Requests`** status code
+- **`retry-after`**: number of seconds to wait before retrying
+- **`x-retry-in`**: a more precise delay (in milliseconds) before retrying
 
-When you make a request to the API, the following headers are included in the response:
-
-- **`X-RateLimit-Success`**: Indicates whether the request was successful (true) or denied due to rate limiting (false).
-- **`X-RateLimit-Limit`**: The maximum number of requests allowed within the current time window.
-- **`X-RateLimit-Remaining`**: The number of requests you have remaining in the current time window.
-- **`X-RateLimit-Reset`**: The time (milliseconds elapsed since the epoch) when the current rate limit window will reset.
-
-### Example Response Headers
+### Example Error Response
 
 ```http
-X-RateLimit-Success: true
-X-RateLimit-Limit: 10
-X-RateLimit-Remaining: 7
-X-RateLimit-Reset: 1724634840000
+HTTP/1.1 429 Too Many Requests
+retry-after: 1
+x-retry-in: 495.644403ms
 ```
-
-### Managing Your Usage
-
-To avoid hitting the rate limit, monitor the `X-RateLimit-Remaining` header. If this value is low, consider reducing the frequency of your requests until the `X-RateLimit-Reset` time. Once the rate limit window resets, your `X-RateLimit-Remaining` count will be replenished.
-
-If you exceed the rate limit, subsequent requests will be denied until the rate limit resets. In such cases, the `X-RateLimit-Success` header will return `false`.
-
-By staying within the rate limits, you can ensure continued access to the API without interruptions.
