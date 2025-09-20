@@ -18,7 +18,9 @@
   },
   "pnpm": {
     "overrides": {
-      "@headlessui/react": "^2.1.2"
+      "@headlessui/react": "^2.1.2",
+      "@types/react": "19.1.13",
+      "@types/react-dom": "19.1.9"
     }
   }
 }
