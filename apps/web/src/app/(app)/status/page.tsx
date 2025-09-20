@@ -38,7 +38,7 @@ const getData = cache(
 
     const datasetsData = datasets.map((d) => ({
       ...d,
-      etag: etags.find((e) => e.url === d.url),
+      etag: etags.find((e) => e.url === d.url) ?? null,
     }));
 
     return datasetsData;
@@ -74,13 +74,25 @@ const Page = async () => {
                     {dataset.name}
                   </Link>
                 </TableCell>
-                <TableCell>
-                  {dataset.etag?.checkedAt.toLocaleString()}
-                </TableCell>
-                <TableCell>
-                  {dataset.etag?.updatedAt.toLocaleString()}
-                </TableCell>
-                <TableCell>{dataset.etag?.etag}</TableCell>
+                {dataset.etag ? (
+                  <>
+                    <TableCell className="font-mono">
+                      {new Date(dataset.etag.checkedAt).toISOString()}
+                    </TableCell>
+                    <TableCell className="font-mono">
+                      {new Date(dataset.etag.updatedAt).toISOString()}
+                    </TableCell>
+                    <TableCell className="font-mono">
+                      <code>{dataset.etag.etag ?? "N/A"}</code>
+                    </TableCell>
+                  </>
+                ) : (
+                  <>
+                    <TableCell>N/A</TableCell>
+                    <TableCell>N/A</TableCell>
+                    <TableCell>N/A</TableCell>
+                  </>
+                )}
               </TableRow>
             ))}
           </TableBody>
