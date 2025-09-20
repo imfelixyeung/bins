@@ -72,9 +72,9 @@ services:
       - "--providers.docker"
       - "--log.level=INFO"
     labels:
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=2"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=4"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=1s"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=10"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=100"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=10s"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
