@@ -24,7 +24,7 @@ services:
     restart: unless-stopped
     labels:
       # rapidapi requests can skip rate limiting, next.js middleware will check if the secret is valid
-      - "traefik.http.routers.bins-rapid.rule=HostRegexp(`.*`) && PathPrefix(`/api`) && HeadersRegexp(`X-RapidAPI-Proxy-Secret`, `.+`)"
+      - "traefik.http.routers.bins-rapid.rule=HostRegexp(`.*`) && PathPrefix(`/api`) && HeaderRegexp(`X-RapidAPI-Proxy-Secret`, `.+`)"
       - "traefik.http.routers.bins-rapid.priority=20"
       # - "traefik.http.routers.bins-rapid.entrypoints=web"
       # - "traefik.http.routers.bins-rapid.service=bins-service"
@@ -72,9 +72,9 @@ services:
       - "--providers.docker"
       - "--log.level=INFO"
     labels:
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=10"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=100"
-      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=10s"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=2"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=4"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=1s"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
