@@ -47,7 +47,7 @@ WORKDIR /app/apps/web
 
 ENV NODE_ENV=production
 
-COPY --from=web-builder /app/apps/web/public ./public
+COPY --from=web-builder /app/apps/web/public ./apps/web/public
 COPY --from=web-builder /app/apps/web/.next/standalone ./
 COPY --from=web-builder /app/apps/web/.next/static ./apps/web/.next/static
 COPY --from=web-builder /app/apps/web/docker-entrypoint.sh ./
