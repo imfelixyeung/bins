@@ -54,7 +54,7 @@ const postcodeFormSchema = z.object({
 
 const premisesFormSchema = z.object({
   premises: z.coerce.number({
-    invalid_type_error: "Please select an address from the list",
+    error: "Please select an address from the list",
   }),
 });
 
@@ -67,13 +67,13 @@ const PremisesSearchForm = () => {
     defaultValue: "",
   });
   const addressSelectRef = useRef<HTMLButtonElement>(null);
-  const postcodeForm = useForm<PostcodeFormData>({
+  const postcodeForm = useForm({
     resolver: zodResolver(postcodeFormSchema),
     defaultValues: {
       postcode,
     },
   });
-  const premisesForm = useForm<PremisesFormData>({
+  const premisesForm = useForm({
     resolver: zodResolver(premisesFormSchema),
     defaultValues: {
       premises: undefined,
