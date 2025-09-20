@@ -92,7 +92,7 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
         </section>
         <section>
           <h2 className="text-2xl font-semibold">At a glance</h2>
-          <div className="mt-3 relative after:absolute after:inset-x-0 after:bottom-0 after:h-16 after:bg-gradient-to-b after:from-transparent after:to-white dark:after:to-background">
+          <div className="mt-3 relative after:absolute after:inset-x-0 after:bottom-0 after:h-16 after:bg-linear-to-b after:from-transparent after:to-white dark:after:to-background">
             <DotCalendarBins data={data.jobs} />
           </div>
         </section>

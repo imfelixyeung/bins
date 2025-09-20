@@ -78,7 +78,7 @@ const Page = async (props: PageProps) => {
         <PremisesJobList data={premises} />
       </div>
       <div className="mt-16">
-        <Link href="/" className={buttonVariants({ variant: "outline" })}>
+        <Link href="/" className={buttonVariants({ variant: "outline-solid" })}>
           Search for another address
         </Link>
       </div>

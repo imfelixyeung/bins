@@ -41,7 +41,7 @@ export default async function RootLayout({
     <html lang="en" className={cn(GeistSans.variable)} suppressHydrationWarning>
       <body>
         <Providers>
-          <div className="min-h-[100dvh]">
+          <div className="min-h-dvh">
             <header className="border-b h-14 flex flex-col justify-center">
               <nav className="container">
                 <Link href="/" className="text-xl font-bold">

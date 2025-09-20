@@ -25,7 +25,7 @@ const RecentPremises = () => {
               return (
                 <div key={premises.id}>
                   <Card className="flex gap-3 items-center px-3 py-3 relative hover:shadow-md transition-shadow group">
-                    <div className="size-10 rounded-full flex items-center justify-center border shrink-0 bg-gradient-to-b from-foreground/0 to to-foreground/10">
+                    <div className="size-10 rounded-full flex items-center justify-center border shrink-0 bg-linear-to-b from-foreground/0 to to-foreground/10">
                       <MapPinHouseIcon size={20} />
                     </div>
                     <Link

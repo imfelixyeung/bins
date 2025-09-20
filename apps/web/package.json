@@ -46,14 +46,14 @@
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/container-queries": "^0.1.1",
+    "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.10.6",
     "@types/react": "19.1.13",
     "@types/react-dom": "19.1.9",
-    "autoprefixer": "^10.4.20",
     "eslint": "^8",
     "eslint-config-next": "15.5.3",
     "postcss": "^8.5.1",
-    "tailwindcss": "^3.4.17",
+    "tailwindcss": "^4.1.13",
     "typescript": "^5.7.3"
   },
   "pnpm": {

@@ -119,7 +119,7 @@ const PremisesSearchForm = () => {
         <div className="absolute left-6 -rotate-12">
           <TrashIcon className="stroke-[1.5]" />
         </div>
-        <div className="absolute right-12 rotate-[6deg]">
+        <div className="absolute right-12 rotate-6">
           <Trash2Icon className="stroke-[1.5]" />
         </div>
       </div>
@@ -150,7 +150,7 @@ const PremisesSearchForm = () => {
           />
           <Button
             type="submit"
-            variant={postcode ? "outline" : "default"}
+            variant={postcode ? "outline-solid" : "default"}
             size="icon"
             className="size-10 shrink-0"
             onClick={
