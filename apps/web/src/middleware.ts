@@ -1,46 +1,13 @@
-import {
-  type NextFetchEvent,
-  type NextRequest,
-  NextResponse,
-} from "next/server";
-import {
-  getRatelimit,
-  getRatelimitHeaders,
-  getRatelimitErrorResponse,
-} from "./lib/ratelimit";
+import { type NextRequest, NextResponse } from "next/server";
 
-const rateLimitedPaths = ["/api/jobs", "/api/premises"];
+export const middleware = async (request: NextRequest) => {
+  const proxySecret = request.headers.get("X-RapidAPI-Proxy-Secret");
 
-export const middleware = async (
-  request: NextRequest,
-  context: NextFetchEvent
-) => {
-  const path = request.nextUrl.pathname;
-  if (!rateLimitedPaths.includes(path)) {
-    return NextResponse.next();
-  }
-
-  const ip = request.headers.get("X-Forwarded-For") ?? "no-ip";
-  console.log({ ip });
-
-  const result = await getRatelimit(request);
-
-  const { success, pending } = result;
-
-  context.waitUntil(pending);
-
-  if (!success) {
-    const response = await getRatelimitErrorResponse(result);
-    return response;
+  if (proxySecret === process.env.RAPID_API_PROXY_SECRET) {
+    return new NextResponse("Bad request", { status: 400 });
   }
 
   const response = NextResponse.next();
-  const headers = await getRatelimitHeaders(result);
-  for (const [key, value] of Object.entries(headers)) {
-    response.headers.set(key, value);
-  }
-  response.headers.set("Cache-Control", "public, max-age=3600");
-
   return response;
 };
 

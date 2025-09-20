@@ -25,8 +25,6 @@ file_env() {
 }
 
 docker_setup_env() {
-	file_env 'UPSTASH_REDIS_REST_URL'
-	file_env 'UPSTASH_REDIS_REST_TOKEN'
 	file_env 'RAPID_API_PROXY_SECRET'
 	file_env 'BASE_URL'
 }

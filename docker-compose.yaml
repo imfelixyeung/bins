@@ -23,15 +23,23 @@ services:
     image: registry.digitalocean.com/felixyeung/bins:web
     restart: unless-stopped
     labels:
+      # rapidapi requests can skip rate limiting, next.js middleware will check if the secret is valid
+      - "traefik.http.routers.bins-rapid.rule=HostRegexp(`.*`) && PathPrefix(`/api`) && HeadersRegexp(`X-RapidAPI-Proxy-Secret`, `.+`)"
+      - "traefik.http.routers.bins-rapid.priority=20"
+      # - "traefik.http.routers.bins-rapid.entrypoints=web"
+      # - "traefik.http.routers.bins-rapid.service=bins-service"
+
+      # normal user rate limiting
       - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
+      - "traefik.http.routers.bins.priority=10"
+      # - "traefik.http.routers.bins.entrypoints=web"
+      # - "traefik.http.routers.bins.service=bins-service"
+      - "traefik.http.routers.bins.middlewares=bins-api-ratelimit"
+
     secrets:
-      - upstash_redis_rest_url
-      - upstash_redis_rest_token
       - rapid_api_proxy_secret
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-      - UPSTASH_REDIS_REST_URL_FILE=/run/secrets/upstash_redis_rest_url
-      - UPSTASH_REDIS_REST_TOKEN_FILE=/run/secrets/upstash_redis_rest_token
       - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
       - SKIP_SITEMAP=
     depends_on:
@@ -63,15 +71,15 @@ services:
       - "--api.insecure=true"
       - "--providers.docker"
       - "--log.level=INFO"
+    labels:
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.average=10"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.burst=100"
+      - "traefik.http.middlewares.bins-api-ratelimit.ratelimit.period=10s"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
 secrets:
   tunnel_token:
-    external: true
-  upstash_redis_rest_url:
-    external: true
-  upstash_redis_rest_token:
     external: true
   rapid_api_proxy_secret:
     external: true
