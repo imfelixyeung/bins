@@ -57,7 +57,7 @@ const checkEtag = async (url: string) => {
   const etagDatabase = await pRetry(() => getEtagFromDb(url), {
     onFailedAttempt: (error) => {
       logger.warn(
-        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.message})`
+        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.error.message})`
       );
     },
     retries: 3,
@@ -65,7 +65,7 @@ const checkEtag = async (url: string) => {
   const etagLatest = await pRetry(() => getEtagFromFetch(url), {
     onFailedAttempt: (error) => {
       logger.warn(
-        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.message})`
+        `Attempt ${error.attemptNumber} failed. There are ${error.retriesLeft} retries left. (${error.error.message})`
       );
     },
     retries: 3,
