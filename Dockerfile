@@ -8,9 +8,19 @@ RUN corepack enable pnpm
 # set working directory
 WORKDIR /app
 
-COPY . .
+COPY ./packages/typescript-config/package.json ./packages/typescript-config/package.json
+COPY ./packages/database/package.json ./packages/database/package.json
+COPY ./packages/eslint-config/package.json ./packages/eslint-config/package.json
+COPY ./apps/web/package.json ./apps/web/package.json
+COPY ./apps/worker/package.json ./apps/worker/package.json
+COPY ./package.json ./package.json
+COPY ./pnpm-lock.yaml ./pnpm-lock.yaml
+COPY ./pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY ./turbo.json ./turbo.json
 
 RUN pnpm install --frozen-lockfile
+
+COPY . .
 
 
 
