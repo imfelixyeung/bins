@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "next dev --turbo",
     "build": "next build",
+    "build:pagefind": "pagefind --site .next/server/app --output-path public/_pagefind",
     "start": "next start",
     "lint": "next lint"
   },
@@ -52,6 +53,7 @@
     "@types/react-dom": "19.1.9",
     "eslint": "^8",
     "eslint-config-next": "15.5.3",
+    "pagefind": "^1.4.0",
     "postcss": "^8.5.1",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.7.3"

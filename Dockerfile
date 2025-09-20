@@ -33,6 +33,7 @@ ENV DATABASE_URL="postgres://postgres:postgres@db:5432/db"
 ENV SKIP_SITEMAP="true"
 
 RUN pnpm run build
+RUN pnpm run build:pagefind
 
 
 
