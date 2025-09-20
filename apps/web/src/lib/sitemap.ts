@@ -10,7 +10,7 @@ export const shouldSkipSitemapGeneration = () => {
 
 export const getPremisesSitemapPages = async () => {
   if (shouldSkipSitemapGeneration()) {
-    console.info("Skipping generatiton...");
+    console.info("Skipping generation...");
     return [];
   }
 
@@ -21,7 +21,7 @@ export const getPremisesSitemapPages = async () => {
 
 export const getPremisesSitemapPage = async (page: number) => {
   if (shouldSkipSitemapGeneration()) {
-    console.info("Skipping generatiton...");
+    console.info("Skipping generation...");
     return [];
   }
 
