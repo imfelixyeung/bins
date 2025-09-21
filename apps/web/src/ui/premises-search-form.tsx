@@ -44,6 +44,7 @@ import { getPresentableFullAddress } from "@/functions/format-address";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
 import { getRandomPremises } from "@/actions/get-random-premises";
+import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -80,6 +81,16 @@ const PremisesSearchForm = () => {
     },
   });
   const { data: premises } = useSearchPremisesQuery({ postcode });
+
+  const selectedPremisesId = premisesForm.watch("premises");
+
+  useEffect(() => {
+    if (!selectedPremisesId) return;
+
+    router.prefetch(`/premises/${selectedPremisesId}`, {
+      kind: PrefetchKind.FULL,
+    });
+  }, [selectedPremisesId]);
 
   const onSubmitPostcode = async (data: PostcodeFormData) => {
     setPostcode(data.postcode);
