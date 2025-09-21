@@ -1,7 +1,7 @@
 use crate::sync::DatabaseSync;
 use std::env;
 use tokio_postgres::types::Type;
-// use
+
 mod sync;
 
 #[tokio::main]

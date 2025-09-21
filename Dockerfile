@@ -77,11 +77,20 @@ FROM rustlang AS worker-bin-builder
 RUN apk update \
   && apk add pkgconfig libressl-dev musl-dev
 
-COPY ./packages/import-csv /app/packages/import-csv
 WORKDIR /app/packages/import-csv
 
-RUN cargo update
-RUN cargo build --release
+# fetch dependencies with cache
+COPY ./packages/import-csv/Cargo.toml ./packages/import-csv/Cargo.lock ./
+RUN mkdir src && echo "fn main() {}" > src/main.rs
+RUN --mount=type=cache,target=/usr/local/cargo/registry cargo fetch
+
+# build dependencies and target with cache
+COPY ./packages/import-csv ./
+RUN --mount=type=cache,target=/app/packages/import-csv/target cargo build --release
+
+# move binary out of cache
+RUN mkdir bin
+RUN --mount=type=cache,target=/app/packages/import-csv/target cp ./target/release/import-csv ./bin/import-csv
 
 CMD [ "./target/release/import-csv" ]
 
@@ -99,7 +108,7 @@ WORKDIR /app/apps/worker
 
 COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
-COPY --from=worker-bin-builder /app/packages/import-csv/target/release/import-csv ./bin/import-csv
+COPY --from=worker-bin-builder /app/packages/import-csv/bin/import-csv ./bin/import-csv
 
 CMD [ "node", "dist/index.js" ]
 
