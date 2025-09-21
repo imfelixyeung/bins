@@ -31,6 +31,10 @@ registry-pull--%: ## Pulls image from registry
 
 
 
+build: image-build image-tag registry-push ## Builds, tags, and push to registry
+
+
+
 deploy-local: image-build image-tag ## Build and deploys the application
 	docker stack deploy $(DOCKER_STACK_DEPLOY_FLAGS) --compose-file docker-compose.yaml $(DOCKER_STACK_NAME)
 
