@@ -85,6 +85,7 @@ services:
   proxy:
     image: traefik:v3.5
     command:
+      - "--ping=true"
       - "--api.insecure=true"
       - "--providers.docker"
       - "--log.level=INFO"
@@ -94,7 +95,12 @@ services:
       - "traefik.http.middlewares.bins-ratelimit.ratelimit.period=10s"
       - "traefik.http.middlewares.bins-api-cors.headers.customresponseheaders.access-control-allow-origin=*"
       - "traefik.http.middlewares.bins-api-cache.headers.customresponseheaders.cache-control=public,max-age=60"
-
+    healthcheck:
+      test: ["CMD", "traefik", "healthcheck", "--ping"]
+      interval: 1s
+      timeout: 30s
+      retries: 15
+      start_period: 1s
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
