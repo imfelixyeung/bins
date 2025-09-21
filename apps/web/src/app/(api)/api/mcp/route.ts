@@ -78,6 +78,36 @@ const handler = createMcpHandler(
         };
       }
     );
+    server.tool(
+      "get_premises_permalink",
+      "Gets the permanent link to a page for this premises/address. The page shows the full address, a simple calendar view for the next few week's collection dates, as well as the full list of bin collection dates. The page also includes a iCal link that users can add to their preferred calendar as integration.",
+      {
+        premisesId: z.number().int().nonnegative(),
+      },
+      async ({ premisesId }) => {
+        const jobs = await searchJobs({ premisesId: premisesId });
+
+        if (!jobs)
+          return {
+            isError: true,
+            content: [
+              {
+                type: "text",
+                text: `Address not found (bad premisesId of ${premisesId})`,
+              } as const,
+            ],
+          };
+
+        const link = `https://bins.felixyeung.com/premises/${premisesId}`;
+
+        return {
+          content: [
+            { type: "text", text: `Permalink to the premises page:\n${link}` },
+          ],
+          structuredContent: { link },
+        };
+      }
+    );
   },
   {},
   {
