@@ -69,6 +69,7 @@ ENV SKIP_SITEMAP=
 RUN chmod +x ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
+HEALTHCHECK --interval=1s --timeout=30s --start-period=5s CMD wget -O/dev/null -q http://$HOSTNAME:3000/api/health || exit 1
 CMD [ "node", "apps/web/server.js" ]
 
 
