@@ -11,9 +11,11 @@ const handler = createMcpHandler(
   (server) => {
     server.tool(
       "search_premises_from_postcode",
-      "Search premises using a postcode",
+      "Search premises or addresses using a postcode. The premises.id can then be used in show_premises_jobs_by_id or get_premises_permalink for their respective functions",
       {
-        postcode: z.string(),
+        postcode: z
+          .string()
+          .describe("The UK postcode of the address. For example, LS6 2SE"),
       },
       async ({ postcode }) => {
         const premises = await searchPremises({ postcode });
@@ -45,9 +47,15 @@ const handler = createMcpHandler(
     );
     server.tool(
       "show_premises_jobs_by_id",
-      "Retrives a list of bin dates for a given premises",
+      "Retrives a list of bin dates (household waste collection dates) for a given premises or address. This will include the date of collection and the type of bin (e.g. Black, Green etc.)",
       {
-        premisesId: z.number().int().nonnegative(),
+        premisesId: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe(
+            "The premises.id returned from search_premises_from_postcode"
+          ),
       },
       async ({ premisesId }) => {
         const jobs = await searchJobs({ premisesId: premisesId });
@@ -80,9 +88,15 @@ const handler = createMcpHandler(
     );
     server.tool(
       "get_premises_permalink",
-      "Gets the permanent link to a page for this premises/address. The page shows the full address, a simple calendar view for the next few week's collection dates, as well as the full list of bin collection dates. The page also includes a iCal link that users can add to their preferred calendar as integration.",
+      "Gets the permanent link to a page for this premises or address. The page shows the full address, a simple calendar view for the next few week's collection dates, as well as the full list of bin collection dates by each bin type. The page also includes a iCal link and instructions for users to add to their preferred calendar as an integration.",
       {
-        premisesId: z.number().int().nonnegative(),
+        premisesId: z
+          .number()
+          .int()
+          .nonnegative()
+          .describe(
+            "The premises.id returned from search_premises_from_postcode"
+          ),
       },
       async ({ premisesId }) => {
         const jobs = await searchJobs({ premisesId: premisesId });
