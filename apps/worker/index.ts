@@ -157,7 +157,7 @@ app.get("/status", async (req, res) => {
 });
 
 const startTime = new Date();
-app.get("/health", async (_req, res) => res.json({ timestamp: startTime }));
+app.get("/ready", async (_req, res) => res.json({ timestamp: startTime }));
 
 if (process.env.ONE_SHOT) {
   queueRun()
