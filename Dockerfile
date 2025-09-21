@@ -111,6 +111,7 @@ COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
 COPY --from=worker-bin-builder /app/packages/import-csv/bin/import-csv ./bin/import-csv
 
+HEALTHCHECK --interval=1s --timeout=30s --start-period=5s CMD wget -O/dev/null -q http://$HOSTNAME:3000/health || exit 1
 CMD [ "node", "dist/index.js" ]
 
 
