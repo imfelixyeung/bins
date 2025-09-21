@@ -4,6 +4,7 @@ import {
 } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import { searchPremises } from "@/functions/search-premises";
+import { format } from "date-fns";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
 
@@ -58,7 +59,23 @@ const handler = createMcpHandler(
           ),
       },
       async ({ premisesId }) => {
-        const jobs = await searchJobs({ premisesId: premisesId });
+        const now = format(new Date(), "yyyy-MM-dd");
+        const jobs = await searchJobs({ premisesId: premisesId }).then((res) =>
+          res
+            ? {
+                ...res,
+                jobs: res.jobs.map((job) => {
+                  const status =
+                    job.date < now
+                      ? "Expired"
+                      : job.date > now
+                        ? "Upcoming"
+                        : "Today";
+                  return { ...job, status };
+                }),
+              }
+            : null
+        );
 
         if (!jobs)
           return {
@@ -78,7 +95,7 @@ const handler = createMcpHandler(
               (job) =>
                 ({
                   type: "text",
-                  text: `${job.date}: ${job.bin} bin`,
+                  text: `${job.date} (${job.status}): ${job.bin} bin`,
                 }) as const
             ),
           ],
