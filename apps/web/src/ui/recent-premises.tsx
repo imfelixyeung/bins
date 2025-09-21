@@ -31,6 +31,7 @@ const RecentPremises = () => {
                     <Link
                       href={`/premises/${premises.id}`}
                       className="after:absolute after:inset-0 grow"
+                      prefetch
                     >
                       <h3 className="font-medium line-clamp-2">{line1}</h3>
                       <p className="text-sm line-clamp-2 text-muted-foreground">
