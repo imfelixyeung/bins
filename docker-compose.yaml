@@ -60,6 +60,12 @@ services:
     image: cloudflare/cloudflared
     restart: unless-stopped
     command: tunnel --no-autoupdate run
+    healthcheck:
+      test: ["CMD", "cloudflared", "tunnel", "--metrics", "proxy:80", "ready"]
+      interval: 1s
+      timeout: 30s
+      retries: 15
+      start_period: 1s
     secrets:
       - tunnel_token
     environment:
