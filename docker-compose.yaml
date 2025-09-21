@@ -6,10 +6,10 @@ services:
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "psql", "-U", "postgres", "-c", "select 1"]
-      interval: 1s
+      interval: 5s
       timeout: 30s
       retries: 15
-      start_period: 1s
+      start_period: 5s
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
@@ -62,10 +62,10 @@ services:
     command: tunnel --no-autoupdate run
     healthcheck:
       test: ["CMD", "cloudflared", "tunnel", "--metrics", "proxy:80", "ready"]
-      interval: 1s
+      interval: 5s
       timeout: 30s
       retries: 15
-      start_period: 1s
+      start_period: 5s
     secrets:
       - tunnel_token
     environment:
@@ -97,10 +97,10 @@ services:
       - "traefik.http.middlewares.bins-api-cache.headers.customresponseheaders.cache-control=public,max-age=60"
     healthcheck:
       test: ["CMD", "traefik", "healthcheck", "--ping"]
-      interval: 1s
+      interval: 5s
       timeout: 30s
       retries: 15
-      start_period: 1s
+      start_period: 5s
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 

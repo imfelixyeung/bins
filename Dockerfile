@@ -69,7 +69,7 @@ ENV SKIP_SITEMAP=
 RUN chmod +x ./docker-entrypoint.sh
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
-HEALTHCHECK --interval=1s --timeout=30s --start-period=5s --retries=10 CMD wget -O/dev/null -q http://$HOSTNAME:3000/ready || exit 1
+HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=15 CMD wget -O/dev/null -q http://$HOSTNAME:3000/ready || exit 1
 CMD [ "node", "apps/web/server.js" ]
 
 
@@ -111,7 +111,7 @@ COPY --from=worker-builder /app/apps/worker/package.json .
 COPY --from=worker-builder /app/apps/worker/dist/index.js ./dist/index.js
 COPY --from=worker-bin-builder /app/packages/import-csv/bin/import-csv ./bin/import-csv
 
-HEALTHCHECK --interval=1s --timeout=30s --start-period=5s --retries=10 CMD wget -O/dev/null -q http://$HOSTNAME:3000/ready || exit 1
+HEALTHCHECK --interval=5s --timeout=30s --start-period=5s --retries=15 CMD wget -O/dev/null -q http://$HOSTNAME:3000/ready || exit 1
 CMD [ "node", "dist/index.js" ]
 
 
