@@ -63,11 +63,16 @@ const premisesFormSchema = z.object({
 type PostcodeFormData = z.infer<typeof postcodeFormSchema>;
 type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
+const randomPremisesQueryStaleTime = 1000;
+
 const PremisesSearchForm = () => {
   const trpc = useTRPC();
   const queryClient = useQueryClient();
   const randomPremisesQuery = useQuery(
-    trpc.premises.random.queryOptions(undefined, { enabled: false })
+    trpc.premises.random.queryOptions(undefined, {
+      initialData: null as any,
+      staleTime: randomPremisesQueryStaleTime,
+    })
   );
 
   const router = useRouter();
@@ -109,7 +114,9 @@ const PremisesSearchForm = () => {
 
   const onSupriseMe = async () => {
     const premises = await queryClient.fetchQuery(
-      trpc.premises.random.queryOptions()
+      trpc.premises.random.queryOptions(undefined, {
+        staleTime: randomPremisesQueryStaleTime,
+      })
     );
 
     if (!premises || !premises.addressPostcode) return;
@@ -246,7 +253,9 @@ const PremisesSearchForm = () => {
             variant="ghost"
             size="sm"
             onClick={onSupriseMe}
-            disabled={randomPremisesQuery.isFetching}
+            disabled={
+              randomPremisesQuery.isFetching || !randomPremisesQuery.isStale
+            }
           >
             <DicesIcon size={20} />
             Suprise Me
