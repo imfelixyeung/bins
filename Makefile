@@ -13,7 +13,7 @@ help: ## Show this help
 
 image-build: $(SERVICES:%=image-build--%) ## Build docker images for all services
 image-build--%: ## build docker image for service $*
-	docker buildx build -t bins:$* --target $* .
+	docker buildx build --load -t bins:$* --target $* .
 
 image-tag: $(SERVICES:%=image-tag--%) ## Tag docker images for registry
 image-tag--%: ## Tag docker image $* for registry
