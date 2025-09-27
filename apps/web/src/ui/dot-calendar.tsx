@@ -69,8 +69,10 @@ const DotCalendar = ({
         date: formattedDate,
         classNames: classNamesByDate[formattedDate] ?? [],
       });
-      date = new Date(date.getTime() + 1000 * 60 * 60 * 24);
+      date = addDays(date, 1);
     }
+
+    console.log(dates);
     return dates;
   }, [end, start, classNamesByDate]);
 
