@@ -1,6 +1,6 @@
 "use client";
 
-import { searchPremisesAction } from "@/actions/search-premises-action";
+import { useTRPC } from "@/trpc/utils";
 import { useQuery } from "@tanstack/react-query";
 
 export const useSearchPremisesQuery = ({
@@ -8,11 +8,13 @@ export const useSearchPremisesQuery = ({
 }: {
   postcode: string | null;
 }) => {
-  const query = useQuery({
-    queryKey: ["search-premises", postcode],
-    queryFn: () => searchPremisesAction({ postcode: postcode! }),
-    enabled: !!postcode,
-  });
+  const trpc = useTRPC();
+  const query = useQuery(
+    trpc.premises.search.queryOptions(
+      { postcode: postcode! },
+      { enabled: !!postcode }
+    )
+  );
 
   return query;
 };

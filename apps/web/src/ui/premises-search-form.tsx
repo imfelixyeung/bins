@@ -43,9 +43,9 @@ import {
 import { getPresentableFullAddress } from "@/functions/format-address";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
-import { getRandomPremises } from "@/actions/get-random-premises";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 import { useTRPC } from "@/trpc/utils";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -65,6 +65,10 @@ type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
 const PremisesSearchForm = () => {
   const trpc = useTRPC();
+  const queryClient = useQueryClient();
+  const randomPremisesQuery = useQuery(
+    trpc.premises.random.queryOptions(undefined, { enabled: false })
+  );
 
   const router = useRouter();
   const [postcode, setPostcode] = useQueryState("postcode", {
@@ -104,10 +108,10 @@ const PremisesSearchForm = () => {
   };
 
   const onSupriseMe = async () => {
-    const result = await getRandomPremises();
-    if (!result) return;
+    const premises = await queryClient.fetchQuery(
+      trpc.premises.random.queryOptions()
+    );
 
-    const premises = result.data;
     if (!premises || !premises.addressPostcode) return;
 
     setPostcode(premises.addressPostcode);
@@ -176,7 +180,7 @@ const PremisesSearchForm = () => {
           </Button>
         </form>
       </Form>
-      {premises && premises.data && premises.data.length === 0 && (
+      {premises && premises && premises.length === 0 && (
         <div className="mt-8">
           <p className="text-lg">
             Oops, we couldn't find any addresses matching your postcode of{" "}
@@ -184,7 +188,7 @@ const PremisesSearchForm = () => {
           </p>
         </div>
       )}
-      {premises && premises.data && premises.data.length > 0 && (
+      {premises && premises && premises.length > 0 && (
         <Form {...premisesForm}>
           <form
             onSubmit={premisesForm.handleSubmit(onSubmitPremises)}
@@ -209,7 +213,7 @@ const PremisesSearchForm = () => {
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {premises.data?.map((premises) => {
+                        {premises?.map((premises) => {
                           const address = getPresentableFullAddress(premises);
 
                           return (
@@ -242,6 +246,7 @@ const PremisesSearchForm = () => {
             variant="ghost"
             size="sm"
             onClick={onSupriseMe}
+            disabled={randomPremisesQuery.isFetching}
           >
             <DicesIcon size={20} />
             Suprise Me
