@@ -121,8 +121,6 @@ WORKDIR /app/packages/database
 
 RUN pnpm run build:migrate
 
-RUN cat ./dist/migrate.js
-
 
 
 FROM nodejs AS migration
