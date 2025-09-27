@@ -45,6 +45,7 @@ import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
 import { getRandomPremises } from "@/actions/get-random-premises";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
+import { useTRPC } from "@/trpc/utils";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -63,6 +64,8 @@ type PostcodeFormData = z.infer<typeof postcodeFormSchema>;
 type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
 const PremisesSearchForm = () => {
+  const trpc = useTRPC();
+
   const router = useRouter();
   const [postcode, setPostcode] = useQueryState("postcode", {
     defaultValue: "",
