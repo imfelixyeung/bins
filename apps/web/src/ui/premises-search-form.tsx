@@ -92,7 +92,8 @@ const PremisesSearchForm = () => {
       premises: undefined,
     },
   });
-  const { data: premises } = useSearchPremisesQuery({ postcode });
+  const { data: premises, isLoading: premisesIsLoading } =
+    useSearchPremisesQuery({ postcode });
 
   const selectedPremisesId = premisesForm.watch("premises");
 
@@ -181,6 +182,7 @@ const PremisesSearchForm = () => {
             onClick={
               premises ? postcodeForm.handleSubmit(onSubmitPostcode) : undefined
             }
+            disabled={premisesIsLoading}
           >
             <SearchIcon size={16} />
             <div className="sr-only">Lookup</div>
