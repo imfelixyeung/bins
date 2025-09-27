@@ -6,7 +6,15 @@ import { AppRouter } from "../server/router";
 import SuperJSON from "superjson";
 
 function makeQueryClient() {
-  return new QueryClient();
+  return new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnMount: false,
+        refetchOnReconnect: false,
+        refetchOnWindowFocus: false,
+      },
+    },
+  });
 }
 
 let browserQueryClient: QueryClient | undefined = undefined;
