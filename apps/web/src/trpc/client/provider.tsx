@@ -3,6 +3,7 @@ import { createTRPCClient, httpBatchLink } from "@trpc/client";
 import { ReactNode, useState } from "react";
 import { TRPCProvider as _TRPCProvider } from "../utils";
 import { AppRouter } from "../server/router";
+import SuperJSON from "superjson";
 
 function makeQueryClient() {
   return new QueryClient({
@@ -38,6 +39,7 @@ export const TRPCProvider = ({ children }: { children: ReactNode }) => {
       links: [
         httpBatchLink({
           url: "/api/trpc",
+          transformer: SuperJSON,
         }),
       ],
     })
