@@ -17,7 +17,6 @@ const ThemeSwitch = () => {
 
   useEffect(() => {
     setMounted(true);
-    console.log(themes);
   }, []);
 
   if (!mounted) {

@@ -72,7 +72,6 @@ const DotCalendar = ({
       date = addDays(date, 1);
     }
 
-    console.log(dates);
     return dates;
   }, [end, start, classNamesByDate]);
 
