@@ -5,7 +5,7 @@
  * https://dub.co/
  */
 
-import React, { useEffect, useRef } from "react";
+import React, { useEffect, useMemo, useRef } from "react";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -86,6 +86,23 @@ const PremisesSearchForm = () => {
       postcode,
     },
   });
+
+  const inputPostcode = postcodeForm.watch("postcode");
+
+  const autocompleteQuery = useQuery(
+    trpc.postcode.autocomplete.queryOptions(
+      { postcode: inputPostcode },
+      { enabled: !!inputPostcode }
+    )
+  );
+
+  const autocomplete = useMemo(() => {
+    if (!autocompleteQuery.data || autocompleteQuery.data.length === 1)
+      return [];
+
+    return autocompleteQuery.data;
+  }, [autocompleteQuery.data]);
+
   const premisesForm = useForm({
     resolver: zodResolver(premisesFormSchema),
     defaultValues: {
@@ -165,6 +182,7 @@ const PremisesSearchForm = () => {
                     placeholder="Postcode eg. LS2 3AB"
                     {...field}
                     className={cn("")}
+                    list="autocomplete-postcode-list"
                   />
                 </FormControl>
                 <FormDescription className="sr-only">
@@ -174,6 +192,11 @@ const PremisesSearchForm = () => {
               </FormItem>
             )}
           />
+          <datalist id="autocomplete-postcode-list">
+            {autocomplete.map((e) => (
+              <option key={e} value={e} />
+            ))}
+          </datalist>
           <Button
             type="submit"
             variant={postcode ? "outline" : "default"}
