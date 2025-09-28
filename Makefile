@@ -2,6 +2,7 @@ SERVICES := web worker migration
 REGISTRY := registry.digitalocean.com/felixyeung
 DOCKER_STACK_NAME := bins
 DOCKER_STACK_DEPLOY_FLAGS := 
+DOCKER_BUILD_FLAGS := 
 
 
 help: ## Show this help
@@ -13,7 +14,7 @@ help: ## Show this help
 
 image-build: $(SERVICES:%=image-build--%) ## Build docker images for all services
 image-build--%: ## build docker image for service $*
-	docker buildx build --load -t bins:$* --target $* .
+	docker buildx build $(DOCKER_BUILD_FLAGS) -t bins:$* --target $* .
 
 image-tag: $(SERVICES:%=image-tag--%) ## Tag docker images for registry
 image-tag--%: ## Tag docker image $* for registry
