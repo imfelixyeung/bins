@@ -23,6 +23,9 @@ packages/import-csv/target
 packages/import-csv/temp
 
 scripts
-.turbo
 .vscode
 test
+
+# turbo
+.turbo
+out
