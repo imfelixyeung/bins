@@ -14,6 +14,8 @@ temp
 .env
 apps/web/.env
 apps/web/.next
+apps/web/public/sw.js
+apps/web/public/swe-worker-*.js
 apps/worker/.env
 apps/worker/temp
 packages/database/.env
@@ -21,6 +23,9 @@ packages/import-csv/target
 packages/import-csv/temp
 
 scripts
-.turbo
 .vscode
 test
+
+# turbo
+.turbo
+out

@@ -2,7 +2,7 @@ SERVICES := web worker migration
 REGISTRY := registry.digitalocean.com/felixyeung
 DOCKER_STACK_NAME := bins
 DOCKER_STACK_DEPLOY_FLAGS := 
-DOCKER_BUILD_FLAGS := 
+DOCKER_BUILD_FLAGS := --load
 
 
 help: ## Show this help
