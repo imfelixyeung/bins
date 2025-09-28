@@ -13,7 +13,7 @@
     "preserveSymlinks": true,
     "declaration": false,
     "declarationMap": false,
-    "lib": ["dom", "dom.iterable", "esnext"]
+    "lib": ["dom", "dom.iterable", "esnext", "webworker"]
   },
   "include": [
     "next-env.d.ts",
