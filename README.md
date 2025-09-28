@@ -12,6 +12,7 @@ Get Leeds waste collection data via API
 - Suprise Me with a random premises
 - API for searching premises and getting collection dates
 - iCal integration
+- [MCP server](https://bins.felixyeung.com/docs/mcp)
 
 ## API Reference
 
