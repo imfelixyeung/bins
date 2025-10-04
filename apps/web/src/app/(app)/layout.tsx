@@ -46,7 +46,7 @@ export default async function RootLayout({
     >
       <body>
         <Providers>
-          <div className="min-h-dvh">
+          <div className="min-h-dvh flex flex-col">
             <header className="border-b h-14 flex flex-col justify-center">
               <nav className="container">
                 <Link href="/" className="text-xl font-bold">
@@ -54,7 +54,7 @@ export default async function RootLayout({
                 </Link>
               </nav>
             </header>
-            <main>{children}</main>
+            <main className="grow flex flex-col">{children}</main>
           </div>
           <footer className="border-t py-6 text-muted-foreground text-sm">
             <div className="container grid md:grid-cols-2 gap-8">

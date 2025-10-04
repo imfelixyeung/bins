@@ -3,8 +3,8 @@ import React, { Suspense } from "react";
 
 const Page = () => {
   return (
-    <div className="container py-24">
-      <section className="py-16 flex flex-col items-center justify-center gap-3">
+    <div className="container py-16 grow flex flex-col justify-center">
+      <section className="flex flex-col items-center justify-center gap-3">
         <h1 className="text-3xl md:text-5xl font-semibold text-balance text-center">
           Check Your Bin Days
         </h1>
