@@ -56,9 +56,9 @@ export default async function RootLayout({
             </header>
             <main>{children}</main>
           </div>
-          <footer className="border-t py-6">
+          <footer className="border-t py-6 text-muted-foreground text-sm">
             <div className="container grid md:grid-cols-2 gap-8">
-              <div>
+              <div className="max-w-prose">
                 <p>
                   Data is provided by{" "}
                   <Link
@@ -86,7 +86,7 @@ export default async function RootLayout({
                   </Link>
                   .
                 </p>
-                <p>
+                <p className="mt-2">
                   Contact{" "}
                   <Link
                     href="mailto:me@felixyeung.com"
@@ -123,7 +123,9 @@ export default async function RootLayout({
               </div>
             </div>
             <div className="container text-muted-foreground mt-6 flex items-center justify-between gap-3 flex-wrap-reverse">
-              <CopyRight />
+              <p>
+                <CopyRight />
+              </p>
               <ThemeSwitch />
             </div>
           </footer>
