@@ -3,6 +3,7 @@ import { getSummaryAddress } from "@/functions/format-address";
 import { searchJobs } from "@/functions/search-jobs";
 import AddToRecents from "@/ui/add-to-recents";
 import ClientOnly from "@/ui/client-only";
+import NearbyMap from "@/ui/nearby-map";
 import PremisesJobList from "@/ui/premises-job-list";
 import { capitalCase } from "change-case";
 import { Metadata } from "next";
@@ -82,6 +83,11 @@ const Page = async (props: PageProps) => {
           Search for another address
         </Link>
       </div>
+      {premises.addressPostcode && (
+        <div className="my-16">
+          <NearbyMap postcode={premises.addressPostcode} />
+        </div>
+      )}
     </div>
   );
 };
