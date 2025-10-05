@@ -68,26 +68,38 @@ const NearbyMapClient = ({
           mapStyle="https://tiles.openfreemap.org/styles/liberty"
         >
           {nearby.map(({ longitude, latitude, postcode, distance, jobs }) => {
-            const nextJob = jobs.find((job) => job.date === selectedDate);
-            if (!nextJob) return <Fragment key={postcode} />;
-            const { bin } = nextJob;
+            const dateJobs = jobs.filter((job) => job.date === selectedDate);
+            if (dateJobs.length === 0) return <Fragment key={postcode} />;
             return (
               <Marker
                 longitude={longitude}
                 latitude={latitude}
                 anchor="top"
-                key={postcode}
+                key={`${postcode}-${selectedDate}`}
               >
                 <div
                   className={cn(
                     "size-3 rounded-full",
-                    distance === 0 && "ring-4 ring-black",
-                    binStyles({
-                      bin: isSupportedBin(bin) ? bin : null,
-                      styled: false,
-                    })
+                    distance === 0 && "ring-4 ring-black"
                   )}
                 >
+                  <div className="flex h-full w-full justify-stretch rounded-full overflow-hidden">
+                    {dateJobs.map((job) => {
+                      const { bin } = job;
+                      return (
+                        <div
+                          key={bin}
+                          className={cn(
+                            binStyles({
+                              bin: isSupportedBin(bin) ? bin : null,
+                              styled: false,
+                            }),
+                            "grow"
+                          )}
+                        ></div>
+                      );
+                    })}
+                  </div>
                   <div className="sr-only">{postcode}</div>
                 </div>
               </Marker>
