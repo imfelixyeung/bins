@@ -1,0 +1,17 @@
+name: garbage-collection
+run-name: Daily Registry Garbage Collection
+
+on:
+  schedule:
+    - cron: "0 4 * * *"
+
+jobs:
+  garbage-collection:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install doctl
+        uses: digitalocean/action-doctl@v2
+        with:
+          token: ${{ secrets.DIGITALOCEAN_ACCESS_TOKEN }}
+      - name: Run garbage collection
+        run: doctl registry garbage-collection start --include-untagged-manifests registry.digitalocean.com/felixyeung
