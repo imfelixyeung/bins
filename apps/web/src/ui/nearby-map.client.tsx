@@ -7,6 +7,7 @@ import Map, { Marker } from "react-map-gl/maplibre";
 import { cn } from "@/lib/utils";
 import { binStyles, isSupportedBin } from "./bins";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { format } from "date-fns";
 
 const NearbyMapClient = ({
   nearby,
@@ -34,9 +35,24 @@ const NearbyMapClient = ({
     return Array.from(dates).sort();
   }, [nearby]);
 
+  const defaultDate = useMemo(() => {
+    const postcode = nearby[0]!;
+    const today = format(new Date(), "yyyy-MM-dd");
+
+    return (
+      postcode.jobs.find((job) => job.date >= today)?.date ||
+      uniqueDates[0] ||
+      undefined
+    );
+  }, [nearby, uniqueDates]);
+
   const [selectedDate, setSelectedDate] = React.useState<string | undefined>(
-    uniqueDates[0] || undefined
+    defaultDate
   );
+
+  if (uniqueDates.length === 0) {
+    return null;
+  }
 
   return (
     <section className="rounded-xl overflow-hidden">
