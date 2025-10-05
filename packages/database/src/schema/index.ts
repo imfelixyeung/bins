@@ -7,6 +7,7 @@ import {
   timestamp,
   serial,
   index,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 
 export const premisesTable = pgTable(
@@ -33,8 +34,12 @@ export const premisesTable = pgTable(
   (table) => [index("search_postcode_index").on(table.searchPostcode)]
 );
 
-export const premisesRelation = relations(premisesTable, ({ many }) => ({
+export const premisesRelation = relations(premisesTable, ({ one, many }) => ({
   jobs: many(jobsTable),
+  postcode: one(postcodesTable, {
+    fields: [premisesTable.addressPostcode],
+    references: [postcodesTable.id],
+  }),
 }));
 
 export const jobsTable = pgTable(
@@ -70,3 +75,20 @@ export const etagsTable = pgTable("etags", {
     .notNull()
     .defaultNow(),
 });
+
+// stores postcode geolocation data
+export const postcodesTable = pgTable("postcodes", {
+  id: text("id").primaryKey(),
+  latitude: doublePrecision("latitude").notNull(),
+  longitude: doublePrecision("longitude").notNull(),
+  createdAt: timestamp("created_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+  updatedAt: timestamp("updated_at", { withTimezone: true })
+    .notNull()
+    .defaultNow(),
+});
+
+export const postcodesRelation = relations(postcodesTable, ({ many }) => ({
+  premises: many(premisesTable),
+}));
