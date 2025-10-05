@@ -9,8 +9,10 @@ import logger from "./logger";
 import { updatePremises } from "./update/premises";
 import { updateJobs } from "./update/jobs";
 import { vacuumFull } from "./db";
+import { fetchPostcodeData } from "./postcodes";
 
-const queue = new PQueue({ concurrency: 1 });
+const updateQueue = new PQueue({ concurrency: 1 });
+const postcodesQueue = new PQueue({ concurrency: 1 });
 
 type Status = {
   running: boolean;
@@ -122,9 +124,9 @@ const run = async () => {
 
 const queueRun = async () => {
   // if queue size is greater than 1, don't run
-  if (queue.size >= 1) return;
+  if (updateQueue.size >= 1) return;
 
-  await queue.add(run);
+  await updateQueue.add(run);
 };
 
 // create an express server on 3000 so that we can trigger the update manually
@@ -172,5 +174,11 @@ if (process.env.ONE_SHOT) {
   schedule.scheduleJob("0 3 * * *", () => {
     logger.info("Triggering update via cron job");
     queueRun();
+  });
+
+  // every 5 seconds, between 2am and 5am, fetch postcode data
+  schedule.scheduleJob("*/10 * 2-5 * * *", async () => {
+    if (postcodesQueue.size >= 1) return;
+    await postcodesQueue.add(fetchPostcodeData).catch(() => null);
   });
 }

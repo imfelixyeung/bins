@@ -20,7 +20,8 @@
     "pino-http": "^11.0.0",
     "textlinestream": "^1.1.1",
     "tsx": "^4.20.6",
-    "undici": "^7.16.0"
+    "undici": "^7.16.0",
+    "zod": "^3.25.76"
   },
   "keywords": [],
   "author": "",
