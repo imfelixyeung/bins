@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbo",
+    "dev": "next dev --turbopack",
     "build": "next build",
     "build:pagefind": "pagefind --site .next/server/app --output-path public/_pagefind",
     "start": "next start",
@@ -30,13 +30,13 @@
     "ical-generator": "^9.0.0",
     "lucide-react": "^0.544.0",
     "mcp-handler": "^1.0.2",
-    "next": "15.5.3",
+    "next": "15.5.4",
     "next-themes": "^0.4.6",
     "nextra": "^4.4.0",
     "nextra-theme-docs": "^4.4.0",
     "nuqs": "^2.6.0",
-    "react": "19.1.1",
-    "react-dom": "19.1.1",
+    "react": "19.2.0",
+    "react-dom": "19.2.0",
     "react-hook-form": "^7.63.0",
     "serwist": "^9.2.1",
     "superjson": "^2.2.2",
@@ -52,13 +52,19 @@
     "@tailwindcss/container-queries": "^0.1.1",
     "@tailwindcss/postcss": "^4.1.13",
     "@types/node": "^22.10.6",
-    "@types/react": "19.1.13",
-    "@types/react-dom": "19.1.9",
+    "@types/react": "19.2.0",
+    "@types/react-dom": "19.2.0",
     "eslint": "^8",
-    "eslint-config-next": "15.5.3",
+    "eslint-config-next": "15.5.4",
     "pagefind": "^1.4.0",
     "postcss": "^8.5.6",
     "tailwindcss": "^4.1.13",
     "typescript": "^5.9.2"
+  },
+  "pnpm": {
+    "overrides": {
+      "@types/react": "19.2.0",
+      "@types/react-dom": "19.2.0"
+    }
   }
 }
