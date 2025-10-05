@@ -78,16 +78,14 @@ const Page = async (props: PageProps) => {
       <div className="mt-8">
         <PremisesJobList data={premises} />
       </div>
+      {premises.addressPostcode && (
+        <NearbyMap postcode={premises.addressPostcode} />
+      )}
       <div className="mt-16">
         <Link href="/" className={buttonVariants({ variant: "outline" })}>
           Search for another address
         </Link>
       </div>
-      {premises.addressPostcode && (
-        <div className="my-16">
-          <NearbyMap postcode={premises.addressPostcode} />
-        </div>
-      )}
     </div>
   );
 };

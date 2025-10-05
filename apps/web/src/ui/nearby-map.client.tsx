@@ -55,73 +55,78 @@ const NearbyMapClient = ({
   }
 
   return (
-    <section className="rounded-xl overflow-hidden">
-      <Tabs
-        value={selectedDate}
-        onValueChange={setSelectedDate}
-        className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-      >
-        <TabsList>
-          {uniqueDates.map((date) => (
-            <TabsTrigger value={date} key={date}>
-              {new Date(date).toLocaleDateString(undefined, {
-                weekday: "short",
-                month: "short",
-                day: "numeric",
-              })}
-            </TabsTrigger>
-          ))}
-        </TabsList>
-      </Tabs>
-      <div className="min-h-64 w-full grid">
-        <Map
-          initialViewState={{
-            longitude,
-            latitude,
-            zoom: 14,
-          }}
-          style={{ width: "100%", height: "100%" }}
-          mapStyle="https://tiles.openfreemap.org/styles/liberty"
+    <section className="my-16">
+      <h2 className="text-2xl font-semibold mb-3">Postcode Map</h2>
+      <div className="rounded-xl overflow-hidden">
+        <Tabs
+          value={selectedDate}
+          onValueChange={setSelectedDate}
+          className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-none"
         >
-          {nearby.map(({ longitude, latitude, postcode, distance, jobs }) => {
-            const dateJobs = jobs.filter((job) => job.date === selectedDate);
-            if (dateJobs.length === 0) return <Fragment key={postcode} />;
-            return (
-              <Marker
-                longitude={longitude}
-                latitude={latitude}
-                anchor="top"
-                key={`${postcode}-${selectedDate}`}
-              >
-                <div
-                  className={cn(
-                    "size-3 rounded-full",
-                    distance === 0 && "ring-4 ring-black"
-                  )}
+          <TabsList className="rounded-none">
+            {uniqueDates.map((date) => (
+              <TabsTrigger value={date} key={date}>
+                {new Date(date).toLocaleDateString(undefined, {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+        <div className="min-h-64 w-full grid">
+          <Map
+            initialViewState={{
+              longitude,
+              latitude,
+              zoom: 14,
+            }}
+            style={{ width: "100%", height: "100%" }}
+            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+          >
+            {nearby.map(({ longitude, latitude, postcode, distance, jobs }) => {
+              const dateJobs = jobs.filter((job) => job.date === selectedDate);
+              if (dateJobs.length === 0) return <Fragment key={postcode} />;
+              return (
+                <Marker
+                  longitude={longitude}
+                  latitude={latitude}
+                  anchor="top"
+                  key={`${postcode}-${selectedDate}`}
                 >
-                  <div className="flex h-full w-full justify-stretch rounded-full overflow-hidden">
-                    {dateJobs.map((job) => {
-                      const { bin } = job;
-                      return (
-                        <div
-                          key={bin}
-                          className={cn(
-                            binStyles({
-                              bin: isSupportedBin(bin) ? bin : null,
-                              styled: false,
-                            }),
-                            "grow"
-                          )}
-                        ></div>
-                      );
-                    })}
+                  <div
+                    className={cn(
+                      "size-3 rounded-full",
+                      distance === 0 && "ring-4 ring-black"
+                    )}
+                  >
+                    <div className="sr-only">{postcode}</div>
+                    <ul className="flex h-full w-full justify-stretch rounded-full overflow-hidden">
+                      {dateJobs.map((job) => {
+                        const { bin } = job;
+                        return (
+                          <li
+                            key={bin}
+                            className={cn(
+                              binStyles({
+                                bin: isSupportedBin(bin) ? bin : null,
+                                styled: false,
+                              }),
+                              "grow"
+                            )}
+                          >
+                            <span className="sr-only">{bin} bin</span>
+                          </li>
+                        );
+                      })}
+                    </ul>
                   </div>
-                  <div className="sr-only">{postcode}</div>
-                </div>
-              </Marker>
-            );
-          })}
-        </Map>
+                </Marker>
+              );
+            })}
+          </Map>
+        </div>
       </div>
     </section>
   );
