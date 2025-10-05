@@ -10,23 +10,7 @@ import Copyable from "./copyable";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
-
-const supportedBins = ["BLACK", "GREEN", "BROWN"] as const;
-type SupportedBin = (typeof supportedBins)[number];
-
-const binStyles = cva("py-5 rounded-t-lg", {
-  variants: {
-    bin: {
-      BLACK: "bg-gray-900 text-gray-50",
-      GREEN: "bg-green-700 text-gray-50",
-      BROWN: "bg-amber-900 text-gray-50",
-    },
-  },
-});
-
-const isSupportedBin = (bin: string): bin is SupportedBin => {
-  return supportedBins.includes(bin as SupportedBin);
-};
+import { binStyles, isSupportedBin } from "./bins";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   const style = binStyles({ bin: isSupportedBin(bin) ? bin : null });

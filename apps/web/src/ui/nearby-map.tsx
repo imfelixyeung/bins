@@ -1,12 +1,25 @@
-import { getNearbyPostcodes } from "@/lib/api/postcodes.io/nearby";
+"use client";
+
 import React from "react";
 import NearbyMapClient from "./nearby-map.client";
+import { useTRPC } from "@/trpc/utils";
+import { useQuery } from "@tanstack/react-query";
 
-const NearbyMap = async ({ postcode }: { postcode: string }) => {
-  const nearby = await getNearbyPostcodes(postcode).catch(() => null);
-  if (!nearby || nearby.length === 0) return null;
+const NearbyMap = ({ postcode }: { postcode: string }) => {
+  const trpc = useTRPC();
+  const nearby = useQuery(trpc.nearby.get.queryOptions({ postcode }));
 
-  return <NearbyMapClient nearby={nearby} />;
+  if (nearby.isLoading) {
+    return (
+      <div className="min-h-64 w-full grid rounded-xl bg-gray-200 animate-pulse" />
+    );
+  }
+
+  if (nearby.error || !nearby.data) {
+    return null;
+  }
+
+  return <NearbyMapClient nearby={nearby.data} />;
 };
 
 export default NearbyMap;
