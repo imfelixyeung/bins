@@ -7,7 +7,11 @@ import { useQuery } from "@tanstack/react-query";
 
 const NearbyMap = ({ postcode }: { postcode: string }) => {
   const trpc = useTRPC();
-  const nearby = useQuery(trpc.nearby.get.queryOptions({ postcode }));
+  const nearby = useQuery(
+    !!postcode
+      ? trpc.nearby.get.queryOptions({ postcode })
+      : trpc.map.get.queryOptions()
+  );
 
   if (nearby.isLoading) {
     return (

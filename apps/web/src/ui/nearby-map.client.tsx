@@ -75,7 +75,7 @@ const NearbyMapClient = ({
             ))}
           </TabsList>
         </Tabs>
-        <div className="min-h-64 w-full grid">
+        <div className="min-h-128 w-full grid">
           <Map
             initialViewState={{
               longitude,

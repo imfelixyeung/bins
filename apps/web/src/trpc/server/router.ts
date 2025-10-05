@@ -4,6 +4,7 @@ import { searchPremises } from "@/functions/search-premises";
 import { getRandomPremises } from "@/functions/get-random-premises";
 import { getNearbyPostcodes } from "@/lib/api/postcodes.io/nearby";
 import { getPostcodeJobs } from "@/functions/get-postcode-jobs";
+import { getPostcodeMap } from "@/functions/get-postcode-map";
 
 export const appRouter = router({
   premises: {
@@ -33,6 +34,11 @@ export const appRouter = router({
           jobs: jobs.filter((job) => job.postcode === postcode.postcode),
         }));
       }),
+  },
+  map: {
+    get: publicProcedure.query(async () => {
+      return await getPostcodeMap();
+    }),
   },
 });
 
