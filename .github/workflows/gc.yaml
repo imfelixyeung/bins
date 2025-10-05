@@ -2,6 +2,7 @@ name: garbage-collection
 run-name: Daily Registry Garbage Collection
 
 on:
+  workflow_dispatch:
   schedule:
     - cron: "0 4 * * *"
 
