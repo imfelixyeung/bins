@@ -11,7 +11,7 @@ const NearbyMap = ({ postcode }: { postcode: string }) => {
 
   if (nearby.isLoading) {
     return (
-      <div className="min-h-64 w-full grid rounded-xl bg-gray-200 animate-pulse" />
+      <div className="my-16 min-h-64 w-full grid rounded-xl bg-gray-200 animate-pulse" />
     );
   }
 
