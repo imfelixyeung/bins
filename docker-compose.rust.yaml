@@ -1,0 +1,74 @@
+# Rust rewrite: the backend API plus a PostGIS database, with the two nightly
+# data syncs scheduled as cron jobs. No migration service (the app runs its own
+# migrations), no proxy and no tunnel.
+name: bins-rust
+
+services:
+  db:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db
+    volumes:
+      # Matches PGDATA in the postgis image.
+      - db-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
+      interval: 5s
+      timeout: 30s
+      retries: 15
+      start_period: 10s
+
+  backend:
+    build:
+      context: ./backend
+      target: runtime
+    image: bins-backend:local
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      PORT: "3000"
+      RUST_LOG: backend=info
+    ports:
+      - "3000:3000"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  sync-premises:
+    build:
+      context: ./backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync premises
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      # Evaluated in this zone, so 4am means London time.
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
+
+  sync-jobs:
+    build:
+      context: ./backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync jobs
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  db-data:

@@ -11,7 +11,7 @@ async fn main() -> anyhow::Result<()> {
         .init();
 
     match Cli::parse().command {
-        Command::Serve => backend::serve::run().await,
+        Command::Serve => backend::serve::run().await?,
         Command::Sync { target } => match target {
             SyncTarget::Premises { source } => backend::sync::premises(&source).await?,
             SyncTarget::Jobs { source } => backend::sync::jobs(&source).await?,
