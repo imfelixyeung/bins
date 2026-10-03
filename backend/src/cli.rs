@@ -1,5 +1,7 @@
 use clap::{Parser, Subcommand};
 
+use crate::import::{jobs, premises};
+
 #[derive(Parser)]
 #[command(
     name = "backend",
@@ -26,8 +28,16 @@ pub enum Command {
 #[derive(Subcommand)]
 pub enum SyncTarget {
     /// Sync premises
-    Premises,
+    Premises {
+        /// CSV URL, or path to a local CSV
+        #[arg(default_value = premises::DEFAULT_URL)]
+        source: String,
+    },
 
     /// Sync jobs
-    Jobs,
+    Jobs {
+        /// CSV URL, or path to a local CSV
+        #[arg(default_value = jobs::DEFAULT_URL)]
+        source: String,
+    },
 }

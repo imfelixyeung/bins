@@ -1,6 +1,6 @@
 CREATE TABLE dm_jobs (
     id serial PRIMARY KEY,
-    premises_id integer NOT NULL REFERENCES dm_premises (id) ON DELETE CASCADE,
+    premises_id integer NOT NULL,
     bin text NOT NULL,
     date date NOT NULL
 );

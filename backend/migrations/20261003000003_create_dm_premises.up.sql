@@ -5,8 +5,7 @@ CREATE TABLE dm_premises (
     address_street text,
     address_locality text,
     address_city text,
-    address_postcode text REFERENCES postcodes (id)
-        ON UPDATE CASCADE ON DELETE SET NULL,
+    address_postcode text,
     search_postcode text,
     created_at timestamp with time zone NOT NULL DEFAULT now(),
     updated_at timestamp with time zone NOT NULL DEFAULT now()
