@@ -220,6 +220,59 @@ async fn premises_returns_every_address_at_the_postcode() {
 }
 
 #[tokio::test]
+async fn random_premises_returns_a_stored_premise() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let (status, body) = server.get("/api/random/premises").await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["success"], true);
+    assert!(body["timestamp"].as_str().is_some_and(|t| t.ends_with('Z')));
+
+    let data = &body["data"];
+    let id = data["id"].as_i64().expect("a premise id");
+    assert!(
+        data["addressPostcode"]
+            .as_str()
+            .is_some_and(|p| !p.is_empty()),
+        "the caller needs a postcode to send the visitor to"
+    );
+    // The whole address, not just the two columns the tRPC procedure returned.
+    assert_eq!(
+        data.as_object().expect("an address").len(),
+        8,
+        "the payload should match the one from /api/premises"
+    );
+
+    // And it is a row that exists, rather than an id made up on the way out.
+    let stored: Option<(i32, String)> =
+        sqlx::query_as("SELECT id, search_postcode FROM dm_premises WHERE id = $1")
+            .bind(i32::try_from(id).expect("an id Postgres holds"))
+            .fetch_optional(&server.pool)
+            .await
+            .expect("querying the premise that came back");
+    assert_eq!(stored.map(|(stored, _)| stored), Some(id as i32));
+}
+
+#[tokio::test]
+async fn random_premises_takes_no_query_string() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    // Unknown parameters are ignored, as they are everywhere else, so a
+    // postcode sent by mistake cannot narrow or empty the result.
+    let (status, body) = server
+        .get("/api/random/premises?postcode=ZZ99%209ZZ&format=csv")
+        .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(body["data"]["id"].as_i64().is_some());
+}
+
+#[tokio::test]
 async fn premises_answers_with_an_empty_list_for_an_unknown_postcode() {
     let Some(server) = TestServer::start().await else {
         return;

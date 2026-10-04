@@ -1,6 +1,6 @@
-//! The reads behind the `/api/premises` and `/api/jobs` endpoints, ported from
-//! the Next.js app's `functions/search-premises.ts` and
-//! `functions/search-jobs.ts`.
+//! The reads behind the `/api/premises`, `/api/random/premises` and `/api/jobs`
+//! endpoints, ported from the Next.js app's `functions/search-premises.ts`,
+//! `functions/get-random-premises.ts` and `functions/search-jobs.ts`.
 //!
 //! The row structs double as the API response shape, so the field names and
 //! ordering here are what clients see and must not drift.
@@ -86,6 +86,21 @@ pub async fn premises(pool: &PgPool, postcode: &str) -> Result<Vec<Premises>> {
     }
 
     Ok(found)
+}
+
+/// A premise chosen at random, or `None` when there are no premises at all.
+///
+/// `ORDER BY random()` has no index to work from, so this reads every row. The
+/// Next.js app did the same, behind a one second cache.
+pub async fn random_premise(pool: &PgPool) -> Result<Option<Premises>> {
+    let sql = AssertSqlSafe(format!(
+        "SELECT {PREMISES_COLUMNS} FROM dm_premises ORDER BY random() LIMIT 1"
+    ));
+
+    sqlx::query_as(sql)
+        .fetch_optional(pool)
+        .await
+        .context("querying a random premise")
 }
 
 /// The premise with `premises_id` and its jobs, or `None` when no such premise

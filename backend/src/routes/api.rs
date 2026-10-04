@@ -6,6 +6,7 @@
 
 pub mod jobs;
 pub mod premises;
+pub mod random;
 
 use std::collections::HashMap;
 
@@ -26,6 +27,7 @@ pub fn router() -> Router<PgPool> {
     Router::new()
         .route("/api/jobs", get(jobs::handler))
         .route("/api/premises", get(premises::handler))
+        .route("/api/random/premises", get(random::handler))
 }
 
 /// Every successful response is wrapped in this envelope.
@@ -52,6 +54,10 @@ pub type JobsBody = Json<Envelope<PremisesJobs>>;
 
 /// A shorthand for the payload of `/api/premises`, where `data` is a list.
 pub type PremisesBody = Json<Envelope<Vec<Premises>>>;
+
+/// A shorthand for the payload of `/api/random/premises`, where `data` is one
+/// premise, or `null` when there is nothing to choose from.
+pub type RandomBody = Json<Envelope<Option<Premises>>>;
 
 /// Anything that stops an endpoint from answering with `data`.
 #[derive(Debug)]
