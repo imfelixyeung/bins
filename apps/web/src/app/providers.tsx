@@ -3,11 +3,13 @@
 import React from "react";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { TRPCProvider } from "@/trpc/client/provider";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+
+const client = new QueryClient();
 
 const Providers = ({ children }: Readonly<{ children: React.ReactNode }>) => {
   return (
-    <TRPCProvider>
+    <QueryClientProvider client={client}>
       <NuqsAdapter>
         <ThemeProvider
           attribute="class"
@@ -18,7 +20,7 @@ const Providers = ({ children }: Readonly<{ children: React.ReactNode }>) => {
           {children}
         </ThemeProvider>
       </NuqsAdapter>
-    </TRPCProvider>
+    </QueryClientProvider>
   );
 };
 

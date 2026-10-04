@@ -43,7 +43,6 @@ import { getPresentableFullAddress } from "@/functions/format-address";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
-import { useTRPC } from "@/trpc/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { getRandomPremises, searchPremises } from "@/v2api/client";
 
