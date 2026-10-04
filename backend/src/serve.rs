@@ -14,7 +14,6 @@ pub async fn run() -> Result<()> {
     let pool = db::connect(&url).await?;
     // Migrations are owned by the app rather than a separate compose service.
     db::migrate(&pool).await?;
-    pool.close().await;
 
     let host = std::env::var("HOST").unwrap_or_else(|_| DEFAULT_HOST.to_owned());
     let port: u16 = std::env::var("PORT")
@@ -26,7 +25,8 @@ pub async fn run() -> Result<()> {
         .with_context(|| format!("binding {host}:{port}"))?;
 
     info!(address = %listener.local_addr()?, "listening");
-    axum::serve(listener, routes::router())
+    // The pool is handed to the router, which closes it on shutdown.
+    axum::serve(listener, routes::router(pool))
         .await
         .context("serving requests")
 }
