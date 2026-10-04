@@ -40,4 +40,7 @@ pub enum SyncTarget {
         #[arg(default_value = jobs::DEFAULT_URL)]
         source: String,
     },
+
+    /// Sync postcode coordinates from postcodes.io
+    Postcodes,
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { NearbyPostcode } from "@/lib/api/postcodes.io/nearby";
+import { NearbyPostcode } from "@/v2api/client";
 import React, { Fragment, useMemo } from "react";
 import "maplibre-gl/dist/maplibre-gl.css";
 import Map, { Marker } from "react-map-gl/maplibre";
@@ -9,17 +9,7 @@ import { binStyles, isSupportedBin } from "./bins";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format } from "date-fns";
 
-const NearbyMapClient = ({
-  nearby,
-}: {
-  nearby: (NearbyPostcode & {
-    jobs: {
-      bin: string;
-      date: string;
-      postcode: string | null;
-    }[];
-  })[];
-}) => {
+const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
   const self = nearby[0]!;
   const { latitude, longitude } = self;
 

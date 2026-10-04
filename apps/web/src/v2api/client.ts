@@ -67,3 +67,34 @@ export const searchJobs = async ({ premisesId }: { premisesId: number }) => {
     .then((data) => data.data);
 };
 export type SearchJobsSchema = z.infer<typeof searchJobsSchema>["data"];
+
+const postcodeJobSchema = jobSchema.merge(
+  z.object({
+    postcode: z.string(),
+  })
+);
+
+const nearbyPostcodeSchema = z.object({
+  postcode: z.string(),
+  latitude: z.number(),
+  longitude: z.number(),
+  distance: z.number(),
+  jobs: z.array(postcodeJobSchema),
+});
+
+export type NearbyPostcode = z.infer<typeof nearbyPostcodeSchema>;
+
+const nearbySchema = makeAPISchema(z.array(nearbyPostcodeSchema).nullable());
+export const getNearbyPostcodes = async ({
+  postcode,
+}: {
+  postcode: string;
+}) => {
+  const query = new URLSearchParams();
+  query.set("postcode", postcode);
+  return await fetch(`${BASE_URL}/nearby?${query.toString()}`)
+    .then((res) => res.json())
+    .then(nearbySchema.parseAsync)
+    .then((data) => data.data);
+};
+export type NearbySchema = z.infer<typeof nearbySchema>["data"];

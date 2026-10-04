@@ -33,7 +33,7 @@ const Page = () => {
       <div className="mt-8">
         <PremisesJobList data={premises} />
       </div>
-      {premises.addressPostcode && (false as boolean) && (
+      {premises.addressPostcode && (
         <NearbyMap postcode={premises.addressPostcode} />
       )}
       <div className="mt-16">

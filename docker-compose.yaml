@@ -58,6 +58,9 @@ services:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
       - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
       - SKIP_SITEMAP=
+      # tRPC procedures call /api/v2 from the server, where relative URLs do not
+      # resolve, so they need the host of the rewrite backend.
+      - V2_API_HOST=http://rewrite-backend:3000
     depends_on:
       - db
 
@@ -170,6 +173,25 @@ services:
       DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
       SYNC_COMMAND: sync jobs
       SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      rewrite-db:
+        condition: service_healthy
+
+  # Fills in coordinates for one postcode and its 100 nearest neighbours per run,
+  # so this runs often rather than once a day: every 10 minutes between 2am and
+  # 6am local time. The schedule is the one the node worker used.
+  rewrite-sync-postcodes:
+    build:
+      context: ./backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
+      SYNC_COMMAND: sync postcodes
+      SCHEDULE: "*/10 * 2-5 * * *"
       RUST_LOG: backend=info
       TZ: Europe/London
     depends_on:

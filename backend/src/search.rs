@@ -1,5 +1,7 @@
-//! The reads behind the `/api/premises`, `/api/random/premises` and `/api/jobs`
-//! endpoints.
+//! The reads behind the `/api/premises`, `/api/random/premises`, `/api/jobs` and
+//! `/api/nearby` endpoints, ported from the Next.js app's
+//! `functions/search-premises.ts`, `functions/get-random-premises.ts`,
+//! `functions/search-jobs.ts` and `functions/get-postcode-jobs.ts`.
 //!
 //! The row structs double as the API response shape, so the field names and
 //! ordering here are what clients see and must not drift.
@@ -10,6 +12,7 @@ use serde::{Serialize, Serializer};
 use sqlx::{AssertSqlSafe, FromRow, PgPool};
 
 use crate::import::premises::search_postcode;
+use crate::postcodes;
 
 /// The address columns both endpoints return. `search_postcode` is only the
 /// lookup key and `created_at` is never served, so neither is selected.
@@ -20,6 +23,11 @@ const PREMISES_COLUMNS: &str = "id, address_room, address_number, address_street
 /// sorting them costs more than the ordering is worth for a postcode holding
 /// hundreds of properties.
 const MAX_SORTED_RESULTS: usize = 100;
+
+/// How far `/api/nearby` looks and how many postcodes it answers with. Both are
+/// what the Next.js app asked postcodes.io for, so the map covers the same area.
+const NEARBY_RADIUS_METRES: f64 = 2_000.0;
+const NEARBY_LIMIT: i64 = 100;
 
 /// An address as the API serves it. `address_room` and friends are free text
 /// from the upstream feed, so all but `id` are optional.
@@ -51,6 +59,39 @@ pub struct PremisesJobs {
     #[serde(flatten)]
     pub premises: Premises,
     pub jobs: Vec<Job>,
+}
+
+/// A postcode near the one that was asked for, as served by `/api/nearby`.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+pub struct NearbyPostcode {
+    pub postcode: String,
+    pub latitude: f64,
+    pub longitude: f64,
+    /// Metres from the postcode that was asked for.
+    pub distance: f64,
+    pub jobs: Vec<PostcodeJob>,
+}
+
+/// The same postcode before its jobs are attached, which is what the database
+/// row maps onto.
+#[derive(Debug, FromRow)]
+struct NearbyRow {
+    #[sqlx(rename = "postcode")]
+    postcode: String,
+    latitude: f64,
+    longitude: f64,
+    distance: f64,
+}
+
+/// A collection happening at one postcode, without knowing which address it
+/// belongs to. Every postcode on a street collects on the same days, so `/api/jobs`
+/// needs the address and this endpoint does not.
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize)]
+pub struct PostcodeJob {
+    pub bin: String,
+    /// `NaiveDate` serialises as `YYYY-MM-DD`, which is what clients expect.
+    pub date: NaiveDate,
+    pub postcode: String,
 }
 
 /// Timestamps go out in the same shape `Date.prototype.toISOString` produced in
@@ -128,6 +169,100 @@ pub async fn jobs(pool: &PgPool, premises_id: i32) -> Result<Option<PremisesJobs
     .with_context(|| format!("querying jobs for premise {premises_id}"))?;
 
     Ok(Some(PremisesJobs { premises, jobs }))
+}
+
+/// The postcode `postcode` and up to [`NEARBY_LIMIT`] others within
+/// [`NEARBY_RADIUS_METRES`], nearest first, each carrying its upcoming jobs.
+///
+/// `None` when the postcode has no coordinates, which is to say when the
+/// `sync postcodes` job has not reached it yet. The map in the web app draws
+/// nothing for a null answer, so this is a quiet answer rather than a 404.
+pub async fn nearby_postcodes(
+    pool: &PgPool,
+    postcode: &str,
+) -> Result<Option<Vec<NearbyPostcode>>> {
+    let wanted = postcodes::canonical(postcode);
+
+    // The anchor is the postcode being asked about. Crossing `postcodes` with it
+    // yields nothing at all when the anchor is missing, which is what makes an
+    // unsynced postcode come back empty. `ST_DWithin` reads the GiST index on
+    // `location`, and distances come back in metres because the column is a
+    // geography rather than a geometry.
+    let sql = AssertSqlSafe(
+        "WITH anchor AS (SELECT location FROM postcodes WHERE id = $1) \
+         SELECT nearby.id AS postcode, nearby.latitude, nearby.longitude, \
+                ST_Distance(nearby.location, anchor.location) AS distance \
+         FROM postcodes nearby, anchor \
+         WHERE ST_DWithin(nearby.location, anchor.location, $2) \
+         ORDER BY distance, nearby.id LIMIT $3",
+    );
+
+    let mut found: Vec<NearbyPostcode> = sqlx::query_as::<_, NearbyRow>(sql)
+        .bind(&wanted)
+        .bind(NEARBY_RADIUS_METRES)
+        .bind(NEARBY_LIMIT)
+        .fetch_all(pool)
+        .await
+        .with_context(|| format!("querying postcodes near {wanted}"))?
+        .into_iter()
+        .map(|row| NearbyPostcode {
+            postcode: row.postcode,
+            latitude: row.latitude,
+            longitude: row.longitude,
+            distance: row.distance,
+            jobs: Vec::new(),
+        })
+        .collect();
+
+    if found.is_empty() {
+        return Ok(None);
+    }
+
+    let jobs = postcode_jobs(
+        pool,
+        &found
+            .iter()
+            .map(|nearby| nearby.postcode.as_str())
+            .collect::<Vec<_>>(),
+    )
+    .await?;
+
+    for nearby in &mut found {
+        nearby.jobs = jobs
+            .iter()
+            .filter(|job| job.postcode == nearby.postcode)
+            .cloned()
+            .collect();
+    }
+
+    Ok(Some(found))
+}
+
+/// The distinct collections happening at any of `postcodes`, ordered so that
+/// grouping them per postcode keeps them in date order.
+pub async fn postcode_jobs(pool: &PgPool, postcodes: &[&str]) -> Result<Vec<PostcodeJob>> {
+    if postcodes.is_empty() {
+        return Ok(Vec::new());
+    }
+
+    // Every premise on a street shares a collection schedule, so the address is
+    // collapsed away and one row is kept per postcode, bin and date.
+    let sql = AssertSqlSafe(
+        "SELECT jobs.bin, jobs.date, premises.address_postcode AS postcode \
+         FROM dm_premises premises \
+         JOIN dm_jobs jobs ON jobs.premises_id = premises.id \
+         WHERE premises.address_postcode = ANY($1) \
+         GROUP BY jobs.bin, jobs.date, premises.address_postcode \
+         ORDER BY premises.address_postcode, jobs.date, jobs.bin",
+    );
+
+    let jobs: Vec<PostcodeJob> = sqlx::query_as(sql)
+        .bind(postcodes)
+        .fetch_all(pool)
+        .await
+        .with_context(|| format!("querying jobs for {} postcodes", postcodes.len()))?;
+
+    Ok(jobs)
 }
 
 /// The house number to sort on. Anything that does not start with digits sorts
@@ -286,6 +421,32 @@ mod tests {
         assert_eq!(
             json["jobs"],
             serde_json::json!([{ "bin": "BLACK", "date": "2026-11-02" }])
+        );
+    }
+
+    #[test]
+    fn nearby_postcodes_carry_their_distance_and_collections() {
+        let found = NearbyPostcode {
+            postcode: "LS6 2SE".to_owned(),
+            latitude: 53.821771,
+            longitude: -1.563046,
+            distance: 0.0,
+            jobs: vec![PostcodeJob {
+                bin: "BLACK".to_owned(),
+                date: NaiveDate::from_ymd_opt(2026, 11, 2).unwrap(),
+                postcode: "LS6 2SE".to_owned(),
+            }],
+        };
+
+        assert_eq!(
+            json(&found),
+            serde_json::json!({
+                "postcode": "LS6 2SE",
+                "latitude": 53.821771,
+                "longitude": -1.563046,
+                "distance": 0.0,
+                "jobs": [{ "bin": "BLACK", "date": "2026-11-02", "postcode": "LS6 2SE" }],
+            })
         );
     }
 }

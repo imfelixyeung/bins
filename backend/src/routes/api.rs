@@ -5,6 +5,7 @@
 //! either `issues` or `message`.
 
 pub mod jobs;
+pub mod nearby;
 pub mod premises;
 pub mod random;
 
@@ -19,13 +20,14 @@ use serde::Serialize;
 use sqlx::PgPool;
 use tracing::error;
 
-use crate::search::{Premises, PremisesJobs};
+use crate::search::{NearbyPostcode, Premises, PremisesJobs};
 
 /// The router for everything under `/api`, returning the state its handlers
 /// need.
 pub fn router() -> Router<PgPool> {
     Router::new()
         .route("/api/jobs", get(jobs::handler))
+        .route("/api/nearby", get(nearby::handler))
         .route("/api/premises", get(premises::handler))
         .route("/api/random/premises", get(random::handler))
 }
@@ -58,6 +60,10 @@ pub type PremisesBody = Json<Envelope<Vec<Premises>>>;
 /// A shorthand for the payload of `/api/random/premises`, where `data` is one
 /// premise, or `null` when there is nothing to choose from.
 pub type RandomBody = Json<Envelope<Option<Premises>>>;
+
+/// A shorthand for the payload of `/api/nearby`, where `data` is a list of
+/// nearby postcodes, or `null` when the postcode asked for is not known.
+pub type NearbyBody = Json<Envelope<Option<Vec<NearbyPostcode>>>>;
 
 /// Anything that stops an endpoint from answering with `data`.
 #[derive(Debug)]

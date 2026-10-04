@@ -15,6 +15,7 @@ async fn main() -> anyhow::Result<()> {
         Command::Sync { target } => match target {
             SyncTarget::Premises { source } => backend::sync::premises(&source).await?,
             SyncTarget::Jobs { source } => backend::sync::jobs(&source).await?,
+            SyncTarget::Postcodes => backend::sync::postcodes().await?,
         },
     }
 

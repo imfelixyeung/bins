@@ -1,8 +1,10 @@
 import { publicProcedure, router } from ".";
 import z from "zod";
-import { getNearbyPostcodes } from "@/lib/api/postcodes.io/nearby";
-import { getPostcodeJobs } from "@/functions/get-postcode-jobs";
-import { getRandomPremises, searchPremises } from "@/v2api/client";
+import {
+  getNearbyPostcodes,
+  getRandomPremises,
+  searchPremises,
+} from "@/v2api/client";
 
 export const appRouter = router({
   premises: {
@@ -20,17 +22,9 @@ export const appRouter = router({
     get: publicProcedure
       .input(z.object({ postcode: z.string() }))
       .query(async ({ input }) => {
-        const nearby = await getNearbyPostcodes(input.postcode).catch(
-          () => null
-        );
-        if (!nearby || nearby.length === 0) return null;
-
-        const jobs = await getPostcodeJobs(nearby.map((p) => p.postcode));
-
-        return nearby.map((postcode) => ({
-          ...postcode,
-          jobs: jobs.filter((job) => job.postcode === postcode.postcode),
-        }));
+        // The backend answers with null when it has no coordinates for the
+        // postcode, which is what the map draws nothing for.
+        return await getNearbyPostcodes(input).catch(() => null);
       }),
   },
 });
