@@ -1,4 +1,3 @@
-import { ReturnedJobs } from "@/functions/search-jobs";
 import React from "react";
 import Address from "./address";
 import { isAfter, format } from "date-fns";
@@ -11,6 +10,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { binStyles, isSupportedBin } from "./bins";
+import { SearchJobsSchema } from "@/v2api/client";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   const style = binStyles({ bin: isSupportedBin(bin) ? bin : null });
@@ -41,7 +41,7 @@ const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
 
 const preferredBinOrder = ["BLACK", "GREEN", "BROWN"];
 
-const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
+const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
   const now = new Date();
   const jobsByBin = Object.entries(
     data.jobs
@@ -54,7 +54,7 @@ const PremisesJobList = ({ data }: { data: ReturnedJobs }) => {
           acc[bin].push(job.date);
           return acc;
         },
-        {} as Record<string, ReturnedJobs["jobs"][number]["date"][]>
+        {} as Record<string, SearchJobsSchema["jobs"][number]["date"][]>
       )
   )
     .map(([bin, dates]) => ({ bin, dates }))

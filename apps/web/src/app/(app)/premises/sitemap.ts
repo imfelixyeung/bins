@@ -20,7 +20,7 @@ const sitemap = async ({
   if (!pagePremises.length) notFound();
 
   return pagePremises.map(({ id, updatedAt }) => ({
-    url: new URL(`/premises/${id}`, BASE_URL).toString(),
+    url: new URL(`/premises?id=${id}`, BASE_URL).toString(),
     lastModified: updatedAt,
   }));
 };

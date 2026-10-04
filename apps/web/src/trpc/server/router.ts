@@ -1,9 +1,8 @@
 import { publicProcedure, router } from ".";
 import z from "zod";
-import { searchPremises } from "@/functions/search-premises";
-import { getRandomPremises } from "@/functions/get-random-premises";
 import { getNearbyPostcodes } from "@/lib/api/postcodes.io/nearby";
 import { getPostcodeJobs } from "@/functions/get-postcode-jobs";
+import { getRandomPremises, searchPremises } from "@/v2api/client";
 
 export const appRouter = router({
   premises: {

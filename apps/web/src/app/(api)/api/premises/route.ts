@@ -1,6 +1,6 @@
+import { searchPremises } from "@/v2api/client";
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { searchPremises } from "../../../../functions/search-premises";
 
 const querySchema = z.object({
   postcode: z.string(),

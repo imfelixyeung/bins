@@ -1,6 +1,6 @@
-import { ReturnedJobs } from "@/functions/search-jobs";
+import { SearchJobsSchema } from "@/v2api/client";
 
-export const createCSV = ({ data }: { data: ReturnedJobs }) => {
+export const createCSV = ({ data }: { data: SearchJobsSchema }) => {
   const header = ["Date", "Bin"];
   const rows = data.jobs.map(({ date, bin }) => [date, bin]);
 

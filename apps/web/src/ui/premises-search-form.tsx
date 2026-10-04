@@ -20,7 +20,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { useSearchPremisesQuery } from "@/hooks/use-search-premises";
 import {
   Select,
   SelectContent,
@@ -46,6 +45,7 @@ import RecentPremises from "./recent-premises";
 import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
 import { useTRPC } from "@/trpc/utils";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { getRandomPremises, searchPremises } from "@/v2api/client";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -63,17 +63,19 @@ const premisesFormSchema = z.object({
 type PostcodeFormData = z.infer<typeof postcodeFormSchema>;
 type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
-const randomPremisesQueryStaleTime = 1000;
+const randomPremiseQueryOption = {
+  queryKey: ["getRandomPremise"],
+  queryFn: getRandomPremises,
+} as const;
+
+const randomPremiseQueryOptionInitialNull = {
+  ...randomPremiseQueryOption,
+  initialData: null,
+};
 
 const PremisesSearchForm = () => {
-  const trpc = useTRPC();
   const queryClient = useQueryClient();
-  const randomPremisesQuery = useQuery(
-    trpc.premises.random.queryOptions(undefined, {
-      initialData: null as any,
-      staleTime: randomPremisesQueryStaleTime,
-    })
-  );
+  const randomPremisesQuery = useQuery(randomPremiseQueryOptionInitialNull);
 
   const router = useRouter();
   const [postcode, setPostcode] = useQueryState("postcode", {
@@ -92,15 +94,17 @@ const PremisesSearchForm = () => {
       premises: undefined,
     },
   });
-  const { data: premises, isLoading: premisesIsLoading } =
-    useSearchPremisesQuery({ postcode });
+  const { data: premises, isLoading: premisesIsLoading } = useQuery({
+    queryKey: ["premise", postcode],
+    queryFn: () => searchPremises({ postcode }),
+  });
 
   const selectedPremisesId = premisesForm.watch("premises");
 
   useEffect(() => {
     if (!selectedPremisesId) return;
 
-    router.prefetch(`/premises/${selectedPremisesId}`, {
+    router.prefetch(`/premises?id=${selectedPremisesId}`, {
       kind: PrefetchKind.FULL,
     });
   }, [selectedPremisesId]);
@@ -110,15 +114,11 @@ const PremisesSearchForm = () => {
   };
 
   const onSubmitPremises = async (data: PremisesFormData) => {
-    router.push(`/premises/${data.premises}`);
+    router.push(`/premises?id=${data.premises}`);
   };
 
   const onSupriseMe = async () => {
-    const premises = await queryClient.fetchQuery(
-      trpc.premises.random.queryOptions(undefined, {
-        staleTime: randomPremisesQueryStaleTime,
-      })
-    );
+    const premises = await queryClient.fetchQuery(randomPremiseQueryOption);
 
     if (!premises || !premises.addressPostcode) return;
 

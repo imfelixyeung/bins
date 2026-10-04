@@ -1,8 +1,8 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { searchJobs } from "../../../../functions/search-jobs";
 import { createIcal } from "./ical";
 import { createCSV } from "./csv";
+import { searchJobs } from "@/v2api/client";
 
 const querySchema = z.object({
   premises: z.coerce.number(),

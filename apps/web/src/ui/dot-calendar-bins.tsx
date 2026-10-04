@@ -1,6 +1,6 @@
-import { ReturnedJobs } from "@/functions/search-jobs";
 import React, { useMemo } from "react";
 import DotCalendar from "./dot-calendar";
+import { SearchJobsSchema } from "@/v2api/client";
 
 const binToClassName: Record<string, string> = {
   BLACK: "bg-gray-900/90",
@@ -8,7 +8,7 @@ const binToClassName: Record<string, string> = {
   GREEN: "bg-green-600/90",
 };
 
-const DotCalendarBins = ({ data }: { data: ReturnedJobs["jobs"] }) => {
+const DotCalendarBins = ({ data }: { data: SearchJobsSchema["jobs"] }) => {
   const transformedData = useMemo(() => {
     // group by date
     const byDate = data.reduce(

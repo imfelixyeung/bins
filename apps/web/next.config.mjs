@@ -6,6 +6,17 @@ const revision = crypto.randomUUID();
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: "standalone",
+  rewrites: async () => {
+    if (process.env.NODE_ENV === "production") return [];
+    return {
+      beforeFiles: [
+        {
+          source: "/api/v2/:path*",
+          destination: "http://localhost:3000/api/:path*",
+        },
+      ],
+    };
+  },
 };
 
 const withNextra = nextra({

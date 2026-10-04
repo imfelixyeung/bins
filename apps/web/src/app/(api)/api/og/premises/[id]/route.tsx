@@ -1,5 +1,5 @@
 import { getSummaryAddress } from "@/functions/format-address";
-import { searchJobs } from "@/functions/search-jobs";
+import { searchJobs } from "@/v2api/client";
 import { capitalCase } from "change-case";
 import { ImageResponse } from "next/og";
 import { NextRequest } from "next/server";

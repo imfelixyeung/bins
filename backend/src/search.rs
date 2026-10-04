@@ -1,6 +1,5 @@
 //! The reads behind the `/api/premises`, `/api/random/premises` and `/api/jobs`
-//! endpoints, ported from the Next.js app's `functions/search-premises.ts`,
-//! `functions/get-random-premises.ts` and `functions/search-jobs.ts`.
+//! endpoints.
 //!
 //! The row structs double as the API response shape, so the field names and
 //! ordering here are what clients see and must not drift.

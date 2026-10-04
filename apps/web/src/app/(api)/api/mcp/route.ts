@@ -2,8 +2,7 @@ import {
   getFullAddress,
   getOneLineFullAddress,
 } from "@/functions/format-address";
-import { searchJobs } from "@/functions/search-jobs";
-import { searchPremises } from "@/functions/search-premises";
+import { searchJobs, searchPremises } from "@/v2api/client";
 import { format } from "date-fns";
 import { createMcpHandler } from "mcp-handler";
 import { z } from "zod";
@@ -129,7 +128,7 @@ const handler = createMcpHandler(
             ],
           };
 
-        const link = `https://bins.felixyeung.com/premises/${premisesId}`;
+        const link = `https://bins.felixyeung.com/premises?id=${premisesId}`;
 
         return {
           content: [

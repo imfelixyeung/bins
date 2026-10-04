@@ -1,12 +1,12 @@
 import { getFullAddress, getSummaryAddress } from "@/functions/format-address";
-import { ReturnedJobs } from "@/functions/search-jobs";
+import { SearchJobsSchema } from "@/v2api/client";
 import { capitalCase } from "change-case";
 import ical from "ical-generator";
 
 const createURL = (id: string, date: string, bin: string) =>
-  `https://bins.felixyeung.com/premises/${id}?date=${date}&bin=${bin}`;
+  `https://bins.felixyeung.com/premises?id=${id}&date=${date}&bin=${bin}`;
 
-export const createIcal = ({ data }: { data: ReturnedJobs }) => {
+export const createIcal = ({ data }: { data: SearchJobsSchema }) => {
   const fullAddress = getFullAddress(data);
   const summaryAddress = getSummaryAddress(data);
 

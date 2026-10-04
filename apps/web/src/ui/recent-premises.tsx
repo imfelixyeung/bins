@@ -29,7 +29,7 @@ const RecentPremises = () => {
                       <MapPinHouseIcon size={20} />
                     </div>
                     <Link
-                      href={`/premises/${premises.id}`}
+                      href={`/premises?id=${premises.id}`}
                       className="after:absolute after:inset-0 grow"
                       prefetch
                     >
