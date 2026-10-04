@@ -72,6 +72,29 @@ impl TestServer {
         (response.status, body)
     }
 
+    /// A download, read as text and checked for the headers it is served with,
+    /// which name the file.
+    async fn get_download(
+        &self,
+        path: &str,
+        content_type: &str,
+        filename: &str,
+    ) -> (StatusCode, String) {
+        let response = self.fetch(path).await;
+
+        assert_eq!(
+            response.content_type, content_type,
+            "unexpected content type for {path}"
+        );
+        assert_eq!(
+            response.content_disposition.as_deref(),
+            Some(format!("attachment; filename=\"{filename}\"").as_str()),
+            "unexpected filename for {path}"
+        );
+
+        (response.status, response.body)
+    }
+
     /// The sitemaps are XML, so they are read as text and checked for the
     /// headers they are served with.
     async fn get_xml(&self, path: &str) -> (StatusCode, String) {
@@ -105,6 +128,7 @@ impl TestServer {
 
         let content_type = header(reqwest::header::CONTENT_TYPE).unwrap_or_default();
         let cache_control = header(reqwest::header::CACHE_CONTROL);
+        let content_disposition = header(reqwest::header::CONTENT_DISPOSITION);
 
         let body = response
             .text()
@@ -115,6 +139,7 @@ impl TestServer {
             status,
             content_type,
             cache_control,
+            content_disposition,
             body,
         }
     }
@@ -126,6 +151,7 @@ struct Response {
     status: StatusCode,
     content_type: String,
     cache_control: Option<String>,
+    content_disposition: Option<String>,
     body: String,
 }
 
@@ -671,34 +697,116 @@ async fn jobs_reports_every_problem_at_once() {
     );
 }
 
+/// A calendar with its folded lines joined back up, which is how a calendar app
+/// reads one.
+fn unfold(body: &str) -> String {
+    body.replace("\r\n ", "")
+}
+
 #[tokio::test]
-async fn jobs_serves_json_only_for_now() {
+async fn jobs_serves_a_csv_of_the_collections() {
     let Some(server) = TestServer::start().await else {
         return;
     };
     let slot = slot(&server.pool).await;
     let id = premise(&server.pool, &slot, 0, Some("6")).await;
-
-    for format in ["csv", "ical"] {
-        let (status, body) = server
-            .get(&format!("/api/jobs?premises={id}&format={format}"))
-            .await;
-
-        assert_eq!(status, StatusCode::NOT_IMPLEMENTED, "{format}");
-        assert_eq!(body["error"], true, "{format}");
-        assert!(
-            body["message"].as_str().is_some_and(|m| m.contains(format)),
-            "{format}: {}",
-            body["message"]
-        );
-    }
+    jobs(
+        &server.pool,
+        id,
+        &[("GREEN", "2026-11-02"), ("BLACK", "2026-11-09")],
+    )
+    .await;
 
     let (status, body) = server
-        .get(&format!("/api/jobs?premises={id}&format=xml"))
+        .get_download(
+            &format!("/api/jobs?premises={id}&format=csv"),
+            "text/csv",
+            &format!("jobs-{id}.csv"),
+        )
         .await;
 
-    assert_eq!(status, StatusCode::BAD_REQUEST);
-    assert_eq!(body["issues"][0]["path"], json!(["format"]));
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body, "Date,Bin\n2026-11-02,GREEN\n2026-11-09,BLACK\n");
+}
+
+#[tokio::test]
+async fn jobs_serves_a_calendar_of_the_collections() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+    let id = premise(&server.pool, &slot, 0, Some("6")).await;
+    let postcode = slot.postcode.as_str();
+    jobs(
+        &server.pool,
+        id,
+        &[("GREEN", "2026-11-02"), ("BLACK", "2026-11-09")],
+    )
+    .await;
+
+    let (status, body) = server
+        .get_download(
+            &format!("/api/jobs?premises={id}&format=ical"),
+            "text/calendar",
+            &format!("jobs-{id}.ics"),
+        )
+        .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(body.starts_with("BEGIN:VCALENDAR\r\n"), "{body}");
+    assert!(body.ends_with("END:VCALENDAR\r\n"), "{body}");
+
+    let calendar = unfold(&body);
+
+    // One event per collection, in date order.
+    assert_eq!(calendar.matches("BEGIN:VEVENT").count(), 2, "{calendar}");
+    assert!(
+        calendar.contains(&format!("UID:{id}_2026-11-02_GREEN")),
+        "{calendar}"
+    );
+    assert!(
+        calendar.contains(&format!("UID:{id}_2026-11-09_BLACK")),
+        "{calendar}"
+    );
+
+    // Named after the household, described with where the bins are.
+    assert!(
+        calendar.contains("X-WR-CALNAME:Bin Days for 6 TEST STREET"),
+        "{calendar}"
+    );
+    assert!(
+        calendar.contains(&format!("X-WR-CALDESC:Bin collection dates for your household\\n\\n6\\nTEST STREET\\nTEST LOCALITY\\nLEEDS\\n{postcode}\\n\\nID: {id}")),
+        "{calendar}"
+    );
+
+    // Every event is a whole day, collected from the address, and named after
+    // the bin.
+    assert_eq!(
+        calendar.matches("DTSTART;VALUE=DATE:20261102").count(),
+        1,
+        "{calendar}"
+    );
+    assert_eq!(
+        calendar.matches("DTSTART;VALUE=DATE:20261109").count(),
+        1,
+        "{calendar}"
+    );
+    assert!(
+        calendar.contains("SUMMARY:Green Bin Collection"),
+        "{calendar}"
+    );
+    assert!(
+        calendar.contains(&format!(
+            "LOCATION:6\\nTEST STREET\\nTEST LOCALITY\\nLEEDS\\n{postcode}"
+        )),
+        "{calendar}"
+    );
+    assert!(
+        calendar.contains(&format!(
+            "URL;VALUE=URI:https://bins.felixyeung.com/premises?id={id}&date=2026-11-02&bin=GREEN"
+        )),
+        "{calendar}"
+    );
 }
 
 #[tokio::test]

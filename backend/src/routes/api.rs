@@ -2,8 +2,9 @@
 //!
 //! Query strings are read as a plain map and validated by hand so that every
 //! failure leaves the body shape the Next.js routes returned: `error` plus
-//! either `issues` or `message`. The sitemaps are the exception: they answer
-//! with XML, for crawlers.
+//! either `issues` or `message`. Two endpoints are the exception, answering
+//! with something other than that envelope: `/api/jobs` with a CSV or a
+//! calendar when one is asked for, and the sitemaps with XML, for crawlers.
 
 pub mod jobs;
 pub mod nearby;
@@ -22,7 +23,7 @@ use serde::Serialize;
 use sqlx::PgPool;
 use tracing::error;
 
-use crate::search::{NearbyPostcode, Premises, PremisesJobs};
+use crate::search::{NearbyPostcode, Premises};
 
 /// The router for everything under `/api`, returning the state its handlers
 /// need.
@@ -53,10 +54,6 @@ impl<T> Envelope<T> {
     }
 }
 
-/// A shorthand for the payload of `/api/jobs`, where `data` is a single
-/// premise.
-pub type JobsBody = Json<Envelope<PremisesJobs>>;
-
 /// A shorthand for the payload of `/api/premises`, where `data` is a list.
 pub type PremisesBody = Json<Envelope<Vec<Premises>>>;
 
@@ -75,8 +72,6 @@ pub enum ApiError {
     Invalid(Vec<Issue>),
     /// The premise asked for does not exist.
     NotFound(&'static str),
-    /// A response format that has not been ported to Rust yet.
-    Unsupported(String),
     /// Anything unexpected. Logged, never returned.
     Internal(anyhow::Error),
 }
@@ -101,14 +96,6 @@ impl IntoResponse for ApiError {
             ApiError::NotFound(message) => {
                 (StatusCode::NOT_FOUND, Json(Message::new(message))).into_response()
             }
-            ApiError::Unsupported(message) => (
-                StatusCode::NOT_IMPLEMENTED,
-                Json(Message {
-                    error: true,
-                    message,
-                }),
-            )
-                .into_response(),
             ApiError::Internal(cause) => {
                 error!(error = %cause, "request failed");
                 (
