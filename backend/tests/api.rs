@@ -13,8 +13,8 @@
 use std::sync::atomic::{AtomicUsize, Ordering};
 
 use axum::Router;
-use backend::{db, import::premises::search_postcode, routes};
-use chrono::NaiveDate;
+use backend::{db, import::premises::search_postcode, routes, search::format_timestamp, sitemap};
+use chrono::{DateTime, NaiveDate, Utc};
 use reqwest::StatusCode;
 use serde_json::{Value, json};
 use sqlx::{PgPool, postgres::PgPoolOptions};
@@ -58,33 +58,101 @@ impl TestServer {
             pool,
         })
     }
-
     async fn get(&self, path: &str) -> (StatusCode, Value) {
+        let response = self.fetch(path).await;
+
+        let body: Value = serde_json::from_str(&response.body).unwrap_or_else(|err| {
+            panic!("GET {path} returned non-JSON {:?}: {err}", response.body)
+        });
+
+        assert_eq!(
+            response.content_type, "application/json",
+            "unexpected content type for {path}"
+        );
+        (response.status, body)
+    }
+
+    /// The sitemaps are XML, so they are read as text and checked for the
+    /// headers they are served with.
+    async fn get_xml(&self, path: &str) -> (StatusCode, String) {
+        let response = self.fetch(path).await;
+
+        assert_eq!(
+            response.content_type, "application/xml",
+            "unexpected content type for {path}"
+        );
+        assert_eq!(
+            response.cache_control.as_deref(),
+            Some("public, max-age=60"),
+            "unexpected cache header for {path}"
+        );
+        (response.status, response.body)
+    }
+
+    async fn fetch(&self, path: &str) -> Response {
         let response = reqwest::get(format!("{}{path}", self.base))
             .await
             .unwrap_or_else(|err| panic!("GET {path}: {err}"));
 
         let status = response.status();
-        let content_type = response
-            .headers()
-            .get(reqwest::header::CONTENT_TYPE)
-            .and_then(|value| value.to_str().ok())
-            .unwrap_or_default()
-            .to_owned();
+        let header = |name: reqwest::header::HeaderName| {
+            response
+                .headers()
+                .get(name)
+                .and_then(|value| value.to_str().ok())
+                .map(str::to_owned)
+        };
+
+        let content_type = header(reqwest::header::CONTENT_TYPE).unwrap_or_default();
+        let cache_control = header(reqwest::header::CACHE_CONTROL);
 
         let body = response
             .text()
             .await
             .unwrap_or_else(|err| panic!("reading the body of GET {path}: {err}"));
-        let body: Value = serde_json::from_str(&body)
-            .unwrap_or_else(|err| panic!("GET {path} returned non-JSON {body:?}: {err}"));
 
-        assert_eq!(
-            content_type, "application/json",
-            "unexpected content type for {path}"
-        );
-        (status, body)
+        Response {
+            status,
+            content_type,
+            cache_control,
+            body,
+        }
     }
+}
+
+/// One HTTP response, read once so the helpers above can make several claims
+/// about it.
+struct Response {
+    status: StatusCode,
+    content_type: String,
+    cache_control: Option<String>,
+    body: String,
+}
+
+/// How many premises sit before `id`, which is what decides the page it lands
+/// on: the sitemaps are read in id order, fifty thousand to a page.
+async fn page_of(pool: &PgPool, id: i32) -> u32 {
+    let (before,): (i64,) = sqlx::query_as("SELECT count(*) FROM dm_premises WHERE id < $1")
+        .bind(id)
+        .fetch_one(pool)
+        .await
+        .expect("counting the premises before the fixture");
+
+    (before / 50_000) as u32
+}
+
+/// The `<loc>` values in a sitemap or sitemap index, in document order.
+fn locations(xml: &str) -> Vec<String> {
+    let mut rest = xml;
+
+    std::iter::from_fn(move || {
+        let start = rest.find("<loc>")? + "<loc>".len();
+        let end = start + rest[start..].find("</loc>")?;
+        let value = rest[start..end].to_owned();
+        rest = &rest[end..];
+        Some(value)
+    })
+    .collect()
 }
 
 fn database_url() -> Option<String> {
@@ -286,12 +354,13 @@ async fn random_premises_returns_a_stored_premise() {
 
     let data = &body["data"];
     let id = data["id"].as_i64().expect("a premise id");
-    assert!(
-        data["addressPostcode"]
-            .as_str()
-            .is_some_and(|p| !p.is_empty()),
-        "the caller needs a postcode to send the visitor to"
-    );
+    // Most premises carry a postcode, but the feed has rows without one, and a
+    // random pick lands on one of those every so often.
+    match &data["addressPostcode"] {
+        Value::String(postcode) => assert!(!postcode.is_empty(), "a blank postcode"),
+        Value::Null => {}
+        other => panic!("unexpected postcode {other}"),
+    }
     // The whole address, not just the two columns the tRPC procedure returned.
     assert_eq!(
         data.as_object().expect("an address").len(),
@@ -332,13 +401,15 @@ async fn nearby_returns_the_closest_postcodes_with_their_collections() {
     };
     let slot = slot(&server.pool).await;
 
-    // One degree of latitude is about 111km, so the second postcode is a
-    // kilometre away and the third is well outside the two kilometre radius.
+    // Mid Atlantic, where `sync postcodes` has nothing to write, so the only
+    // postcodes within reach are this test's own. One degree of latitude is
+    // about 111km, so the second is a kilometre away and the third is well
+    // outside the two kilometre radius.
     let neighbour = nearby_postcode(&slot, 2);
     let faraway = nearby_postcode(&slot, 3);
-    postcode(&server.pool, &slot.postcode, 53.80, -1.56).await;
-    postcode(&server.pool, &neighbour, 53.81, -1.56).await;
-    postcode(&server.pool, &faraway, 53.90, -1.56).await;
+    postcode(&server.pool, &slot.postcode, 40.0, -40.0).await;
+    postcode(&server.pool, &neighbour, 40.01, -40.0).await;
+    postcode(&server.pool, &faraway, 40.10, -40.0).await;
 
     // Both nearby postcodes collect, and two addresses at the anchor postcode
     // share one collection, which `/api/nearby` should collapse into one row.
@@ -374,8 +445,8 @@ async fn nearby_returns_the_closest_postcodes_with_their_collections() {
     // Nearest first, and the postcode asked about is always at zero metres.
     assert_eq!(data[0]["postcode"], slot.postcode);
     assert_eq!(data[0]["distance"], 0.0);
-    assert_eq!(data[0]["latitude"], 53.80);
-    assert_eq!(data[0]["longitude"], -1.56);
+    assert_eq!(data[0]["latitude"], 40.0);
+    assert_eq!(data[0]["longitude"], -40.0);
     assert_eq!(data[1]["postcode"], neighbour);
     assert!(
         data[1]["distance"]
@@ -628,4 +699,179 @@ async fn jobs_serves_json_only_for_now() {
 
     assert_eq!(status, StatusCode::BAD_REQUEST);
     assert_eq!(body["issues"][0]["path"], json!(["format"]));
+}
+
+#[tokio::test]
+async fn the_premises_sitemap_index_lists_a_page_for_every_fifty_thousand_premises() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    // A premise to make sure the table is not empty.
+    let slot = slot(&server.pool).await;
+    premise(&server.pool, &slot, 0, Some("6")).await;
+
+    let (count,): (i64,) = sqlx::query_as("SELECT count(*) FROM dm_premises")
+        .fetch_one(&server.pool)
+        .await
+        .expect("counting the premises");
+    let expected_pages = (count / 50_000 + i64::from(count % 50_000 > 0)) as usize;
+    assert!(expected_pages > 0, "there should be premises to list");
+
+    let (status, body) = server.get_xml("/api/sitemaps/premises.xml").await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        body.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<sitemapindex"),
+        "not a sitemap index: {body}"
+    );
+    assert!(
+        body.contains("xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\""),
+        "{body}"
+    );
+
+    // One URL per page, from the first to the last, under the public prefix the
+    // proxy serves rather than the path this server answers on.
+    let site = sitemap::site();
+    let urls = locations(&body);
+    assert_eq!(urls.len(), expected_pages, "{body}");
+    assert_eq!(
+        urls.first().unwrap(),
+        &format!("{site}/api/v2/sitemaps/premises.xml?page=0")
+    );
+    assert_eq!(
+        urls.last().unwrap(),
+        &format!(
+            "{site}/api/v2/sitemaps/premises.xml?page={}",
+            expected_pages - 1
+        )
+    );
+    assert!(
+        urls.iter()
+            .all(|url| url.starts_with(&format!("{site}/api/v2/"))),
+        "{urls:?}"
+    );
+}
+
+#[tokio::test]
+async fn a_premises_sitemap_page_lists_the_addresses_read_onto_it() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+    let first = premise(&server.pool, &slot, 0, Some("6")).await;
+    let second = premise(&server.pool, &slot, 1, Some("8")).await;
+
+    let page = page_of(&server.pool, first).await;
+    let (status, body) = server
+        .get_xml(&format!("/api/sitemaps/premises.xml?page={page}"))
+        .await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert!(
+        body.starts_with("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<urlset"),
+        "not a urlset: {body}"
+    );
+
+    // The fixtures are on the page their id count puts them on, oldest first,
+    // each pointing at the address page with when that address changed.
+    let site = sitemap::site();
+    let urls = locations(&body);
+    let ids: Vec<i32> = urls
+        .iter()
+        .map(|url| {
+            url.strip_prefix(&format!("{site}/premises?id="))
+                .unwrap_or_else(|| panic!("unexpected url {url}"))
+                .parse()
+                .expect("a premise id in a sitemap url")
+        })
+        .collect();
+
+    assert!(
+        ids.contains(&first) && ids.contains(&second),
+        "the fixtures are missing from {urls:?}"
+    );
+    let mut sorted = ids.clone();
+    sorted.sort_unstable();
+    assert_eq!(ids, sorted, "premises should be listed in id order");
+    assert!(!ids.is_empty(), "the page should hold the fixtures");
+    assert!(
+        ids.len() <= 50_000,
+        "a page never holds more than fifty thousand"
+    );
+
+    let (_, updated_at): (i32, DateTime<Utc>) =
+        sqlx::query_as("SELECT id, updated_at FROM dm_premises WHERE id = $1")
+            .bind(first)
+            .fetch_one(&server.pool)
+            .await
+            .expect("reading the fixture");
+
+    assert!(
+        body.contains(&format!(
+            "  <url>\n    <loc>{site}/premises?id={first}</loc>\n    \
+             <lastmod>{}</lastmod>\n  </url>",
+            format_timestamp(&updated_at)
+        )),
+        "{body}"
+    );
+}
+
+#[tokio::test]
+async fn a_premises_sitemap_page_past_the_last_one_holds_no_addresses() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    // The Next.js route answered 404 here. An empty sitemap is what the query
+    // it called returns, and is easier for a crawler to move past.
+    let (status, body) = server.get_xml("/api/sitemaps/premises.xml?page=9999").await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(locations(&body), Vec::<String>::new());
+    assert!(body.contains("<urlset"), "{body}");
+}
+
+#[tokio::test]
+async fn a_premises_sitemap_page_has_to_be_a_number() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    for page in ["abc", "-1", "1.5", ""] {
+        let (status, body) = server
+            .get(&format!(
+                "/api/sitemaps/premises.xml?page={}",
+                urlencode(page)
+            ))
+            .await;
+
+        assert_eq!(status, StatusCode::BAD_REQUEST, "page={page:?}");
+        assert_eq!(
+            body,
+            json!({
+                "error": true,
+                "issues": [{
+                    "code": "invalid_type",
+                    "expected": "number",
+                    "received": "nan",
+                    "path": ["page"],
+                    "message": "Expected number, received nan",
+                }]
+            }),
+            "page={page:?}"
+        );
+    }
+}
+
+/// Percent-encodes a query value the way a caller would send it.
+fn urlencode(value: &str) -> String {
+    value
+        .bytes()
+        .map(|byte| match byte {
+            b'A'..=b'Z' | b'a'..=b'z' | b'0'..=b'9' | b'-' | b'_' | b'.' | b'~' => {
+                (byte as char).to_string()
+            }
+            other => format!("%{other:02X}"),
+        })
+        .collect()
 }

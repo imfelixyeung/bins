@@ -96,11 +96,15 @@ pub struct PostcodeJob {
 
 /// Timestamps go out in the same shape `Date.prototype.toISOString` produced in
 /// the Next.js app: UTC, always with millisecond precision.
+pub fn format_timestamp(timestamp: &DateTime<Utc>) -> String {
+    timestamp.to_rfc3339_opts(SecondsFormat::Millis, true)
+}
+
 fn serialize_timestamp<S: Serializer>(
     timestamp: &DateTime<Utc>,
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
-    serializer.serialize_str(&timestamp.to_rfc3339_opts(SecondsFormat::Millis, true))
+    serializer.serialize_str(&format_timestamp(timestamp))
 }
 
 /// Every premise at `postcode`, ordered by house number.

@@ -130,6 +130,9 @@ services:
       DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
       PORT: "3000"
       RUST_LOG: backend=info
+      # The host the sitemaps write their URLs against, matching what the web
+      # app serves from.
+      BASE_URL: https://bins.felixyeung.com
     depends_on:
       rewrite-db:
         condition: service_healthy

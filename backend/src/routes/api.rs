@@ -2,12 +2,14 @@
 //!
 //! Query strings are read as a plain map and validated by hand so that every
 //! failure leaves the body shape the Next.js routes returned: `error` plus
-//! either `issues` or `message`.
+//! either `issues` or `message`. The sitemaps are the exception: they answer
+//! with XML, for crawlers.
 
 pub mod jobs;
 pub mod nearby;
 pub mod premises;
 pub mod random;
+pub mod sitemaps;
 
 use std::collections::HashMap;
 
@@ -30,6 +32,7 @@ pub fn router() -> Router<PgPool> {
         .route("/api/nearby", get(nearby::handler))
         .route("/api/premises", get(premises::handler))
         .route("/api/random/premises", get(random::handler))
+        .route("/api/sitemaps/premises.xml", get(sitemaps::handler))
 }
 
 /// Every successful response is wrapped in this envelope.
@@ -236,6 +239,19 @@ pub fn postcode(query: &HashMap<String, String>) -> Result<&str, Issue> {
         .ok_or_else(|| Issue::missing("postcode", "string"))
 }
 
+/// `page`, the paged sitemap `/api/sitemaps/premises.xml` serves. Absent asks
+/// for the index of them all instead.
+pub fn sitemap_page(query: &HashMap<String, String>) -> Result<Option<u32>, Issue> {
+    query
+        .get("page")
+        .map(|raw| {
+            // Read as a page index rather than an offset, so nothing a caller
+            // sends can overflow the offset it is multiplied into.
+            raw.trim().parse().map_err(|_| Issue::not_a_number("page"))
+        })
+        .transpose()
+}
+
 /// Checks a value against those accepted for its parameter.
 pub fn one_of<'a>(
     value: &'a str,
@@ -355,6 +371,34 @@ mod tests {
             "ls62se"
         );
         assert_eq!(postcode(&query(&[("postcode", "")])).unwrap(), "");
+    }
+
+    #[test]
+    fn an_absent_sitemap_page_asks_for_the_index() {
+        assert_eq!(sitemap_page(&query(&[])).unwrap(), None);
+        assert_eq!(sitemap_page(&query(&[("page", "0")])).unwrap(), Some(0));
+        assert_eq!(sitemap_page(&query(&[("page", " 8 ")])).unwrap(), Some(8));
+    }
+
+    #[test]
+    fn a_sitemap_page_that_is_not_a_whole_number_is_reported_as_an_issue() {
+        // The schema this replaced read the page off the path, so the only
+        // numbers that matter are the ones a page index could be.
+        for page in [
+            "abc",
+            "",
+            "-1",
+            "1.5",
+            "1e3",
+            "0x10",
+            "99999999999999999999",
+        ] {
+            assert_eq!(
+                sitemap_page(&query(&[("page", page)])).unwrap_err(),
+                Issue::not_a_number("page"),
+                "page={page:?} should have been rejected"
+            );
+        }
     }
 
     #[test]

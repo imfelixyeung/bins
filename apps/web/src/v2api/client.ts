@@ -28,6 +28,7 @@ const jobSchema = z.object({
 export type Job = z.infer<typeof jobSchema>;
 
 const BASE_URL = "/api/v2";
+export const PREMISES_SITEMAPS_URL = `${BASE_URL}/sitemaps/premises.xml`;
 
 const getRandomPremisesSchema = makeAPISchema(premiseSchema);
 export const getRandomPremises = async () => {
