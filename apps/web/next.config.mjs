@@ -11,7 +11,7 @@ const nextConfig = {
     return {
       beforeFiles: [
         {
-          source: "/api/v2/:path*",
+          source: "/api/:path*",
           destination: "http://localhost:3000/api/:path*",
         },
       ],

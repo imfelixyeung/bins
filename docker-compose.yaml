@@ -42,11 +42,6 @@ services:
       # - "traefik.http.routers.bins.service=bins-service"
       - "traefik.http.routers.bins.middlewares=bins-ratelimit"
 
-      # rate limit trpc random premises api, cache 1sec
-      - "traefik.http.routers.bins-api-trpc.rule=HostRegexp(`.*`) && PathPrefix(`/api/trpc/premises.random`)"
-      - "traefik.http.routers.bins-api-trpc.priority=16"
-      - "traefik.http.routers.bins-api-trpc.middlewares=bins-ratelimit,bins-api-cache-1s"
-
       # rate limit api and add cors/caching headers
       - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && PathPrefix(`/api`)"
       - "traefik.http.routers.bins-api.priority=15"
@@ -137,14 +132,10 @@ services:
       rewrite-db:
         condition: service_healthy
     labels:
-      # /api/v2/* is served by the rewrite backend, /api is still next.js in
-      # `web`. Priority sits above bins-rapid (20) and bins-api (15), which
-      # would otherwise claim every /api path. The backend only knows /api, so
-      # the version segment is rewritten away.
-      - "traefik.http.routers.bins-api-v2.rule=HostRegexp(`.*`) && (Path(`/api/v2`) || PathPrefix(`/api/v2/`))"
+      - "traefik.http.routers.bins-api-v2.rule=HostRegexp(`.*`) && (Path(`/api`) || PathPrefix(`/api/`))"
       - "traefik.http.routers.bins-api-v2.priority=25"
       - "traefik.http.routers.bins-api-v2.middlewares=bins-api-v2-replace"
-      - "traefik.http.middlewares.bins-api-v2-replace.replacepathregex.regex=^/api/v2"
+      - "traefik.http.middlewares.bins-api-v2-replace.replacepathregex.regex=^/api"
       - "traefik.http.middlewares.bins-api-v2-replace.replacepathregex.replacement=/api"
 
   rewrite-sync-premises:

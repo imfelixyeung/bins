@@ -15,9 +15,9 @@ use crate::search::format_timestamp;
 pub const PAGE_SIZE: u32 = 50_000;
 
 /// Where these sitemaps are published. The proxy puts this server behind
-/// `/api/v2` and strips the version again, so the URLs written into a sitemap
+/// `/api` and strips the version again, so the URLs written into a sitemap
 /// have to carry the prefix a crawler will ask for, not the path served here.
-const PUBLIC_PREFIX: &str = "/api/v2";
+const PUBLIC_PREFIX: &str = "/api";
 
 /// The site the sitemaps describe, matching the Next.js app's `BASE_URL`.
 const DEFAULT_SITE: &str = "https://bins.felixyeung.com";
@@ -193,13 +193,13 @@ mod tests {
             r#"<?xml version="1.0" encoding="UTF-8"?>
 <sitemapindex xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <sitemap>
-    <loc>https://bins.example.com/api/v2/sitemaps/premises.xml?page=0</loc>
+    <loc>https://bins.example.com/api/sitemaps/premises.xml?page=0</loc>
   </sitemap>
   <sitemap>
-    <loc>https://bins.example.com/api/v2/sitemaps/premises.xml?page=1</loc>
+    <loc>https://bins.example.com/api/sitemaps/premises.xml?page=1</loc>
   </sitemap>
   <sitemap>
-    <loc>https://bins.example.com/api/v2/sitemaps/premises.xml?page=2</loc>
+    <loc>https://bins.example.com/api/sitemaps/premises.xml?page=2</loc>
   </sitemap>
 </sitemapindex>
 "#
@@ -254,7 +254,7 @@ mod tests {
     #[test]
     fn a_site_with_a_trailing_slash_does_not_produce_a_doubled_one() {
         assert!(
-            index("https://bins.example.com/", 1).contains("<loc>https://bins.example.com/api/v2/")
+            index("https://bins.example.com/", 1).contains("<loc>https://bins.example.com/api/")
         );
         assert!(
             urlset(

@@ -844,18 +844,18 @@ async fn the_premises_sitemap_index_lists_a_page_for_every_fifty_thousand_premis
     assert_eq!(urls.len(), expected_pages, "{body}");
     assert_eq!(
         urls.first().unwrap(),
-        &format!("{site}/api/v2/sitemaps/premises.xml?page=0")
+        &format!("{site}/api/sitemaps/premises.xml?page=0")
     );
     assert_eq!(
         urls.last().unwrap(),
         &format!(
-            "{site}/api/v2/sitemaps/premises.xml?page={}",
+            "{site}/api/sitemaps/premises.xml?page={}",
             expected_pages - 1
         )
     );
     assert!(
         urls.iter()
-            .all(|url| url.starts_with(&format!("{site}/api/v2/"))),
+            .all(|url| url.starts_with(&format!("{site}/api/"))),
         "{urls:?}"
     );
 }

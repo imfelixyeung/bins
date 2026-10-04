@@ -25,7 +25,6 @@
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "geist": "^1.5.1",
-    "ical-generator": "^9.0.0",
     "lucide-react": "^0.544.0",
     "maplibre-gl": "^5.8.0",
     "mcp-handler": "^1.0.2",
