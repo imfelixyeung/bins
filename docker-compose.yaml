@@ -104,6 +104,68 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
+  rewrite-db:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: db
+    volumes:
+      - rewrite-db-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
+      interval: 5s
+      timeout: 30s
+      retries: 15
+      start_period: 10s
+
+  rewrite-backend:
+    build:
+      context: ./backend
+      target: runtime
+    image: bins-backend:local
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
+      PORT: "3000"
+      RUST_LOG: backend=info
+    depends_on:
+      rewrite-db:
+        condition: service_healthy
+
+  rewrite-sync-premises:
+    build:
+      context: ./backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
+      SYNC_COMMAND: sync premises
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      rewrite-db:
+        condition: service_healthy
+
+  rewrite-sync-jobs:
+    build:
+      context: ./backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
+      SYNC_COMMAND: sync jobs
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      rewrite-db:
+        condition: service_healthy
+
 secrets:
   tunnel_token:
     external: true
@@ -112,3 +174,4 @@ secrets:
 
 volumes:
   db-data:
+  rewrite-db-data:
