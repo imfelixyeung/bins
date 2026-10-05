@@ -1,11 +1,15 @@
 import nextra from "nextra";
 import withSerwistInit from "@serwist/next";
 import { NextConfig } from "next";
+import { join } from "node:path";
 
 const revision = crypto.randomUUID();
 
 const nextConfig: NextConfig = {
   output: "standalone",
+  turbopack: {
+    root: join(__dirname, "../.."),
+  },
   rewrites: async () => {
     if (process.env.NODE_ENV === "production") return [];
     return {
