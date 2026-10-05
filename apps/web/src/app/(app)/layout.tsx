@@ -17,7 +17,7 @@ export const metadata: Metadata = {
     description: "Find out when each of your bins are scheduled to be emptied",
     images: [
       {
-        url: "/api/og",
+        url: "/static/og",
       },
     ],
   },
@@ -27,7 +27,7 @@ export const metadata: Metadata = {
     description: "Find out when each of your bins are scheduled to be emptied",
     images: [
       {
-        url: "/api/og",
+        url: "/static/og",
       },
     ],
   },
