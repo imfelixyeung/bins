@@ -1015,21 +1015,126 @@ fn status_lock() -> std::sync::Arc<tokio::sync::Mutex<()>> {
         .clone()
 }
 
-/// Replaces what the etags and sync runs tables hold for the datasets above, and
-/// holds on to them until the returned guard is dropped.
-async fn status_fixture(pool: &PgPool) -> tokio::sync::OwnedMutexGuard<()> {
-    let guard = status_lock().lock_owned().await;
+/// An `etags` row as a test found it.
+#[derive(sqlx::FromRow)]
+struct Etag {
+    id: i32,
+    url: String,
+    etag: Option<String>,
+    modified_at: Option<DateTime<Utc>>,
+    checked_at: DateTime<Utc>,
+}
+
+/// A `sync_runs` row as a test found it.
+#[derive(sqlx::FromRow)]
+struct SyncRun {
+    id: i32,
+    target: String,
+    source: String,
+    state: String,
+    started_at: DateTime<Utc>,
+    finished_at: Option<DateTime<Utc>>,
+    rows: Option<i64>,
+    message: Option<String>,
+}
+
+/// The status of the datasets above, as a test finds it and as it leaves it.
+///
+/// A status test has to write over the rows a real sync left, because the
+/// datasets `/api/status` reports on are the ones the sync commands default to.
+/// They are read out first and written back by [`StatusFixture::restore`], since
+/// the alternative is a test run deleting a real sync's record of the file the
+/// database holds.
+struct StatusFixture {
+    /// Held for the length of the test, so no other status test replaces these
+    /// rows while the first test is still reading them.
+    _lock: tokio::sync::OwnedMutexGuard<()>,
+    pool: PgPool,
+    etags: Vec<Etag>,
+    runs: Vec<SyncRun>,
+}
+
+impl StatusFixture {
+    /// Puts the status of the datasets back to how this test found it.
+    async fn restore(self) {
+        clear_status(&self.pool).await;
+
+        for etag in &self.etags {
+            sqlx::query(
+                "INSERT INTO etags (id, url, etag, modified_at, checked_at) \
+                 VALUES ($1, $2, $3, $4, $5)",
+            )
+            .bind(etag.id)
+            .bind(&etag.url)
+            .bind(&etag.etag)
+            .bind(etag.modified_at)
+            .bind(etag.checked_at)
+            .execute(&self.pool)
+            .await
+            .expect("restoring an etag a status test replaced");
+        }
+
+        for run in &self.runs {
+            sqlx::query(
+                "INSERT INTO sync_runs (
+                     id, target, source, state, started_at, finished_at, rows, message
+                 ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+            )
+            .bind(run.id)
+            .bind(&run.target)
+            .bind(&run.source)
+            .bind(&run.state)
+            .bind(run.started_at)
+            .bind(run.finished_at)
+            .bind(run.rows)
+            .bind(&run.message)
+            .execute(&self.pool)
+            .await
+            .expect("restoring a sync run a status test replaced");
+        }
+    }
+}
+
+/// Reads the status of the datasets above, clears it for a test to fill in, and
+/// holds the lock until [`StatusFixture::restore`] hands it back.
+async fn status_fixture(pool: &PgPool) -> StatusFixture {
+    let lock = status_lock().lock_owned().await;
+
+    let mut etags = Vec::new();
+    let mut runs = Vec::new();
+    for (target, _, url) in STATUS_DATASETS {
+        etags.extend(
+            sqlx::query_as::<_, Etag>(
+                "SELECT id, url, etag, modified_at, checked_at FROM etags WHERE url = $1",
+            )
+            .bind(url)
+            .fetch_all(pool)
+            .await
+            .expect("reading the etags a status test replaces"),
+        );
+        runs.extend(
+            sqlx::query_as::<_, SyncRun>(
+                "SELECT id, target, source, state, started_at, finished_at, rows, message \
+                 FROM sync_runs WHERE target = $1",
+            )
+            .bind(target)
+            .fetch_all(pool)
+            .await
+            .expect("reading the sync runs a status test replaces"),
+        );
+    }
 
     clear_status(pool).await;
 
-    guard
+    StatusFixture {
+        _lock: lock,
+        pool: pool.clone(),
+        etags,
+        runs,
+    }
 }
 
-/// Takes the status of the datasets above back to how it was found.
-///
-/// Unlike the fixtures elsewhere in this file this is also run at the end of a
-/// test. `sync_runs` is a table the status page reads and a real sync writes to,
-/// so a fixture left behind would be a sync of a dataset nobody ran.
+/// Empties the status of the datasets above.
 async fn clear_status(pool: &PgPool) {
     for (target, _, url) in STATUS_DATASETS {
         sqlx::query("DELETE FROM sync_runs WHERE target = $1")
@@ -1050,7 +1155,7 @@ async fn status_reports_what_the_status_page_reads() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let _fixtures = status_fixture(&server.pool).await;
+    let fixtures = status_fixture(&server.pool).await;
 
     // What a sync leaves behind after importing a file that had changed.
     sqlx::query(
@@ -1117,7 +1222,7 @@ async fn status_reports_what_the_status_page_reads() {
     assert_eq!(unsynced["lastSynced"], Value::Null);
     assert_eq!(unsynced["sync"], Value::Null);
 
-    clear_status(&server.pool).await;
+    fixtures.restore().await;
 }
 
 #[tokio::test]
@@ -1125,7 +1230,7 @@ async fn status_reports_a_sync_that_is_still_going() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let _fixtures = status_fixture(&server.pool).await;
+    let fixtures = status_fixture(&server.pool).await;
 
     // Started but not finished, which is what a long import of the jobs file
     // looks like while it is happening.
@@ -1146,7 +1251,7 @@ async fn status_reports_a_sync_that_is_still_going() {
     assert_eq!(jobs["sync"]["rows"], Value::Null);
     assert_eq!(jobs["sync"]["message"], Value::Null);
 
-    clear_status(&server.pool).await;
+    fixtures.restore().await;
 }
 
 #[tokio::test]
@@ -1154,7 +1259,7 @@ async fn status_reports_a_sync_that_failed() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let _fixtures = status_fixture(&server.pool).await;
+    let fixtures = status_fixture(&server.pool).await;
 
     // A run that failed before any etag was stored still has to say so, since
     // the page is where a broken sync is looked for.
@@ -1178,7 +1283,7 @@ async fn status_reports_a_sync_that_failed() {
     assert_eq!(premises["sync"]["message"], json!("502 Bad Gateway"));
     assert_eq!(premises["etag"], Value::Null);
 
-    clear_status(&server.pool).await;
+    fixtures.restore().await;
 }
 
 /// The protocol revision these tests speak, which is the revision the Next.js

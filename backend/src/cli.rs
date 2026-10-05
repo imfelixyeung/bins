@@ -32,6 +32,13 @@ pub enum SyncTarget {
         /// CSV URL, or path to a local CSV
         #[arg(default_value = premises::DEFAULT_URL)]
         source: String,
+
+        /// Import even when the file upstream has not changed
+        ///
+        /// The etag is still recorded afterwards, so the next scheduled run has
+        /// nothing left to do.
+        #[arg(long)]
+        force: bool,
     },
 
     /// Sync jobs
@@ -39,6 +46,13 @@ pub enum SyncTarget {
         /// CSV URL, or path to a local CSV
         #[arg(default_value = jobs::DEFAULT_URL)]
         source: String,
+
+        /// Import even when the file upstream has not changed
+        ///
+        /// The etag is still recorded afterwards, so the next scheduled run has
+        /// nothing left to do.
+        #[arg(long)]
+        force: bool,
     },
 
     /// Sync postcode coordinates from postcodes.io

@@ -13,8 +13,10 @@ async fn main() -> anyhow::Result<()> {
     match Cli::parse().command {
         Command::Serve => backend::serve::run().await?,
         Command::Sync { target } => match target {
-            SyncTarget::Premises { source } => backend::sync::premises(&source).await?,
-            SyncTarget::Jobs { source } => backend::sync::jobs(&source).await?,
+            SyncTarget::Premises { source, force } => {
+                backend::sync::premises(&source, force).await?
+            }
+            SyncTarget::Jobs { source, force } => backend::sync::jobs(&source, force).await?,
             SyncTarget::Postcodes => backend::sync::postcodes().await?,
         },
     }

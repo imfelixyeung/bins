@@ -6,6 +6,9 @@
 //! the one stored, which is what leaves the daily cron cheap on the days the
 //! council publishes nothing. The etag is only written once the import has
 //! succeeded, so a run that fails is tried again rather than written off.
+//!
+//! `sync premises` and `sync jobs` take `--force` for the times the skip gets in
+//! the way, such as after an import that was interrupted part way through.
 
 use anyhow::Result;
 use sqlx::PgPool;
@@ -18,27 +21,27 @@ use crate::postcodes;
 use crate::source::Source;
 use crate::sync_run::{self, Outcome};
 
-pub async fn premises(raw_source: &str) -> Result<()> {
+pub async fn premises(raw_source: &str, force: bool) -> Result<()> {
     let source = Source::parse(raw_source);
-    info!(source = %source.describe(), "syncing");
+    info!(source = %source.describe(), force, "syncing");
 
     let pool = db::connect(&db::database_url()).await?;
     db::migrate(&pool).await?;
 
-    dataset::<PremisesRow>(&pool, sync_run::PREMISES, &source).await?;
+    dataset::<PremisesRow>(&pool, sync_run::PREMISES, &source, force).await?;
 
     pool.close().await;
     Ok(())
 }
 
-pub async fn jobs(raw_source: &str) -> Result<()> {
+pub async fn jobs(raw_source: &str, force: bool) -> Result<()> {
     let source = Source::parse(raw_source);
-    info!(source = %source.describe(), "syncing");
+    info!(source = %source.describe(), force, "syncing");
 
     let pool = db::connect(&db::database_url()).await?;
     db::migrate(&pool).await?;
 
-    dataset::<JobRow>(&pool, sync_run::JOBS, &source).await?;
+    dataset::<JobRow>(&pool, sync_run::JOBS, &source, force).await?;
 
     pool.close().await;
     Ok(())
@@ -67,10 +70,15 @@ pub async fn postcodes() -> Result<()> {
 /// The run is recorded whether the import worked or not, which is the point of
 /// it: a sync that stops half way through leaves a record saying so, rather than
 /// the status page carrying on as though nothing were happening.
-async fn dataset<S: RowSpec>(pool: &PgPool, target: &str, source: &Source) -> Result<()> {
+async fn dataset<S: RowSpec>(
+    pool: &PgPool,
+    target: &str,
+    source: &Source,
+    force: bool,
+) -> Result<()> {
     let run = sync_run::start(pool, target, &source.describe()).await?;
 
-    let (outcome, error) = match gated::<S>(pool, source).await {
+    let (outcome, error) = match gated::<S>(pool, source, force).await {
         Ok(Imported::Synced { rows }) => (Outcome::Synced { rows }, None),
         Ok(Imported::Unchanged) => (Outcome::Unchanged, None),
         Err(error) => (Outcome::Failed(format!("{error:#}")), Some(error)),
@@ -96,7 +104,12 @@ enum Imported {
 ///
 /// A file on disk is always imported: there is no upstream behind it to have
 /// changed, and the etag table is keyed by URL.
-async fn gated<S: RowSpec>(pool: &PgPool, source: &Source) -> Result<Imported> {
+///
+/// `force` imports it in any case. The file is still asked about, because that
+/// is where the etag to store afterwards comes from, and the etag is still
+/// stored, so a forced import leaves the next scheduled run with nothing to do
+/// rather than with a file it thinks it has already got.
+async fn gated<S: RowSpec>(pool: &PgPool, source: &Source, force: bool) -> Result<Imported> {
     let Some(url) = source.url() else {
         return Ok(Imported::Synced {
             rows: rows(import::run::<S>(pool, source).await?),
@@ -105,12 +118,16 @@ async fn gated<S: RowSpec>(pool: &PgPool, source: &Source) -> Result<Imported> {
 
     let check = etag::check(pool, url).await?;
 
-    if etag::unchanged(check.stored.as_ref(), &check.latest) {
+    if !force && etag::unchanged(check.stored.as_ref(), &check.latest) {
         // The data is as it was, but the check still happened, so it is recorded
         // and `lastChecked` moves on.
         etag::checked(pool, url, &check.latest).await?;
         info!(%url, "upstream has not changed, nothing to import");
         return Ok(Imported::Unchanged);
+    }
+
+    if force {
+        info!(%url, "importing even though upstream has not changed");
     }
 
     let imported = import::run::<S>(pool, source).await?;
