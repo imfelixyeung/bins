@@ -55,7 +55,7 @@ const postcodeFormSchema = z.object({
 
 const premisesFormSchema = z.object({
   premises: z.coerce.number({
-    invalid_type_error: "Please select an address from the list",
+    message: "Please select an address from the list",
   }),
 });
 
