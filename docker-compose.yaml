@@ -1,50 +1,113 @@
-version: "3.7"
-
 services:
-  db:
-    image: postgres:18.6-alpine
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # Baked into the exported pages as their canonical origin. Nothing reads
+        # the environment at runtime, since the site is served as static files.
+        BASE_URL: https://bins.felixyeung.com
+    image: bins-frontend:local
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "psql", "-U", "postgres", "-c", "select 1"]
-      interval: 5s
-      timeout: 30s
-      retries: 15
-      start_period: 5s
+    labels:
+      # normal user rate limiting
+      - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
+      - "traefik.http.routers.bins.priority=10"
+      - "traefik.http.routers.bins.middlewares=bins-ratelimit"
+      # nginx listens on 8080, but its base image also exposes 80, and traefik
+      # would otherwise take the lower of the two and find nothing listening.
+      - "traefik.http.services.bins-frontend.loadbalancer.server.port=8080"
+
+  db:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: db
     volumes:
       - db-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
+      interval: 5s
+      timeout: 30s
+      retries: 15
+      start_period: 10s
 
-  worker:
-    image: registry.digitalocean.com/felixyeung/bins:worker
+  backend:
+    build:
+      context: ./apps/backend
+      target: runtime
+    image: bins-backend:local
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      PORT: "3000"
+      RUST_LOG: backend=info
+      # The host the sitemaps write their URLs against, matching what the static
+      # frontend was built with.
+      BASE_URL: https://bins.felixyeung.com
     depends_on:
-      - db
-
-  web:
-    image: registry.digitalocean.com/felixyeung/bins:web
-    restart: unless-stopped
+      db:
+        condition: service_healthy
     labels:
-      # normal user rate limiting
-      - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
-      - "traefik.http.routers.bins.priority=10"
-      # - "traefik.http.routers.bins.entrypoints=web"
-      # - "traefik.http.routers.bins.service=bins-service"
-      - "traefik.http.routers.bins.middlewares=bins-ratelimit"
-
-      # rate limit api and add cors/caching headers
-      - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.bins-api.priority=15"
+      # Higher priority than the frontend router, so /api reaches this rather than
+      # being looked for among the exported files. The frontend calls the API on
+      # the same origin it is served from.
+      - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && (Path(`/api`) || PathPrefix(`/api/`))"
+      - "traefik.http.routers.bins-api.priority=25"
       - "traefik.http.routers.bins-api.middlewares=bins-ratelimit,bins-api-cors,bins-api-cache"
+
+  sync-premises:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-      - SKIP_SITEMAP=
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync premises
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  sync-jobs:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync jobs
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Fills in coordinates for one postcode and its 100 nearest neighbours per run,
+  # so this runs often rather than once a day: every 10 minutes between 2am and
+  # 6am local time. The schedule is the one the node worker used.
+  sync-postcodes:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync postcodes
+      SCHEDULE: "*/10 * 2-5 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
 
   tunnel:
     image: cloudflare/cloudflared
@@ -52,17 +115,6 @@ services:
     command: tunnel --no-autoupdate run
     environment:
       - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
-
-  migration:
-    image: registry.digitalocean.com/felixyeung/bins:migration
-    restart: "no"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-    depends_on:
-      - db
-    deploy:
-      restart_policy:
-        condition: none
 
   proxy:
     image: traefik:v3.7.12
@@ -87,96 +139,5 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
 
-  rewrite-db:
-    image: postgis/postgis:18-3.6
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: db
-    volumes:
-      - rewrite-db-data:/var/lib/postgresql/18/docker
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
-      interval: 5s
-      timeout: 30s
-      retries: 15
-      start_period: 10s
-
-  rewrite-backend:
-    build:
-      context: ./backend
-      target: runtime
-    image: bins-backend:local
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
-      PORT: "3000"
-      RUST_LOG: backend=info
-      # The host the sitemaps write their URLs against, matching what the web
-      # app serves from.
-      BASE_URL: https://bins.felixyeung.com
-    depends_on:
-      rewrite-db:
-        condition: service_healthy
-    labels:
-      - "traefik.http.routers.bins-api-v2.rule=HostRegexp(`.*`) && (Path(`/api`) || PathPrefix(`/api/`))"
-      - "traefik.http.routers.bins-api-v2.priority=25"
-      - "traefik.http.routers.bins-api-v2.middlewares=bins-api-v2-replace"
-      - "traefik.http.middlewares.bins-api-v2-replace.replacepathregex.regex=^/api"
-      - "traefik.http.middlewares.bins-api-v2-replace.replacepathregex.replacement=/api"
-
-  rewrite-sync-premises:
-    build:
-      context: ./backend
-      target: cron
-    image: bins-backend:cron
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
-      SYNC_COMMAND: sync premises
-      SCHEDULE: "0 4 * * *"
-      RUST_LOG: backend=info
-      TZ: Europe/London
-    depends_on:
-      rewrite-db:
-        condition: service_healthy
-
-  rewrite-sync-jobs:
-    build:
-      context: ./backend
-      target: cron
-    image: bins-backend:cron
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
-      SYNC_COMMAND: sync jobs
-      SCHEDULE: "0 4 * * *"
-      RUST_LOG: backend=info
-      TZ: Europe/London
-    depends_on:
-      rewrite-db:
-        condition: service_healthy
-
-  # Fills in coordinates for one postcode and its 100 nearest neighbours per run,
-  # so this runs often rather than once a day: every 10 minutes between 2am and
-  # 6am local time. The schedule is the one the node worker used.
-  rewrite-sync-postcodes:
-    build:
-      context: ./backend
-      target: cron
-    image: bins-backend:cron
-    restart: unless-stopped
-    environment:
-      DATABASE_URL: postgres://postgres:postgres@rewrite-db:5432/db
-      SYNC_COMMAND: sync postcodes
-      SCHEDULE: "*/10 * 2-5 * * *"
-      RUST_LOG: backend=info
-      TZ: Europe/London
-    depends_on:
-      rewrite-db:
-        condition: service_healthy
-
 volumes:
   db-data:
-  rewrite-db-data:

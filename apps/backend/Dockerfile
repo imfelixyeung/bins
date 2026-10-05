@@ -1,7 +1,7 @@
 # syntax=docker/dockerfile:1
 
-# Build context is ./backend, which is a self-contained crate. Keep this in step
-# with rust-toolchain.toml; sqlx 0.9 needs rustc >= 1.94.
+# Build context is ./apps/backend, which is a self-contained crate. Keep this in
+# step with rust-toolchain.toml; sqlx 0.9 needs rustc >= 1.94.
 FROM rust:1.99-bookworm AS builder
 
 WORKDIR /app
