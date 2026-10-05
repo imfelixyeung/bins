@@ -32,3 +32,5 @@ const manifest = (): MetadataRoute.Manifest => {
 };
 
 export default manifest;
+
+export const dynamic = "force-static";

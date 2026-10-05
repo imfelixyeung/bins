@@ -30,3 +30,5 @@ export default function GET() {
     }
   );
 }
+
+export const dynamic = "force-static";

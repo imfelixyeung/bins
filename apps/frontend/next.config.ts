@@ -6,7 +6,7 @@ import { join } from "node:path";
 const revision = crypto.randomUUID();
 
 const nextConfig: NextConfig = {
-  output: "standalone",
+  output: "export",
   turbopack: {
     root: join(__dirname, "../.."),
   },
