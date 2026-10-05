@@ -7,7 +7,7 @@ services:
         # Baked into the exported pages as their canonical origin. Nothing reads
         # the environment at runtime, since the site is served as static files.
         BASE_URL: https://bins.felixyeung.com
-    image: bins-frontend:local
+    image: ghcr.io/imfelixyeung/bins-frontend:latest
     restart: unless-stopped
     labels:
       # normal user rate limiting
@@ -38,7 +38,7 @@ services:
     build:
       context: ./apps/backend
       target: runtime
-    image: bins-backend:local
+    image: ghcr.io/imfelixyeung/bins-backend:latest
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/db
@@ -62,7 +62,7 @@ services:
     build:
       context: ./apps/backend
       target: cron
-    image: bins-backend:cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/db
@@ -78,7 +78,7 @@ services:
     build:
       context: ./apps/backend
       target: cron
-    image: bins-backend:cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/db
@@ -97,7 +97,7 @@ services:
     build:
       context: ./apps/backend
       target: cron
-    image: bins-backend:cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
     restart: unless-stopped
     environment:
       DATABASE_URL: postgres://postgres:postgres@db:5432/db
