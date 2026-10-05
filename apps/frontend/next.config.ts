@@ -1,10 +1,10 @@
 import nextra from "nextra";
 import withSerwistInit from "@serwist/next";
+import { NextConfig } from "next";
 
 const revision = crypto.randomUUID();
 
-/** @type {import('next').NextConfig} */
-const nextConfig = {
+const nextConfig: NextConfig = {
   output: "standalone",
   rewrites: async () => {
     if (process.env.NODE_ENV === "production") return [];
