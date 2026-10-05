@@ -1,0 +1,119 @@
+name: publish
+
+# Publishes the images the compose file deploys from. The frontend and the backend
+# are separate images rather than one per compose service, so either half can be
+# rebuilt and released without touching the other. The backend is built twice: the
+# cron stage extends the runtime one, so the syncs run from the same binary plus
+# cron and its entrypoint.
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+env:
+  FRONTEND_IMAGE: ghcr.io/imfelixyeung/bins-frontend
+  BACKEND_IMAGE: ghcr.io/imfelixyeung/bins-backend
+
+# A push to main supersedes an unfinished one rather than racing it to the same
+# tags.
+concurrency:
+  group: publish
+  cancel-in-progress: true
+
+jobs:
+  frontend:
+    name: frontend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      # The compose file refers to these images by tag, so they are also tagged by
+      # the commit they were built from. That is what a rollback pins to.
+      - name: Resolve the commit to tag with
+        id: rev
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and push the static site
+        uses: docker/build-push-action@v6
+        with:
+          # The repository root, since apps/frontend is a bun workspace member and
+          # next.config.ts points turbopack at the root.
+          context: .
+          file: apps/frontend/Dockerfile
+          push: true
+          tags: |
+            ${{ env.FRONTEND_IMAGE }}:latest
+            ${{ env.FRONTEND_IMAGE }}:${{ steps.rev.outputs.sha }}
+          build-args: |
+            # Baked into the exported pages as their canonical origin. Defaults to
+            # the production host in the Dockerfile.
+            BASE_URL=${{ vars.BASE_URL || 'https://bins.felixyeung.com' }}
+          cache-from: type=gha,scope=frontend
+          cache-to: type=gha,mode=max,scope=frontend
+          # Plain image manifests, which is what `docker stack deploy` expects on
+          # the far end. Leaving this on attaches provenance attestations as extra
+          # manifest entries.
+          provenance: false
+
+  backend:
+    name: backend
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Resolve the commit to tag with
+        id: rev
+        run: echo "sha=$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      - uses: docker/setup-buildx-action@v3
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # The cron stage is built second and shares the builder's local cache with
+      # the runtime stage it extends, so the crate is only compiled once. Both
+      # export to the same cache scope, the second overwriting it with the
+      # superset.
+      - name: Build and push the api
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/backend
+          target: runtime
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:latest
+            ${{ env.BACKEND_IMAGE }}:${{ steps.rev.outputs.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+          provenance: false
+
+      - name: Build and push the sync crons
+        uses: docker/build-push-action@v6
+        with:
+          context: ./apps/backend
+          target: cron
+          push: true
+          tags: |
+            ${{ env.BACKEND_IMAGE }}:cron
+            ${{ env.BACKEND_IMAGE }}:cron-${{ steps.rev.outputs.sha }}
+          cache-from: type=gha,scope=backend
+          cache-to: type=gha,mode=max,scope=backend
+          provenance: false

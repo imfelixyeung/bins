@@ -1,31 +1,39 @@
-Makefile
+# Only the frontend build context reads this. The Rust build uses
+# apps/backend/.dockerignore, which is narrower because that crate is
+# self-contained.
+#
+# Bare patterns such as `node_modules` only match at the context root, so the
+# nested ones need **/ to be caught: apps/frontend keeps its own node_modules,
+# .next, out.
 
-node_modules
-.git
-.gitignore
+**/.git
+**/.env
+**/.env.*
+**/node_modules
+**/.turbo
+
+# next.js build output. apps/frontend/out is the export, which is built inside the
+# image rather than copied in.
+**/.next
+**/out
+
+# Build artefacts of the crate, only present because this is the root context.
+apps/backend/target
+
+Makefile
 README.md
 LICENSE
-Dockerfile
 docker-compose.yaml
 data
-npm-debug.log
-temp
-
-.env
-apps/web/.env
-apps/web/.next
-apps/web/public/sw.js
-apps/web/public/swe-worker-*.js
-apps/worker/.env
-apps/worker/temp
-packages/database/.env
-packages/import-csv/target
-packages/import-csv/temp
-
 scripts
-.vscode
+temp
 test
 
-# turbo
-.turbo
-out
+npm-debug.log
+.DS_Store
+*.pem
+
+# pwa, pagefind and next's generated service worker, all built inside the image
+apps/frontend/public/sw.js
+apps/frontend/public/swe-worker-*.js
+apps/frontend/public/_pagefind

@@ -1,1 +1,0 @@
-ALTER TABLE "dm_etags" ALTER COLUMN "etag" DROP NOT NULL;

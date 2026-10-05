@@ -1,85 +1,120 @@
-version: "3.7"
-
 services:
-  db:
-    image: postgres:18.6-alpine
+  frontend:
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
+      args:
+        # Baked into the exported pages as their canonical origin. Nothing reads
+        # the environment at runtime, since the site is served as static files.
+        BASE_URL: https://bins.felixyeung.com
+    image: ghcr.io/imfelixyeung/bins-frontend:latest
     restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "psql", "-U", "postgres", "-c", "select 1"]
-      interval: 5s
-      timeout: 30s
-      retries: 15
-      start_period: 5s
+    labels:
+      # normal user rate limiting
+      - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
+      - "traefik.http.routers.bins.priority=10"
+      - "traefik.http.routers.bins.middlewares=bins-ratelimit"
+      # nginx listens on 8080, but its base image also exposes 80, and traefik
+      # would otherwise take the lower of the two and find nothing listening.
+      - "traefik.http.services.bins-frontend.loadbalancer.server.port=8080"
+
+  db:
+    image: postgis/postgis:18-3.6
+    restart: unless-stopped
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: db
     volumes:
       - db-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d db"]
+      interval: 5s
+      timeout: 30s
+      retries: 15
+      start_period: 10s
 
-  worker:
-    image: registry.digitalocean.com/felixyeung/bins:worker
+  backend:
+    build:
+      context: ./apps/backend
+      target: runtime
+    image: ghcr.io/imfelixyeung/bins-backend:latest
     restart: unless-stopped
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      PORT: "3000"
+      RUST_LOG: backend=info
+      # The host the sitemaps write their URLs against, matching what the static
+      # frontend was built with.
+      BASE_URL: https://bins.felixyeung.com
     depends_on:
-      - db
-
-  web:
-    image: registry.digitalocean.com/felixyeung/bins:web
-    restart: unless-stopped
+      db:
+        condition: service_healthy
     labels:
-      # rapidapi requests can skip rate limiting, next.js middleware will check if the secret is valid
-      - "traefik.http.routers.bins-rapid.rule=HostRegexp(`.*`) && PathPrefix(`/api`) && HeaderRegexp(`X-RapidAPI-Proxy-Secret`, `.+`)"
-      - "traefik.http.routers.bins-rapid.priority=20"
-      # - "traefik.http.routers.bins-rapid.entrypoints=web"
-      # - "traefik.http.routers.bins-rapid.service=bins-service"
-
-      # normal user rate limiting
-      - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
-      - "traefik.http.routers.bins.priority=10"
-      # - "traefik.http.routers.bins.entrypoints=web"
-      # - "traefik.http.routers.bins.service=bins-service"
-      - "traefik.http.routers.bins.middlewares=bins-ratelimit"
-
-      # rate limit trpc random premises api, cache 1sec
-      - "traefik.http.routers.bins-api-trpc.rule=HostRegexp(`.*`) && PathPrefix(`/api/trpc/premises.random`)"
-      - "traefik.http.routers.bins-api-trpc.priority=16"
-      - "traefik.http.routers.bins-api-trpc.middlewares=bins-ratelimit,bins-api-cache-1s"
-
-      # rate limit api and add cors/caching headers
-      - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && PathPrefix(`/api`)"
-      - "traefik.http.routers.bins-api.priority=15"
+      # Higher priority than the frontend router, so /api reaches this rather than
+      # being looked for among the exported files. The frontend calls the API on
+      # the same origin it is served from.
+      - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && (Path(`/api`) || PathPrefix(`/api/`))"
+      - "traefik.http.routers.bins-api.priority=25"
       - "traefik.http.routers.bins-api.middlewares=bins-ratelimit,bins-api-cors,bins-api-cache"
 
-    secrets:
-      - rapid_api_proxy_secret
+  sync-premises:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
+    restart: unless-stopped
     environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-      - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
-      - SKIP_SITEMAP=
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync premises
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
     depends_on:
-      - db
+      db:
+        condition: service_healthy
+
+  sync-jobs:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync jobs
+      SCHEDULE: "0 4 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
+
+  # Fills in coordinates for one postcode and its 100 nearest neighbours per run,
+  # so this runs often rather than once a day: every 10 minutes between 2am and
+  # 6am local time. The schedule is the one the node worker used.
+  sync-postcodes:
+    build:
+      context: ./apps/backend
+      target: cron
+    image: ghcr.io/imfelixyeung/bins-backend:cron
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/db
+      SYNC_COMMAND: sync postcodes
+      SCHEDULE: "*/10 * 2-5 * * *"
+      RUST_LOG: backend=info
+      TZ: Europe/London
+    depends_on:
+      db:
+        condition: service_healthy
 
   tunnel:
     image: cloudflare/cloudflared
     restart: unless-stopped
     command: tunnel --no-autoupdate run
-    secrets:
-      - tunnel_token
     environment:
-      - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
-
-  migration:
-    image: registry.digitalocean.com/felixyeung/bins:migration
-    restart: "no"
-    environment:
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-    depends_on:
-      - db
-    deploy:
-      restart_policy:
-        condition: none
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 
   proxy:
     image: traefik:v3.7.12
@@ -103,12 +138,6 @@ services:
       start_period: 5s
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-
-secrets:
-  tunnel_token:
-    external: true
-  rapid_api_proxy_secret:
-    external: true
 
 volumes:
   db-data:
