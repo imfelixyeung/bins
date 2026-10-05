@@ -29,12 +29,6 @@ services:
     image: registry.digitalocean.com/felixyeung/bins:web
     restart: unless-stopped
     labels:
-      # rapidapi requests can skip rate limiting, next.js middleware will check if the secret is valid
-      - "traefik.http.routers.bins-rapid.rule=HostRegexp(`.*`) && PathPrefix(`/api`) && HeaderRegexp(`X-RapidAPI-Proxy-Secret`, `.+`)"
-      - "traefik.http.routers.bins-rapid.priority=20"
-      # - "traefik.http.routers.bins-rapid.entrypoints=web"
-      # - "traefik.http.routers.bins-rapid.service=bins-service"
-
       # normal user rate limiting
       - "traefik.http.routers.bins.rule=HostRegexp(`.*`)"
       - "traefik.http.routers.bins.priority=10"
@@ -46,12 +40,8 @@ services:
       - "traefik.http.routers.bins-api.rule=HostRegexp(`.*`) && PathPrefix(`/api`)"
       - "traefik.http.routers.bins-api.priority=15"
       - "traefik.http.routers.bins-api.middlewares=bins-ratelimit,bins-api-cors,bins-api-cache"
-
-    secrets:
-      - rapid_api_proxy_secret
     environment:
       - DATABASE_URL=postgres://postgres:postgres@db:5432/db
-      - RAPID_API_PROXY_SECRET_FILE=/run/secrets/rapid_api_proxy_secret
       - SKIP_SITEMAP=
     depends_on:
       - db
@@ -60,10 +50,8 @@ services:
     image: cloudflare/cloudflared
     restart: unless-stopped
     command: tunnel --no-autoupdate run
-    secrets:
-      - tunnel_token
     environment:
-      - TUNNEL_TOKEN_FILE=/run/secrets/tunnel_token
+      - TUNNEL_TOKEN=${CLOUDFLARE_TUNNEL_TOKEN}
 
   migration:
     image: registry.digitalocean.com/felixyeung/bins:migration
@@ -188,12 +176,6 @@ services:
     depends_on:
       rewrite-db:
         condition: service_healthy
-
-secrets:
-  tunnel_token:
-    external: true
-  rapid_api_proxy_secret:
-    external: true
 
 volumes:
   db-data:
