@@ -1,6 +1,8 @@
+pub mod address;
 pub mod cli;
 pub mod db;
 pub mod import;
+pub mod mcp;
 pub mod postcodes;
 pub mod routes;
 pub mod search;

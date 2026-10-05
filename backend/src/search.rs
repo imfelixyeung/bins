@@ -8,6 +8,7 @@
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, NaiveDate, SecondsFormat, Utc};
+use schemars::JsonSchema;
 use serde::{Serialize, Serializer};
 use sqlx::{AssertSqlSafe, FromRow, PgPool};
 
@@ -31,7 +32,10 @@ const NEARBY_LIMIT: i64 = 100;
 
 /// An address as the API serves it. `address_room` and friends are free text
 /// from the upstream feed, so all but `id` are optional.
-#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize)]
+///
+/// The schema is here because the MCP tools answer with this struct and publish
+/// it as their output schema.
+#[derive(Debug, Clone, PartialEq, Eq, FromRow, Serialize, JsonSchema)]
 #[serde(rename_all = "camelCase")]
 pub struct Premises {
     pub id: i32,

@@ -15,6 +15,7 @@ use std::sync::atomic::{AtomicUsize, Ordering};
 use axum::Router;
 use backend::{db, import::premises::search_postcode, routes, search::format_timestamp, sitemap};
 use chrono::{DateTime, NaiveDate, Utc};
+use futures_util::StreamExt;
 use reqwest::StatusCode;
 use serde_json::{Value, json};
 use sqlx::{PgPool, postgres::PgPoolOptions};
@@ -982,4 +983,632 @@ fn urlencode(value: &str) -> String {
             other => format!("%{other:02X}"),
         })
         .collect()
+}
+
+/// The protocol revision these tests speak, which is the revision the Next.js
+/// handler's clients speak and the one that keeps a session open.
+const PROTOCOL_VERSION: &str = "2025-06-18";
+
+/// A client for `/api/mcp`, speaking the protocol over HTTP as a real one does:
+/// one handshake, then every request carrying the session the handshake handed
+/// back.
+struct Mcp<'a> {
+    base: &'a str,
+    client: reqwest::Client,
+    session: String,
+    /// The protocol version the server settled on, which it sends back on every
+    /// request from here on.
+    version: String,
+}
+
+impl TestServer {
+    /// The handshake, which is what a client does before anything else.
+    async fn mcp(&self) -> Mcp<'_> {
+        let client = reqwest::Client::new();
+
+        let response = client
+            .post(format!("{}/api/mcp", self.base))
+            .header(
+                reqwest::header::ACCEPT,
+                "application/json, text/event-stream",
+            )
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .json(&json!({
+                "jsonrpc": "2.0",
+                "id": 0,
+                "method": "initialize",
+                "params": {
+                    "protocolVersion": PROTOCOL_VERSION,
+                    "capabilities": {},
+                    "clientInfo": { "name": "api-tests", "version": "0.0.0" },
+                }
+            }))
+            .send()
+            .await
+            .expect("the MCP handshake");
+
+        assert_eq!(response.status(), StatusCode::OK);
+
+        let session = response
+            .headers()
+            .get("mcp-session-id")
+            .and_then(|value| value.to_str().ok())
+            .expect("a session the handshake opens")
+            .to_owned();
+
+        let message = event(response).await;
+        let result = &message["result"];
+
+        assert_eq!(result["protocolVersion"], PROTOCOL_VERSION);
+        assert_eq!(result["serverInfo"]["name"], "bins");
+
+        // The client says it is ready before it asks for anything, as the spec
+        // asks it to.
+        client
+            .post(format!("{}/api/mcp", self.base))
+            .header(
+                reqwest::header::ACCEPT,
+                "application/json, text/event-stream",
+            )
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .header("mcp-session-id", &session)
+            .header("mcp-protocol-version", PROTOCOL_VERSION)
+            .json(&json!({ "jsonrpc": "2.0", "method": "notifications/initialized" }))
+            .send()
+            .await
+            .expect("saying the client is ready");
+
+        Mcp {
+            base: &self.base,
+            client,
+            session,
+            version: PROTOCOL_VERSION.to_string(),
+        }
+    }
+}
+
+impl Mcp<'_> {
+    /// A request sent the way a client sends every one of them, left as the
+    /// response itself so a caller can read an answer that is not a result.
+    async fn post(&self, message: Value) -> reqwest::Response {
+        self.client
+            .post(format!("{}/api/mcp", self.base))
+            .header(
+                reqwest::header::ACCEPT,
+                "application/json, text/event-stream",
+            )
+            .header(reqwest::header::CONTENT_TYPE, "application/json")
+            .header("mcp-session-id", &self.session)
+            .header("mcp-protocol-version", &self.version)
+            .json(&message)
+            .send()
+            .await
+            .expect("a request made in the session")
+    }
+
+    /// One request, answered with the `result` it was looking for. A failure
+    /// answer is left in place for the caller to look at, rather than panicking
+    /// here.
+    async fn request(&self, id: i64, method: &str, params: Value) -> Value {
+        let response = self
+            .post(json!({ "jsonrpc": "2.0", "id": id, "method": method, "params": params }))
+            .await;
+
+        assert_eq!(response.status(), StatusCode::OK, "{method}");
+
+        let message = event(response).await;
+
+        message
+            .get("result")
+            .cloned()
+            .unwrap_or_else(|| panic!("{method} answered with {message}"))
+    }
+
+    /// The tools the server offers, in the order it lists them.
+    async fn tools(&self) -> Vec<Value> {
+        let result = self.request(1, "tools/list", json!({})).await;
+
+        result["tools"]
+            .as_array()
+            .expect("an array of tools")
+            .clone()
+    }
+
+    /// One tool, called as a client would call it.
+    async fn call(&self, name: &str, arguments: Value) -> Value {
+        self.request(
+            2,
+            "tools/call",
+            json!({ "name": name, "arguments": arguments }),
+        )
+        .await
+    }
+}
+
+/// The answer to one request, which comes back as a server sent event while the
+/// session is open. The event is read as it arrives rather than by waiting for
+/// the stream to end, since the stream stays open for the rest of the session.
+async fn event(response: reqwest::Response) -> Value {
+    let mut events = response.bytes_stream();
+    let mut read = String::new();
+
+    while let Some(chunk) = events.next().await {
+        let chunk = chunk.expect("a chunk of the event stream");
+        read.push_str(std::str::from_utf8(&chunk).expect("an event stream of text"));
+
+        // Only the lines that have arrived whole, since a line may still be on
+        // its way in the next chunk.
+        let Some(last_line) = read.rfind('\n') else {
+            continue;
+        };
+        let arrived = read[..=last_line].to_owned();
+        read = read[last_line + 1..].to_owned();
+
+        for line in arrived.lines() {
+            let Some(payload) = line.strip_prefix("data:") else {
+                continue;
+            };
+
+            let payload = payload.trim();
+
+            // The stream opens with a priming event carrying a retry hint and no
+            // message, which a client reads past to reach the answer.
+            if payload.is_empty() {
+                continue;
+            }
+
+            return serde_json::from_str(payload)
+                .unwrap_or_else(|err| panic!("an answer that is not JSON ({payload:?}): {err}"));
+        }
+    }
+
+    panic!("the event stream ended without an answer")
+}
+
+/// The text blocks of an answer, which is the part of it a person reads.
+fn text_of(result: &Value) -> Vec<String> {
+    result["content"]
+        .as_array()
+        .expect("an array of content blocks")
+        .iter()
+        .map(|block| {
+            assert_eq!(
+                block["type"], "text",
+                "every block the tools answer with is text"
+            );
+
+            block["text"]
+                .as_str()
+                .expect("a text block of text")
+                .to_owned()
+        })
+        .collect()
+}
+
+#[tokio::test]
+async fn the_handshake_says_what_the_server_is_and_opens_a_session() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let mcp = server.mcp().await;
+
+    assert!(
+        !mcp.session.is_empty(),
+        "the session every request is made in"
+    );
+
+    let tools = mcp.tools().await;
+
+    assert!(
+        tools
+            .iter()
+            .any(|tool| tool["name"] == "search_premises_from_postcode"),
+        "the handshake answered on a session that serves the tools: {tools:?}"
+    );
+}
+
+#[tokio::test]
+async fn the_tools_are_the_three_the_next_js_route_registered() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let mut names: Vec<String> = server
+        .mcp()
+        .await
+        .tools()
+        .await
+        .iter()
+        .filter_map(|tool| tool["name"].as_str().map(str::to_owned))
+        .collect();
+    names.sort();
+
+    assert_eq!(
+        names,
+        vec![
+            "get_premises_permalink".to_string(),
+            "search_premises_from_postcode".to_string(),
+            "show_premises_jobs_by_id".to_string(),
+        ],
+        "the tools are named as they always have been, listed by name"
+    );
+}
+
+#[tokio::test]
+async fn a_tool_says_what_it_wants_and_what_it_answers_with() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let tools = server.mcp().await.tools().await;
+
+    let search = tools
+        .iter()
+        .find(|tool| tool["name"] == "search_premises_from_postcode")
+        .expect("the postcode search");
+
+    assert_eq!(
+        search["description"],
+        "Search premises or addresses using a postcode. The premises.id can then be used in \
+         show_premises_jobs_by_id or get_premises_permalink for their respective functions"
+    );
+    assert_eq!(
+        search["inputSchema"]["required"],
+        json!(["postcode"]),
+        "the postcode is the only thing it needs"
+    );
+    assert!(
+        search["inputSchema"]["properties"]["postcode"]["description"]
+            .as_str()
+            .is_some_and(|description| description.contains("LS6 2SE")),
+        "the parameter carries the example the Next.js schema did"
+    );
+    assert_eq!(
+        search["outputSchema"]["type"], "object",
+        "a client is told what it is being answered with"
+    );
+
+    for tool in &tools {
+        assert!(
+            tool["description"]
+                .as_str()
+                .is_some_and(|description| !description.is_empty()),
+            "{} says what it is for",
+            tool["name"]
+        );
+        assert_eq!(
+            tool["inputSchema"]["type"], "object",
+            "{} takes an object of arguments",
+            tool["name"]
+        );
+    }
+
+    // The typo the Next.js description carried is not worth carrying over.
+    let jobs = tools
+        .iter()
+        .find(|tool| tool["name"] == "show_premises_jobs_by_id")
+        .expect("the collections");
+
+    assert!(
+        !jobs["description"]
+            .as_str()
+            .is_some_and(|it| it.contains("Retrives")),
+        "{:?}",
+        jobs["description"]
+    );
+}
+
+#[tokio::test]
+async fn a_postcode_search_lists_the_addresses_and_hands_back_their_ids() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+    let numbered = premise(&server.pool, &slot, 0, Some("10")).await;
+    premise(&server.pool, &slot, 1, Some("9")).await;
+
+    let mcp = server.mcp().await;
+    let result = mcp
+        .call(
+            "search_premises_from_postcode",
+            json!({ "postcode": slot.postcode.replace(' ', "").to_lowercase() }),
+        )
+        .await;
+
+    assert_ne!(result["isError"], true, "{result}");
+
+    assert_eq!(
+        text_of(&result),
+        vec![
+            format!(
+                "{}: 9, TEST STREET, TEST LOCALITY, LEEDS, {}",
+                slot.first_id + 1,
+                slot.postcode
+            ),
+            format!(
+                "{numbered}: 10, TEST STREET, TEST LOCALITY, LEEDS, {}",
+                slot.postcode
+            ),
+        ],
+        "an address on one line, prefixed with the id that finds it again"
+    );
+
+    let found = &result["structuredContent"]["premises"];
+
+    assert_eq!(found[0]["id"], slot.first_id + 1);
+    assert_eq!(found[0]["addressPostcode"], slot.postcode);
+    assert_eq!(found[1]["id"], numbered);
+}
+
+#[tokio::test]
+async fn a_postcode_with_nothing_at_it_is_a_tool_error() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+
+    let result = server
+        .mcp()
+        .await
+        .call(
+            "search_premises_from_postcode",
+            json!({ "postcode": slot.postcode }),
+        )
+        .await;
+
+    assert_eq!(result["isError"], true, "{result}");
+    assert_eq!(
+        text_of(&result),
+        vec![format!(
+            "No address matching with postcode {} found",
+            slot.postcode
+        )]
+    );
+    assert_eq!(
+        result["structuredContent"],
+        Value::Null,
+        "an answer that failed has nothing to structure"
+    );
+}
+
+#[tokio::test]
+async fn the_collections_are_listed_with_where_each_one_sits() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+    let premises = premise(&server.pool, &slot, 0, Some("6")).await;
+
+    // Yesterday, today and next week, as the server would count them.
+    let today = chrono::Local::now().date_naive();
+    let (yesterday, next_week) = (
+        today - chrono::Duration::days(1),
+        today + chrono::Duration::days(7),
+    );
+    jobs(
+        &server.pool,
+        premises,
+        &[
+            ("GREEN", &yesterday.to_string()),
+            ("BLACK", &today.to_string()),
+            ("GENERAL WASTE", &next_week.to_string()),
+        ],
+    )
+    .await;
+
+    let result = server
+        .mcp()
+        .await
+        .call(
+            "show_premises_jobs_by_id",
+            json!({ "premisesId": premises }),
+        )
+        .await;
+
+    assert_ne!(result["isError"], true, "{result}");
+
+    assert_eq!(
+        text_of(&result),
+        vec![
+            format!(
+                "Full Address:\n6\nTEST STREET\nTEST LOCALITY\nLEEDS\n{}",
+                slot.postcode
+            ),
+            format!("{yesterday} (Expired): GREEN bin"),
+            format!("{today} (Today): BLACK bin"),
+            format!("{next_week} (Upcoming): GENERAL WASTE bin"),
+        ]
+    );
+
+    let collections = &result["structuredContent"];
+
+    assert_eq!(
+        collections["addressStreet"], "TEST STREET",
+        "the address is structured as it is on the API, rather than nested"
+    );
+    assert_eq!(
+        collections["jobs"],
+        json!([
+            { "bin": "GREEN", "date": yesterday.to_string(), "status": "Expired" },
+            { "bin": "BLACK", "date": today.to_string(), "status": "Today" },
+            { "bin": "GENERAL WASTE", "date": next_week.to_string(), "status": "Upcoming" },
+        ])
+    );
+}
+
+#[tokio::test]
+async fn a_premises_id_nobody_has_is_a_tool_error() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+
+    let mcp = server.mcp().await;
+
+    // An id nothing was ever given out under, and then one too large to be an id
+    // at all: both are addresses this site does not have.
+    for premises_id in [u32::try_from(slot.first_id + 50).expect("an id"), u32::MAX] {
+        let result = mcp
+            .call(
+                "show_premises_jobs_by_id",
+                json!({ "premisesId": premises_id }),
+            )
+            .await;
+
+        assert_eq!(
+            result["isError"], true,
+            "premisesId={premises_id}: {result}"
+        );
+        assert_eq!(
+            text_of(&result),
+            vec![format!(
+                "Address not found (bad premisesId of {premises_id})"
+            )]
+        );
+    }
+}
+
+#[tokio::test]
+async fn the_permalink_points_at_the_premises_page() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+    let premises = premise(&server.pool, &slot, 0, Some("6")).await;
+
+    let result = server
+        .mcp()
+        .await
+        .call("get_premises_permalink", json!({ "premisesId": premises }))
+        .await;
+
+    assert_ne!(result["isError"], true, "{result}");
+
+    let link = format!("https://bins.felixyeung.com/premises?id={premises}");
+
+    assert_eq!(
+        text_of(&result),
+        vec![format!("Permalink to the premises page:\n{link}")]
+    );
+    assert_eq!(result["structuredContent"]["link"], link);
+}
+
+#[tokio::test]
+async fn a_permalink_for_an_address_this_site_does_not_have_is_a_tool_error() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let slot = slot(&server.pool).await;
+
+    let result = server
+        .mcp()
+        .await
+        .call(
+            "get_premises_permalink",
+            json!({ "premisesId": slot.first_id + 50 }),
+        )
+        .await;
+
+    assert_eq!(result["isError"], true, "{result}");
+    assert_eq!(
+        text_of(&result),
+        vec![format!(
+            "Address not found (bad premisesId of {})",
+            slot.first_id + 50
+        )]
+    );
+}
+
+#[tokio::test]
+async fn a_premises_id_that_cannot_be_one_is_refused_before_the_query() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    // The argument does not match the schema the tool published, so it is refused
+    // where it is read rather than looked up: the tool takes the id as an
+    // unsigned number, where the Next.js schema took any number and checked it
+    // was not negative.
+    let result = server
+        .mcp()
+        .await
+        .call("show_premises_jobs_by_id", json!({ "premisesId": -1 }))
+        .await;
+
+    assert_eq!(result["isError"], true, "{result}");
+    assert!(
+        text_of(&result)[0].contains("expected u32"),
+        "the refusal says why: {result}"
+    );
+    assert_eq!(result["structuredContent"], Value::Null);
+}
+
+#[tokio::test]
+async fn a_session_can_be_closed_and_is_then_forgotten() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let mcp = server.mcp().await;
+
+    let closed = mcp
+        .client
+        .delete(format!("{}/api/mcp", server.base))
+        .header("mcp-session-id", &mcp.session)
+        .header("mcp-protocol-version", &mcp.version)
+        .send()
+        .await
+        .expect("closing the session");
+
+    assert_eq!(closed.status(), StatusCode::ACCEPTED);
+
+    // Anything else made in that session is a session the server no longer has.
+    let response = mcp
+        .client
+        .post(format!("{}/api/mcp", server.base))
+        .header(
+            reqwest::header::ACCEPT,
+            "application/json, text/event-stream",
+        )
+        .header(reqwest::header::CONTENT_TYPE, "application/json")
+        .header("mcp-session-id", &mcp.session)
+        .header("mcp-protocol-version", &mcp.version)
+        .json(&json!({ "jsonrpc": "2.0", "id": 3, "method": "tools/list", "params": {} }))
+        .send()
+        .await
+        .expect("asking in a session that was closed");
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
+}
+
+#[tokio::test]
+async fn a_client_may_open_the_stream_of_events_for_its_session() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let mcp = server.mcp().await;
+
+    // Read as the headers rather than the body, since the stream stays open for
+    // as long as the session does.
+    let stream = mcp
+        .client
+        .get(format!("{}/api/mcp", server.base))
+        .header(reqwest::header::ACCEPT, "text/event-stream")
+        .header("mcp-session-id", &mcp.session)
+        .header("mcp-protocol-version", &mcp.version)
+        .send()
+        .await
+        .expect("opening the event stream");
+
+    assert_eq!(stream.status(), StatusCode::OK);
+    assert!(
+        stream
+            .headers()
+            .get(reqwest::header::CONTENT_TYPE)
+            .and_then(|value| value.to_str().ok())
+            .is_some_and(|value| value.starts_with("text/event-stream")),
+        "the Next.js handler only ever served requests, and this stream is what took its place"
+    );
 }
