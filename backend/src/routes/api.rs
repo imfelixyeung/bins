@@ -11,6 +11,7 @@ pub mod nearby;
 pub mod premises;
 pub mod random;
 pub mod sitemaps;
+pub mod status;
 
 use std::collections::HashMap;
 
@@ -34,6 +35,7 @@ pub fn router() -> Router<PgPool> {
         .route("/api/premises", get(premises::handler))
         .route("/api/random/premises", get(random::handler))
         .route("/api/sitemaps/premises.xml", get(sitemaps::handler))
+        .route("/api/status", get(status::handler))
 }
 
 /// Every successful response is wrapped in this envelope.

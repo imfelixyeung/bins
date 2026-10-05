@@ -104,11 +104,23 @@ pub fn format_timestamp(timestamp: &DateTime<Utc>) -> String {
     timestamp.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
 
-fn serialize_timestamp<S: Serializer>(
+pub(crate) fn serialize_timestamp<S: Serializer>(
     timestamp: &DateTime<Utc>,
     serializer: S,
 ) -> Result<S::Ok, S::Error> {
     serializer.serialize_str(&format_timestamp(timestamp))
+}
+
+/// [`serialize_timestamp`] for a timestamp that may be absent, such as one from a
+/// dataset this deployment has never synced.
+pub(crate) fn serialize_optional_timestamp<S: Serializer>(
+    timestamp: &Option<DateTime<Utc>>,
+    serializer: S,
+) -> Result<S::Ok, S::Error> {
+    match timestamp {
+        Some(timestamp) => serializer.serialize_some(&format_timestamp(timestamp)),
+        None => serializer.serialize_none(),
+    }
 }
 
 /// Every premise at `postcode`, ordered by house number.

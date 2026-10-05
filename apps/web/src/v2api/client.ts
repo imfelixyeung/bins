@@ -99,3 +99,34 @@ export const getNearbyPostcodes = async ({
     .then((data) => data.data);
 };
 export type NearbySchema = z.infer<typeof nearbySchema>["data"];
+
+const syncRunSchema = z.object({
+  state: z.enum(["running", "synced", "unchanged", "failed"]),
+  startedAt: z.string(),
+  finishedAt: z.string().nullable(),
+  rows: z.number().nullable(),
+  message: z.string().nullable(),
+});
+
+const statusDatasetSchema = z.object({
+  key: z.string(),
+  name: z.string(),
+  url: z.string(),
+  etag: z.string().nullable(),
+  lastChecked: z.string().nullable(),
+  lastSynced: z.string().nullable(),
+  sync: syncRunSchema.nullable(),
+});
+
+export type StatusDataset = z.infer<typeof statusDatasetSchema>;
+
+const statusSchema = makeAPISchema(
+  z.object({ datasets: z.array(statusDatasetSchema) })
+);
+export const getStatus = async () => {
+  return await fetch(`${BASE_URL}/status`)
+    .then((res) => res.json())
+    .then(statusSchema.parseAsync)
+    .then((data) => data.data);
+};
+export type StatusSchema = z.infer<typeof statusSchema>["data"];

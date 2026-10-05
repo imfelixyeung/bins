@@ -200,6 +200,7 @@ dependencies = [
  "csv",
  "csv-async",
  "futures-util",
+ "httpdate",
  "icalendar",
  "reqwest",
  "rmcp",

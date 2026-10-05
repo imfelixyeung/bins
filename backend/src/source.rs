@@ -30,6 +30,17 @@ impl Source {
         }
     }
 
+    /// The URL this source is fetched from, or `None` for a file on disk.
+    ///
+    /// The etag gate only applies to a URL: a local file has no upstream to have
+    /// changed, so there is nothing to compare it against.
+    pub fn url(&self) -> Option<&str> {
+        match self {
+            Source::Url(url) => Some(url),
+            Source::File(_) => None,
+        }
+    }
+
     /// Opens the source as a byte stream. Nothing is buffered up front, so the
     /// caller only ever holds a single chunk of the CSV in memory.
     pub async fn open(&self) -> Result<Box<dyn AsyncRead + Send + Unpin>> {
