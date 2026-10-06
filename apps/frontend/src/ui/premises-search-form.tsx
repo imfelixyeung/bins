@@ -96,6 +96,7 @@ const PremisesSearchForm = () => {
   const { data: premises, isLoading: premisesIsLoading } = useQuery({
     queryKey: ["premise", postcode],
     queryFn: () => searchPremises({ postcode }),
+    enabled: postcode.trim().length > 0,
   });
 
   const selectedPremisesId = premisesForm.watch("premises");
