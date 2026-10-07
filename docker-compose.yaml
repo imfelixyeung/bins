@@ -118,6 +118,7 @@ services:
 
   proxy:
     image: traefik:v3.7.12
+    restart: unless-stopped
     command:
       - "--ping=true"
       - "--api.insecure=true"
