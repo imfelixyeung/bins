@@ -5,18 +5,27 @@ import { join } from "node:path";
 
 const revision = crypto.randomUUID();
 
+const DEVELOPMENT_BACKEND_URL =
+  process.env.NODE_ENV === "development"
+    ? process.env.DEVELOPMENT_BACKEND_URL
+    : null;
+
 const nextConfig: NextConfig = {
-  output: "export",
+  // Hack to enable rewrites, export doesn't do rewrites in development mode.
+  output: DEVELOPMENT_BACKEND_URL ? "standalone" : "export",
   turbopack: {
     root: join(__dirname, "../.."),
   },
   rewrites: async () => {
-    if (process.env.NODE_ENV === "production") return [];
+    if (!DEVELOPMENT_BACKEND_URL) return [];
     return {
       beforeFiles: [
         {
           source: "/api/:path*",
-          destination: "http://localhost:3000/api/:path*",
+          destination: new URL(
+            "/api/:path*",
+            DEVELOPMENT_BACKEND_URL
+          ).toString(),
         },
       ],
     };
