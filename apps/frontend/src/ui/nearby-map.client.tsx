@@ -51,7 +51,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
         <Tabs
           value={selectedDate}
           onValueChange={setSelectedDate}
-          className="max-w-full overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden rounded-none"
+          className="max-w-full overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden rounded-none"
         >
           <TabsList className="rounded-none">
             {uniqueDates.map((date) => (
