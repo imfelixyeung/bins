@@ -1,6 +1,6 @@
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import type { SearchJobsSchema } from "@/v2api/client";
 import DotCalendar from "./dot-calendar";
-import { SearchJobsSchema } from "@/v2api/client";
 
 const binToClassName: Record<string, string> = {
   BLACK: "bg-gray-900/90",
@@ -20,7 +20,7 @@ const DotCalendarBins = ({ data }: { data: SearchJobsSchema["jobs"] }) => {
         acc[date].push(item.bin);
         return acc;
       },
-      {} as Record<string, string[]>
+      {} as Record<string, string[]>,
     );
 
     return Object.entries(byDate).map(([date, bins]) => {

@@ -1,5 +1,5 @@
-import { BASE_URL, BUILD_TIME } from "@/app/config";
 import type { MetadataRoute } from "next";
+import { BASE_URL, BUILD_TIME } from "@/app/config";
 
 const sitemap = (): MetadataRoute.Sitemap => {
   return [

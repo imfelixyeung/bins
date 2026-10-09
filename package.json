@@ -1,13 +1,13 @@
 {
   "name": "bins",
   "private": true,
-  "workspaces": [
-    "apps/frontend"
-  ],
   "scripts": {
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
+  "workspaces": [
+    "apps/frontend"
+  ],
   "devDependencies": {
-    "prettier": "^3.9.9"
+    "@biomejs/biome": "2.5.15"
   }
 }

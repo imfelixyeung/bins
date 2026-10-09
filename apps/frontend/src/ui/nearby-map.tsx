@@ -1,9 +1,8 @@
 "use client";
 
-import React from "react";
-import NearbyMapClient from "./nearby-map.client";
 import { useQuery } from "@tanstack/react-query";
 import { getNearbyPostcodes } from "@/v2api/client";
+import NearbyMapClient from "./nearby-map.client";
 
 const NearbyMap = ({ postcode }: { postcode: string }) => {
   const nearby = useQuery({

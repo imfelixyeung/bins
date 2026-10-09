@@ -1,9 +1,9 @@
 "use client";
 
-import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ThemeProvider } from "next-themes";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import type React from "react";
 
 const client = new QueryClient();
 

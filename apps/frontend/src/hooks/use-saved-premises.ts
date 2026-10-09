@@ -29,7 +29,7 @@ export const useSavedPremises = () => {
   const MAX_SAVED_PREMISES = 10;
   const [localPremises, saveLocalPremises] = useLocalStorage<LocalStorage>(
     "bins__saved_premises",
-    defaultLocalStorage
+    defaultLocalStorage,
   );
 
   const premises: Premises[] = useMemo(() => {

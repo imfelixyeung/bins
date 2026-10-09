@@ -1,16 +1,16 @@
 "use client";
 
-import { cn } from "@/lib/utils";
 import { addDays, endOfWeek, format, startOfWeek, subDays } from "date-fns";
-import React, { useMemo } from "react";
+import { useMemo } from "react";
+import { cn } from "@/lib/utils";
 
 const WeekDays = () => {
   const days = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 
   return (
     <div className="grid grid-cols-7 gap-1.5 max-w-fit bg-gray-100 dark:bg-gray-800 rounded-sm">
-      {days.map((day, index) => (
-        <div key={index} className="h-5 w-5">
+      {days.map((day) => (
+        <div key={day} className="h-5 w-5">
           <div className="flex h-full w-full justify-center items-center">
             <div className="text-xs text-muted">{day}</div>
           </div>
@@ -28,7 +28,7 @@ const DotCalendar = ({
     classNames: string[];
   }[];
 }) => {
-  const now = new Date();
+  const now = useMemo(() => new Date(), []);
   const today = format(now, "yyyy-MM-dd");
   const start = startOfWeek(subDays(now, 7), { weekStartsOn: 1 });
   const end = useMemo(() => {
@@ -42,8 +42,8 @@ const DotCalendar = ({
     return new Date(
       Math.min(
         Math.max(max.getTime(), addDays(now, 7).getTime()),
-        endOfWeek(addDays(now, 28), { weekStartsOn: 1 }).getTime()
-      )
+        endOfWeek(addDays(now, 28), { weekStartsOn: 1 }).getTime(),
+      ),
     );
   }, [data, now]);
 
@@ -84,11 +84,12 @@ const DotCalendar = ({
             key={date.date}
             className={cn(
               "h-5 w-5 rounded-full bg-gray-300 dark:bg-gray-600",
-              date.date === today && "ring-2 ring-offset-1 ring-blue-600"
+              date.date === today && "ring-2 ring-offset-1 ring-blue-600",
             )}
           >
             <div className="flex h-full w-full justify-stretch rounded-full overflow-hidden">
               {date.classNames.map((className, index) => (
+                // biome-ignore lint/suspicious/noArrayIndexKey: fix later
                 <div key={index} className={cn(className, "grow")}></div>
               ))}
             </div>

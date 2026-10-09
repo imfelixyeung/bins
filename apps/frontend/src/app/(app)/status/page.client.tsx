@@ -1,6 +1,5 @@
 "use client";
 
-import { StatusDataset, getStatus } from "@/v2api/client";
 import {
   Table,
   TableBody,
@@ -14,7 +13,7 @@ import {
 } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
-import React from "react";
+import { getStatus, type StatusDataset } from "@/v2api/client";
 
 /**
  * How often the status is asked for again while a sync is running, in
@@ -29,7 +28,7 @@ const Page = () => {
     queryFn: getStatus,
     refetchInterval: (query) =>
       query.state.data?.datasets.some(
-        (dataset) => dataset.sync?.state === "running"
+        (dataset) => dataset.sync?.state === "running",
       )
         ? WHILE_SYNCING_INTERVAL
         : false,

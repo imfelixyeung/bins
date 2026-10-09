@@ -1,7 +1,7 @@
-import nextra from "nextra";
-import withSerwistInit from "@serwist/next";
-import { NextConfig } from "next";
 import { join } from "node:path";
+import withSerwistInit from "@serwist/next";
+import type { NextConfig } from "next";
+import nextra from "nextra";
 
 const revision = crypto.randomUUID();
 
@@ -24,7 +24,7 @@ const nextConfig: NextConfig = {
           source: "/api/:path*",
           destination: new URL(
             "/api/:path*",
-            DEVELOPMENT_BACKEND_URL
+            DEVELOPMENT_BACKEND_URL,
           ).toString(),
         },
       ],

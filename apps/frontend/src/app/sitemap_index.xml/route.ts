@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { BASE_URL, BUILD_TIME } from "../config";
 import { PREMISES_SITEMAPS_URL } from "@/v2api/client";
+import { BASE_URL, BUILD_TIME } from "../config";
 
 type Sitemap = { url: string; lastModified?: Date };
 

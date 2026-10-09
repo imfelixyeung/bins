@@ -1,35 +1,37 @@
 "use client";
 
-import { Button } from "@heroui/react";
-import { Input } from "@heroui/react";
-import React, { useState } from "react";
-import { Clipboard, Cross, Check } from "lucide-react";
+import { Button, Input } from "@heroui/react";
+import { Check, Clipboard, Cross } from "lucide-react";
+import { useEffect, useState } from "react";
 
 const Copyable = ({ text }: { text: string }) => {
   const [copied, setCopied] = useState(false);
   const [error, setError] = useState(false);
-  const [lastCopied, setLastCopied] = useState(Date.now());
+  const [lastCopied, setLastCopied] = useState<number | null>(null);
 
   const handleCopy = async () => {
     try {
       await navigator.clipboard.writeText(text);
       setCopied(true);
       setError(false);
-    } catch (error) {
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    } catch (_error) {
       setCopied(false);
       setError(true);
     }
     setLastCopied(Date.now());
   };
 
-  React.useEffect(() => {
+  useEffect(() => {
+    if (lastCopied === null) return;
+
     const timeout = setTimeout(() => {
       setCopied(false);
       setError(false);
     }, 2000);
 
     return () => clearTimeout(timeout);
-  }, [copied, lastCopied]);
+  }, [lastCopied]);
 
   return (
     <div className="flex w-full items-center gap-2">

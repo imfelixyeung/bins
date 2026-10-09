@@ -1,13 +1,10 @@
 "use client";
 
-import { NearbyPostcode } from "@/v2api/client";
 import React, { Fragment, useMemo } from "react";
+import type { NearbyPostcode } from "@/v2api/client";
 import "maplibre-gl/dist/maplibre-gl.css";
-import Map, { Marker } from "react-map-gl/maplibre";
-import { cn } from "@/lib/utils";
-import { binStyles, isSupportedBin } from "./bins";
 import {
-  Key,
+  type Key,
   Tab,
   TabIndicator,
   TabList,
@@ -15,9 +12,12 @@ import {
   Tabs,
 } from "@heroui/react";
 import { format } from "date-fns";
+import { default as MapGL, Marker } from "react-map-gl/maplibre";
+import { cn } from "@/lib/utils";
+import { binStyles, isSupportedBin } from "./bins";
 
 const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
-  const self = nearby[0]!;
+  const self = nearby[0];
   const { latitude, longitude } = self;
 
   const uniqueDates = useMemo(() => {
@@ -33,7 +33,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
   }, [nearby]);
 
   const defaultDate = useMemo(() => {
-    const postcode = nearby[0]!;
+    const postcode = nearby[0];
     const today = format(new Date(), "yyyy-MM-dd");
 
     return (
@@ -44,7 +44,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
   }, [nearby, uniqueDates]);
 
   const [selectedDate, setSelectedDate] = React.useState<Key>(
-    defaultDate ?? ""
+    defaultDate ?? "",
   );
 
   if (uniqueDates.length === 0) {
@@ -72,7 +72,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
           </TabListContainer>
         </Tabs>
         <div className="min-h-64 w-full grid">
-          <Map
+          <MapGL
             initialViewState={{
               longitude,
               latitude,
@@ -94,7 +94,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
                   <div
                     className={cn(
                       "size-3 rounded-full",
-                      distance === 0 && "ring-4 ring-black"
+                      distance === 0 && "ring-4 ring-black",
                     )}
                   >
                     <div className="sr-only">{postcode}</div>
@@ -109,7 +109,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
                                 bin: isSupportedBin(bin) ? bin : undefined,
                                 styled: false,
                               }),
-                              "grow"
+                              "grow",
                             )}
                           >
                             <span className="sr-only">{bin} bin</span>
@@ -121,7 +121,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
                 </Marker>
               );
             })}
-          </Map>
+          </MapGL>
         </div>
       </div>
     </section>

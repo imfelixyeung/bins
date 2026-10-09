@@ -1,16 +1,14 @@
 "use client";
 
+import { buttonVariants } from "@heroui/react";
+import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import AddToRecents from "@/ui/add-to-recents";
 import ClientOnly from "@/ui/client-only";
 import NearbyMap from "@/ui/nearby-map";
 import PremisesJobList from "@/ui/premises-job-list";
 import { searchJobs } from "@/v2api/client";
-import { Button, buttonVariants } from "@heroui/react";
-import { useQuery } from "@tanstack/react-query";
-import { Metadata } from "next";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import React from "react";
 
 const Page = () => {
   const params = useSearchParams();

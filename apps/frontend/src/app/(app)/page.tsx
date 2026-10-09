@@ -1,5 +1,5 @@
+import { Suspense } from "react";
 import PremisesSearchForm from "@/ui/premises-search-form";
-import React, { Suspense } from "react";
 
 const Page = () => {
   return (

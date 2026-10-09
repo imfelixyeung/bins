@@ -5,10 +5,6 @@
  * https://dub.co/
  */
 
-import React, { useEffect, useRef } from "react";
-import { z } from "zod";
-import { Controller, useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Button,
   Card,
@@ -16,19 +12,20 @@ import {
   ErrorMessage,
   FieldError,
   Form,
+  Input,
   Label,
   ListBox,
   ListBoxItem,
   ListBoxItemIndicator,
+  Select,
   SelectIndicator,
   SelectPopover,
+  SelectTrigger,
+  SelectValue,
   TextField,
 } from "@heroui/react";
-import { Input } from "@heroui/react";
-import { Select, SelectTrigger, SelectValue } from "@heroui/react";
-import { useRouter } from "next/navigation";
-import { useQueryState } from "nuqs";
-import { cn } from "@/lib/utils";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
   DicesIcon,
@@ -37,12 +34,16 @@ import {
   Trash2Icon,
   TrashIcon,
 } from "lucide-react";
+import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
+import { useRouter } from "next/navigation";
+import { useQueryState } from "nuqs";
+import { useEffect, useRef } from "react";
+import { Controller, useForm } from "react-hook-form";
+import { z } from "zod";
 import { getPresentableFullAddress } from "@/functions/format-address";
+import { getRandomPremises, searchPremises } from "@/v2api/client";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
-import { PrefetchKind } from "next/dist/client/components/router-reducer/router-reducer-types";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { getRandomPremises, searchPremises } from "@/v2api/client";
 
 const postcodeFormSchema = z.object({
   postcode: z
@@ -105,7 +106,7 @@ const PremisesSearchForm = () => {
     router.prefetch(`/premises?id=${selectedPremisesId}`, {
       kind: PrefetchKind.FULL,
     });
-  }, [selectedPremisesId]);
+  }, [router, selectedPremisesId]);
 
   const onSubmitPostcode = async (data: PostcodeFormData) => {
     setPostcode(data.postcode);
@@ -118,7 +119,7 @@ const PremisesSearchForm = () => {
   const onSupriseMe = async () => {
     const premises = await queryClient.fetchQuery(randomPremiseQueryOption);
 
-    if (!premises || !premises.addressPostcode) return;
+    if (!premises?.addressPostcode) return;
 
     setPostcode(premises.addressPostcode);
     postcodeForm.setValue("postcode", premises.addressPostcode);

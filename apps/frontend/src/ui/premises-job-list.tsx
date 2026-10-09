@@ -1,21 +1,14 @@
-import React from "react";
-import Address from "./address";
-import { isAfter, format } from "date-fns";
+import { CardContent, CardHeader, CardTitle, Surface } from "@heroui/react";
 import { capitalCase } from "change-case";
-import DotCalendarBins from "./dot-calendar-bins";
+import { format, isAfter } from "date-fns";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
-import Copyable from "./copyable";
 import { cn } from "@/lib/utils";
+import type { SearchJobsSchema } from "@/v2api/client";
+import Address from "./address";
 import { binStyles, isSupportedBin } from "./bins";
-import { SearchJobsSchema } from "@/v2api/client";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  Surface,
-} from "@heroui/react";
+import Copyable from "./copyable";
+import DotCalendarBins from "./dot-calendar-bins";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   const style = binStyles({ bin: isSupportedBin(bin) ? bin : undefined });
@@ -59,13 +52,13 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
           acc[bin].push(job.date);
           return acc;
         },
-        {} as Record<string, SearchJobsSchema["jobs"][number]["date"][]>
-      )
+        {} as Record<string, SearchJobsSchema["jobs"][number]["date"][]>,
+      ),
   )
     .map(([bin, dates]) => ({ bin, dates }))
     .sort(
       ({ bin: a }, { bin: b }) =>
-        preferredBinOrder.indexOf(a) - preferredBinOrder.indexOf(b)
+        preferredBinOrder.indexOf(a) - preferredBinOrder.indexOf(b),
     );
 
   const ical = `https://bins.felixyeung.com/api/jobs?premises=${data.id}&format=ical`;

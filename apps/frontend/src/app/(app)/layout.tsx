@@ -1,11 +1,11 @@
 import { cn } from "@/lib/utils";
 import "@/app/globals.css";
+import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import Providers from "../providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
-import { Metadata } from "next";
 import ThemeSwitch from "@/ui/theme-switch";
+import Providers from "../providers";
 
 export const metadata: Metadata = {
   title: { default: "Check your bin days - Bins", template: "%s - Bins" },

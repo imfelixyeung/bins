@@ -1,5 +1,4 @@
 import { getPresentableFullAddress } from "@/functions/format-address";
-import React from "react";
 
 const Address = ({
   data,

@@ -1,5 +1,5 @@
-import { Metadata } from "next";
-import { ReactNode } from "react";
+import type { Metadata } from "next";
+import type { ReactNode } from "react";
 
 const title = "Bin Days";
 const description = "View the scheduled bin collection days";

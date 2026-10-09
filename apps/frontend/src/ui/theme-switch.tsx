@@ -1,18 +1,17 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useTheme } from "next-themes";
-
-import { capitalCase } from "change-case";
 import {
-  Select,
   ListBox,
   ListBoxItem,
+  Select,
+  SelectIndicator,
   SelectPopover,
   SelectTrigger,
   SelectValue,
-  SelectIndicator,
 } from "@heroui/react";
+import { capitalCase } from "change-case";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 const ThemeSwitch = () => {
   const [mounted, setMounted] = useState(false);

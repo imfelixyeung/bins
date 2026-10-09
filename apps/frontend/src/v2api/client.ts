@@ -56,8 +56,8 @@ const searchJobsSchema = makeAPISchema(
   premiseSchema.merge(
     z.object({
       jobs: jobSchema.array(),
-    })
-  )
+    }),
+  ),
 );
 export const searchJobs = async ({ premisesId }: { premisesId: number }) => {
   const query = new URLSearchParams();
@@ -72,7 +72,7 @@ export type SearchJobsSchema = z.infer<typeof searchJobsSchema>["data"];
 const postcodeJobSchema = jobSchema.merge(
   z.object({
     postcode: z.string(),
-  })
+  }),
 );
 
 const nearbyPostcodeSchema = z.object({
@@ -121,7 +121,7 @@ const statusDatasetSchema = z.object({
 export type StatusDataset = z.infer<typeof statusDatasetSchema>;
 
 const statusSchema = makeAPISchema(
-  z.object({ datasets: z.array(statusDatasetSchema) })
+  z.object({ datasets: z.array(statusDatasetSchema) }),
 );
 export const getStatus = async () => {
   return await fetch(`${BASE_URL}/status`)

@@ -1,7 +1,7 @@
 "use client";
 
-import { Premises, useSavedPremises } from "@/hooks/use-saved-premises";
 import React, { useEffect } from "react";
+import { type Premises, useSavedPremises } from "@/hooks/use-saved-premises";
 
 const AddToRecents = ({ premises }: { premises: Premises }) => {
   const [added, setAdded] = React.useState(false);
