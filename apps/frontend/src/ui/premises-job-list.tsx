@@ -6,7 +6,6 @@ import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import Copyable from "./copyable";
-import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { binStyles, isSupportedBin } from "./bins";
 import { SearchJobsSchema } from "@/v2api/client";
@@ -19,7 +18,7 @@ import {
 } from "@heroui/react";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
-  const style = binStyles({ bin: isSupportedBin(bin) ? bin : null });
+  const style = binStyles({ bin: isSupportedBin(bin) ? bin : undefined });
 
   return (
     <Surface className="grow basis-0 rounded-3xl">

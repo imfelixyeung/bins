@@ -1,4 +1,4 @@
-import { cva } from "class-variance-authority";
+import { tv } from "@heroui/styles";
 
 const supportedBins = ["BLACK", "GREEN", "BROWN"] as const;
 type SupportedBin = (typeof supportedBins)[number];
@@ -7,7 +7,7 @@ export const isSupportedBin = (bin: string): bin is SupportedBin => {
   return supportedBins.includes(bin as SupportedBin);
 };
 
-export const binStyles = cva("", {
+export const binStyles = tv({
   variants: {
     bin: {
       BLACK: "bg-gray-900 text-gray-50",

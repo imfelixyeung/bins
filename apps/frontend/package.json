@@ -18,8 +18,6 @@
     "@tanstack/react-query": "^5.90.2",
     "@uidotdev/usehooks": "^2.4.1",
     "change-case": "^5.4.4",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.544.0",
     "maplibre-gl": "^5.8.0",
@@ -33,8 +31,6 @@
     "react-hook-form": "^7.64.0",
     "react-map-gl": "^8.1.0",
     "serwist": "^9.2.1",
-    "tailwind-merge": "^3.3.1",
-    "tailwindcss-animate": "^1.0.7",
     "zod": "4.3.6"
   },
   "devDependencies": {

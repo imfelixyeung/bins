@@ -106,7 +106,7 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
                             key={bin}
                             className={cn(
                               binStyles({
-                                bin: isSupportedBin(bin) ? bin : null,
+                                bin: isSupportedBin(bin) ? bin : undefined,
                                 styled: false,
                               }),
                               "grow"
