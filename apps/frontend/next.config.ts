@@ -45,6 +45,7 @@ const withSerwist = withSerwistInit({
   swSrc: "src/app/sw.ts",
   swDest: "public/sw.js",
   additionalPrecacheEntries: [{ url: "/~offline", revision }],
+  disable: process.env.NODE_ENV !== "production",
 });
 
 export default withSerwist(withNextra(nextConfig));
