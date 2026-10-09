@@ -8,7 +8,7 @@ const Page = () => {
         <h1 className="text-3xl md:text-5xl font-semibold text-balance text-center">
           Check Your Bin Days
         </h1>
-        <p className="text-muted-foreground text-xl text-center text-balance">
+        <p className="text-muted text-xl text-center text-balance">
           Check when your bins are scheduled to be emptied.
         </p>
         <Suspense>

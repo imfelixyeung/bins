@@ -1,7 +1,7 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Button } from "@heroui/react";
+import { Input } from "@heroui/react";
 import React, { useState } from "react";
 import { Clipboard, Cross, Check } from "lucide-react";
 
@@ -33,7 +33,13 @@ const Copyable = ({ text }: { text: string }) => {
 
   return (
     <div className="flex w-full items-center gap-2">
-      <Input type="email" placeholder="Email" defaultValue={text} readOnly />
+      <Input
+        type="email"
+        placeholder="Email"
+        defaultValue={text}
+        readOnly
+        className="max-w-lg w-full"
+      />
       <Button
         type="button"
         onClick={handleCopy}

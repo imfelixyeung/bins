@@ -2,14 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+
+import { capitalCase } from "change-case";
 import {
   Select,
-  SelectContent,
-  SelectItem,
+  ListBox,
+  ListBoxItem,
+  SelectPopover,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select";
-import { capitalCase } from "change-case";
+  SelectIndicator,
+} from "@heroui/react";
 
 const ThemeSwitch = () => {
   const [mounted, setMounted] = useState(false);
@@ -24,17 +27,23 @@ const ThemeSwitch = () => {
   }
 
   return (
-    <Select value={theme} onValueChange={setTheme}>
+    <Select
+      value={theme}
+      onChange={(key) => setTheme(key?.toString() ?? "light")}
+    >
       <SelectTrigger className="max-w-min gap-2" aria-label="Pick a theme">
-        <SelectValue placeholder="Theme" />
+        <SelectValue />
+        <SelectIndicator />
       </SelectTrigger>
-      <SelectContent>
-        {themes.map((themeId) => (
-          <SelectItem key={themeId} value={themeId}>
-            {capitalCase(themeId)}
-          </SelectItem>
-        ))}
-      </SelectContent>
+      <SelectPopover>
+        <ListBox>
+          {themes.map((themeId) => (
+            <ListBoxItem key={themeId} id={themeId} textValue={themeId}>
+              {capitalCase(themeId)}
+            </ListBoxItem>
+          ))}
+        </ListBox>
+      </SelectPopover>
     </Select>
   );
 };

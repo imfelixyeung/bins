@@ -6,23 +6,29 @@ import DotCalendarBins from "./dot-calendar-bins";
 import { Trash2Icon } from "lucide-react";
 import Link from "next/link";
 import Copyable from "./copyable";
-import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { cva } from "class-variance-authority";
 import { cn } from "@/lib/utils";
 import { binStyles, isSupportedBin } from "./bins";
 import { SearchJobsSchema } from "@/v2api/client";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Surface,
+} from "@heroui/react";
 
 const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
   const style = binStyles({ bin: isSupportedBin(bin) ? bin : null });
 
   return (
-    <Card className="grow basis-0">
-      <CardHeader className={cn(style)}>
-        <h3 className="text-xl font-semibold flex items-center gap-2">
+    <Surface className="grow basis-0 rounded-3xl">
+      <CardHeader className={cn(style, "p-6")}>
+        <CardTitle className="text-xl font-semibold flex items-center gap-2">
           {capitalCase(bin)} <Trash2Icon />
-        </h3>
+        </CardTitle>
       </CardHeader>
-      <CardContent className="pt-6">
+      <CardContent className="p-6">
         <ul className="list-disc list-outside ml-5 mt-3">
           {dates.map((date) => {
             // format date to 29 March 2023
@@ -35,7 +41,7 @@ const BinDates = ({ bin, dates }: { bin: string; dates: string[] }) => {
           })}
         </ul>
       </CardContent>
-    </Card>
+    </Surface>
   );
 };
 
@@ -76,7 +82,7 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
         </section>
         <section>
           <h2 className="text-2xl font-semibold">At a glance</h2>
-          <div className="mt-3 relative after:absolute after:inset-x-0 after:bottom-0 after:h-16 after:bg-linear-to-b after:from-transparent after:to-white dark:after:to-background">
+          <div className="mt-3 relative after:absolute after:inset-x-0 after:bottom-0 after:h-16 after:bg-linear-to-b after:from-transparent after:to-background">
             <DotCalendarBins data={data.jobs} />
           </div>
         </section>
@@ -93,7 +99,7 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
           </div>
         ) : (
           <div>
-            <p className="mt-3 text-muted-foreground">
+            <p className="mt-3 text-muted">
               It looks like there are no scheduled bin days for this premises.
             </p>
           </div>
@@ -101,7 +107,7 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
       </section>
       <section className="@container max-w-3xl">
         <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
-        <p className="text-muted-foreground mt-3">
+        <p className="text-muted mt-3">
           You can subscribe to the iCalendar feed for this address to
           automatically add and update bin days directly in your preferred
           calendar app, ensuring you never miss a collection day. For more

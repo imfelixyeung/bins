@@ -15,7 +15,7 @@ export const binStyles = cva("", {
       BROWN: "bg-amber-900 text-gray-50",
     },
     styled: {
-      true: "py-5 rounded-t-lg",
+      true: "py-5 rounded-t-3xl",
       false: "",
     },
   },

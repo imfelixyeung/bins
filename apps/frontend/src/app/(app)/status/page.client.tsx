@@ -1,14 +1,17 @@
 "use client";
 
+import { StatusDataset, getStatus } from "@/v2api/client";
 import {
   Table,
   TableBody,
   TableCell,
-  TableHead,
+  TableCollection,
+  TableColumn,
+  TableContent,
   TableHeader,
   TableRow,
-} from "@/components/ui/table";
-import { StatusDataset, getStatus } from "@/v2api/client";
+  TableScrollContainer,
+} from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
 import Link from "next/link";
 import React from "react";
@@ -38,38 +41,42 @@ const Page = () => {
 
       <div className="mt-6">
         <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Dataset</TableHead>
-              <TableHead>Last Checked</TableHead>
-              <TableHead>Last Synced</TableHead>
-              <TableHead>Etag</TableHead>
-              <TableHead>Sync</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {statusQuery.data?.datasets.map((dataset) => (
-              <TableRow key={dataset.key}>
-                <TableCell className="font-medium">
-                  <Link href={dataset.url} target="_blank">
-                    {dataset.name}
-                  </Link>
-                </TableCell>
-                <TableCell className="font-mono">
-                  {timestamp(dataset.lastChecked)}
-                </TableCell>
-                <TableCell className="font-mono">
-                  {timestamp(dataset.lastSynced)}
-                </TableCell>
-                <TableCell className="font-mono">
-                  <code>{dataset.etag ?? "N/A"}</code>
-                </TableCell>
-                <TableCell className="font-mono">
-                  {sync(dataset.sync)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
+          <TableScrollContainer>
+            <TableContent>
+              <TableHeader>
+                <TableColumn isRowHeader>Dataset</TableColumn>
+                <TableColumn>Last Checked</TableColumn>
+                <TableColumn>Last Synced</TableColumn>
+                <TableColumn>Etag</TableColumn>
+                <TableColumn>Sync</TableColumn>
+              </TableHeader>
+              <TableBody>
+                <TableCollection items={statusQuery.data?.datasets}>
+                  {(dataset) => (
+                    <TableRow key={dataset.key}>
+                      <TableCell className="font-medium">
+                        <Link href={dataset.url} target="_blank">
+                          {dataset.name}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        {timestamp(dataset.lastChecked)}
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        {timestamp(dataset.lastSynced)}
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        <code>{dataset.etag ?? "N/A"}</code>
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        {sync(dataset.sync)}
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableCollection>
+              </TableBody>
+            </TableContent>
+          </TableScrollContainer>
         </Table>
       </div>
     </div>

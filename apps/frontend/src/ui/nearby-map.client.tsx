@@ -6,7 +6,14 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import Map, { Marker } from "react-map-gl/maplibre";
 import { cn } from "@/lib/utils";
 import { binStyles, isSupportedBin } from "./bins";
-import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Key,
+  Tab,
+  TabIndicator,
+  TabList,
+  TabListContainer,
+  Tabs,
+} from "@heroui/react";
 import { format } from "date-fns";
 
 const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
@@ -36,8 +43,8 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
     );
   }, [nearby, uniqueDates]);
 
-  const [selectedDate, setSelectedDate] = React.useState<string | undefined>(
-    defaultDate
+  const [selectedDate, setSelectedDate] = React.useState<Key>(
+    defaultDate ?? ""
   );
 
   if (uniqueDates.length === 0) {
@@ -48,22 +55,21 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
     <section className="my-16">
       <h2 className="text-2xl font-semibold mb-3">Postcode Map</h2>
       <div className="rounded-xl overflow-hidden">
-        <Tabs
-          value={selectedDate}
-          onValueChange={setSelectedDate}
-          className="max-w-full overflow-x-auto scrollbar-none [&::-webkit-scrollbar]:hidden rounded-none"
-        >
-          <TabsList className="rounded-none">
-            {uniqueDates.map((date) => (
-              <TabsTrigger value={date} key={date}>
-                {new Date(date).toLocaleDateString(undefined, {
-                  weekday: "short",
-                  month: "short",
-                  day: "numeric",
-                })}
-              </TabsTrigger>
-            ))}
-          </TabsList>
+        <Tabs selectedKey={selectedDate} onSelectionChange={setSelectedDate}>
+          <TabListContainer className="rounded-none ">
+            <TabList>
+              {uniqueDates.map((date) => (
+                <Tab id={date} key={date} className="text-nowrap">
+                  {new Date(date).toLocaleDateString(undefined, {
+                    weekday: "short",
+                    month: "short",
+                    day: "numeric",
+                  })}
+                  <TabIndicator />
+                </Tab>
+              ))}
+            </TabList>
+          </TabListContainer>
         </Tabs>
         <div className="min-h-64 w-full grid">
           <Map

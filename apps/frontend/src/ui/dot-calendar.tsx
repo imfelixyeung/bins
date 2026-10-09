@@ -12,7 +12,7 @@ const WeekDays = () => {
       {days.map((day, index) => (
         <div key={index} className="h-5 w-5">
           <div className="flex h-full w-full justify-center items-center">
-            <div className="text-xs text-muted-foreground">{day}</div>
+            <div className="text-xs text-muted">{day}</div>
           </div>
         </div>
       ))}

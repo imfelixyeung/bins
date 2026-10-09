@@ -67,7 +67,7 @@ export default async function RootLayout({
             </header>
             <main className="grow flex flex-col">{children}</main>
           </div>
-          <footer className="border-t py-6 text-muted-foreground text-sm">
+          <footer className="border-t py-6 text-muted text-sm">
             <div className="container grid md:grid-cols-2 gap-8">
               <div className="max-w-prose">
                 <p>
@@ -133,7 +133,7 @@ export default async function RootLayout({
                 </ul>
               </div>
             </div>
-            <div className="container text-muted-foreground mt-6 flex items-center justify-between gap-3 flex-wrap-reverse">
+            <div className="container text-muted mt-6 flex items-center justify-between gap-3 flex-wrap-reverse">
               <p>
                 <CopyRight />
               </p>

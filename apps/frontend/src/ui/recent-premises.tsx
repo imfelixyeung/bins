@@ -3,8 +3,7 @@
 import { useSavedPremises } from "@/hooks/use-saved-premises";
 import Link from "next/link";
 import React from "react";
-import { Card } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { Button, Surface } from "@heroui/react";
 import { MapPinHouseIcon, XIcon } from "lucide-react";
 import { getTwoLineFullAddress } from "@/functions/format-address";
 
@@ -24,7 +23,10 @@ const RecentPremises = () => {
                 getTwoLineFullAddress(premises).split("\n");
               return (
                 <div key={premises.id}>
-                  <Card className="flex gap-3 items-center px-3 py-3 relative hover:shadow-md transition-shadow group">
+                  <Surface
+                    className="flex gap-3 items-center px-3 py-3 relative hover:shadow-md transition-shadow group border rounded-3xl"
+                    variant="secondary"
+                  >
                     <div className="size-10 rounded-full flex items-center justify-center border shrink-0 bg-linear-to-b from-foreground/0 to to-foreground/10">
                       <MapPinHouseIcon size={20} />
                     </div>
@@ -34,9 +36,7 @@ const RecentPremises = () => {
                       prefetch
                     >
                       <h3 className="font-medium line-clamp-2">{line1}</h3>
-                      <p className="text-sm line-clamp-2 text-muted-foreground">
-                        {line2}
-                      </p>
+                      <p className="text-sm line-clamp-2 text-muted">{line2}</p>
                     </Link>
                     <button
                       className="p-2 opacity-50 md:opacity-30 group-hover:opacity-100 transition-opacity z-10 hover:scale-110"
@@ -46,13 +46,13 @@ const RecentPremises = () => {
                       <div className="sr-only">Remove</div>
                       <XIcon size={16} />
                     </button>
-                  </Card>
+                  </Surface>
                 </div>
               );
             })}
           </div>
           <div className="mt-3">
-            <Button variant="outline" onClick={removeAll} type="button">
+            <Button variant="secondary" onClick={removeAll} type="button">
               Clear Recent Searches
             </Button>
           </div>
