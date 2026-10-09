@@ -1,7 +1,6 @@
 import { cn } from "@/lib/utils";
 import "@/app/globals.css";
-import { GeistSans } from "geist/font/sans";
-import { GeistMono } from "geist/font/mono";
+import { Geist, Geist_Mono } from "next/font/google";
 import Providers from "../providers";
 import Link from "next/link";
 import CopyRight from "@/ui/copyright";
@@ -32,6 +31,18 @@ export const metadata: Metadata = {
     ],
   },
 };
+
+const GeistSans = Geist({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-sans",
+});
+
+const GeistMono = Geist_Mono({
+  subsets: ["latin"],
+  display: "swap",
+  variable: "--font-geist-mono",
+});
 
 export default async function RootLayout({
   children,
