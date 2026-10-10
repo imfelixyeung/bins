@@ -51,7 +51,9 @@ export const PREMISES_SITEMAPS_URL = `${BASE_URL}/sitemaps/premises.xml`;
 
 const getRandomPremisesSchema = makeAPISchema(premiseSchema);
 export const getRandomPremises = async () => {
-  return await fetch(`${BASE_URL}/random/premises`)
+  const query = new URLSearchParams();
+  query.set("t", Date.now().toString());
+  return await fetch(`${BASE_URL}/random/premises?${query.toString()}`)
     .then((res) => res.json())
     .then(getRandomPremisesSchema.parseAsync)
     .then((data) => throwErrorMessage(data).data);
