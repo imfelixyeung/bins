@@ -2,16 +2,26 @@
   "folders": [
     {
       "name": "bins",
-      "path": "..",
+      "path": ".."
     },
     {
       "name": "frontend",
-      "path": "../apps/frontend",
+      "path": "../apps/frontend"
     },
     {
       "name": "backend",
-      "path": "../apps/backend",
-    },
+      "path": "../apps/backend"
+    }
   ],
-  "settings": {},
+  "settings": {
+    "eslint.workingDirectories": [
+      {
+        "mode": "auto"
+      }
+    ],
+    "editor.codeActionsOnSave": {
+      "source.organizeImports.biome": "explicit",
+      "source.fixAll.biome": "explicit"
+    }
+  }
 }
