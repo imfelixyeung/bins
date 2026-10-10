@@ -2,11 +2,9 @@
 //! table so a sync can tell whether the file it is about to download is the one
 //! it already holds.
 //!
-//! Ported from `apps/worker/etag.ts`, which did the same thing in front of the
-//! import scripts. Leeds sends both an `etag` and a `last-modified` header for
-//! each CSV, and only the etag decides whether an import runs: a file whose
-//! etag has not moved is not downloaded, which is what keeps a daily sync of a
-//! 170MB feed cheap.
+//! Leeds sends both an `etag` and a `last-modified` header for each CSV, and
+//! only the etag decides whether an import runs: a file whose etag has not moved
+//! is not downloaded, which is what keeps a daily sync of a 170MB feed cheap.
 //!
 //! The etag is written once the import has succeeded, never before, so a run
 //! that fails is retried on the next tick instead of being written off as done.
@@ -20,12 +18,11 @@ use sqlx::{FromRow, PgPool};
 use tokio::time::sleep;
 use tracing::warn;
 
-/// How long one request to upstream may take, which is the connect timeout the
-/// Next.js worker allowed.
+/// How long one request to upstream may take.
 const TIMEOUT_SECONDS: u64 = 60;
 
-/// How many times a request is made before the check gives up, which is the
-/// four attempts `p-retry` made there: the first, and three retries.
+/// How many times a request is made before the check gives up: the first, and
+/// three retries.
 const ATTEMPTS: usize = 4;
 
 /// How long to wait between attempts, doubling each time so a host that is
@@ -67,8 +64,8 @@ pub struct Check {
 
 /// Whether `latest` is the same version of the file as the one stored.
 ///
-/// Only the etag decides this, as it did in the Next.js worker: the
-/// `last-modified` header is kept for display but is not compared.
+/// Only the etag decides this: the `last-modified` header is kept for display
+/// but is not compared.
 pub fn unchanged(stored: Option<&Stored>, latest: &Latest) -> bool {
     stored.and_then(|stored| stored.etag.as_deref()) == Some(latest.etag.as_str())
 }
@@ -117,9 +114,9 @@ pub async fn store(pool: &PgPool, url: &str, latest: &Latest) -> Result<()> {
 /// Records that upstream was asked about `url`, when nothing had changed.
 ///
 /// Only the time of the check moves on: the etag is the same one that is
-/// already stored, and the row is there because that is what was compared. The
-/// Next.js worker rewrote the whole record instead, which made no difference to
-/// what was read back.
+/// already stored, and the row is there because that is what was compared.
+/// Rewriting the whole record instead would make no difference to what is read
+/// back.
 pub async fn checked(pool: &PgPool, url: &str, latest: &Latest) -> Result<()> {
     sqlx::query("UPDATE etags SET checked_at = $2 WHERE url = $1")
         .bind(url)
@@ -157,9 +154,9 @@ pub async fn fetch(url: &str) -> Result<Latest> {
 /// One `HEAD` request, which upstream answers with the headers describing the
 /// file rather than the file itself.
 ///
-/// Both headers are required, as they were in the Next.js worker: without them
-/// there is no way to tell what changed, or when, so a file that sends neither
-/// is treated as one that cannot be checked.
+/// Both headers are required: without them there is no way to tell what
+/// changed, or when, so a file that sends neither is treated as one that cannot
+/// be checked.
 async fn request(url: &str) -> Result<Latest> {
     // Taken before the request rather than after, so a slow response is not
     // counted as checked before it was.

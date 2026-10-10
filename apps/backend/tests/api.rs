@@ -388,7 +388,7 @@ async fn random_premises_returns_a_stored_premise() {
         Value::Null => {}
         other => panic!("unexpected postcode {other}"),
     }
-    // The whole address, not just the two columns the tRPC procedure returned.
+    // The whole address, matching the `/api/premises` payload.
     assert_eq!(
         data.as_object().expect("an address").len(),
         8,
@@ -931,8 +931,8 @@ async fn a_premises_sitemap_page_past_the_last_one_holds_no_addresses() {
         return;
     };
 
-    // The Next.js route answered 404 here. An empty sitemap is what the query
-    // it called returns, and is easier for a crawler to move past.
+    // An empty sitemap is what the query returns, and is easier for a crawler to
+    // move past than a 404.
     let (status, body) = server.get_xml("/api/sitemaps/premises.xml?page=9999").await;
 
     assert_eq!(status, StatusCode::OK);
@@ -1286,8 +1286,8 @@ async fn status_reports_a_sync_that_failed() {
     fixtures.restore().await;
 }
 
-/// The protocol revision these tests speak, which is the revision the Next.js
-/// handler's clients speak and the one that keeps a session open.
+/// The protocol revision these tests speak, which is a revision that keeps a
+/// session open.
 const PROTOCOL_VERSION: &str = "2025-06-18";
 
 /// A client for `/api/mcp`, speaking the protocol over HTTP as a real one does:
@@ -1563,7 +1563,7 @@ async fn a_tool_says_what_it_wants_and_what_it_answers_with() {
         search["inputSchema"]["properties"]["postcode"]["description"]
             .as_str()
             .is_some_and(|description| description.contains("LS6 2SE")),
-        "the parameter carries the example the Next.js schema did"
+        "the parameter carries an example"
     );
     assert_eq!(
         search["outputSchema"]["type"], "object",
@@ -1585,7 +1585,7 @@ async fn a_tool_says_what_it_wants_and_what_it_answers_with() {
         );
     }
 
-    // The typo the Next.js description carried is not worth carrying over.
+    // The description does not carry the typo an earlier one had.
     let jobs = tools
         .iter()
         .find(|tool| tool["name"] == "show_premises_jobs_by_id")
@@ -1829,8 +1829,7 @@ async fn a_premises_id_that_cannot_be_one_is_refused_before_the_query() {
 
     // The argument does not match the schema the tool published, so it is refused
     // where it is read rather than looked up: the tool takes the id as an
-    // unsigned number, where the Next.js schema took any number and checked it
-    // was not negative.
+    // unsigned number.
     let result = server
         .mcp()
         .await
@@ -1910,6 +1909,6 @@ async fn a_client_may_open_the_stream_of_events_for_its_session() {
             .get(reqwest::header::CONTENT_TYPE)
             .and_then(|value| value.to_str().ok())
             .is_some_and(|value| value.starts_with("text/event-stream")),
-        "the Next.js handler only ever served requests, and this stream is what took its place"
+        "a session is served as an event stream"
     );
 }

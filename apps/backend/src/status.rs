@@ -2,11 +2,10 @@
 //! when it was last looked at, when its data was last replaced, and how far the
 //! last sync of it got.
 //!
-//! The status page used to read the `etags` table through drizzle, and the
-//! Next.js worker kept its own progress in memory to answer `/status`. Both now
-//! live in the database, so one endpoint can serve the lot: the datasets come
-//! from the same constants the sync commands default to, and the progress from
-//! the `sync_runs` rows the syncs write.
+//! Everything the status page reports lives in the database, so one endpoint
+//! can serve the lot: the datasets come from the same constants the sync
+//! commands default to, and the progress from the `sync_runs` rows the syncs
+//! write.
 
 use anyhow::Result;
 use chrono::{DateTime, Utc};

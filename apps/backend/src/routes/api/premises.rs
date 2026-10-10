@@ -12,8 +12,7 @@ use super::{ApiError, Envelope, PremisesBody, postcode};
 
 /// `GET /api/premises?postcode=<postcode>`
 ///
-/// An unknown postcode is not an error: the endpoint answers with an empty list,
-/// exactly as the Next.js route did.
+/// An unknown postcode is not an error: the endpoint answers with an empty list.
 pub async fn handler(
     State(pool): State<PgPool>,
     Query(query): Query<HashMap<String, String>>,

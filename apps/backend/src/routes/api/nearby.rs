@@ -13,15 +13,13 @@ use super::{ApiError, Envelope, NearbyBody, postcode};
 
 /// `GET /api/nearby?postcode=<postcode>`
 ///
-/// The Next.js app built this out of two calls: postcodes.io for the neighbours,
-/// then the database for their collections. Everything it needed is in the
-/// database now, so the postcode is looked up locally and the neighbours are
-/// found with PostGIS.
+/// Everything needed is in the database, so the postcode is looked up locally
+/// and the neighbours are found with PostGIS, rather than calling out to
+/// postcodes.io.
 ///
 /// A postcode the `sync postcodes` job has not reached yet has no coordinates to
-/// search from, and answers with `data: null` rather than a 404. That is what
-/// the tRPC procedure returned when it found nothing to draw, so the map in the
-/// web app already handles it.
+/// search from, and answers with `data: null` rather than a 404, which the map
+/// in the web app already handles.
 pub async fn handler(
     State(pool): State<PgPool>,
     Query(query): Query<HashMap<String, String>>,

@@ -1,10 +1,10 @@
 //! The API endpoints, mounted under `/api`.
 //!
 //! Query strings are read as a plain map and validated by hand so that every
-//! failure leaves the body shape the Next.js routes returned: `error` plus
-//! either `issues` or `message`. Two endpoints are the exception, answering
-//! with something other than that envelope: `/api/jobs` with a CSV or a
-//! calendar when one is asked for, and the sitemaps with XML, for crawlers.
+//! failure leaves the same body shape: `error` plus either `issues` or
+//! `message`. Two endpoints are the exception, answering with something other
+//! than that envelope: `/api/jobs` with a CSV or a calendar when one is asked
+//! for, and the sitemaps with XML, for crawlers.
 
 pub mod jobs;
 pub mod nearby;
@@ -116,8 +116,7 @@ impl IntoResponse for ApiError {
 /// A rejected query parameter.
 ///
 /// The `code`, `expected`, `received`, `options` and `path` fields exist because
-/// clients of the Next.js API read them: they are the zod issues those routes
-/// returned, reproduced field for field so this server is a drop-in
+/// clients read them, reproduced field for field so this server is a drop-in
 /// replacement.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 pub struct Issue {
@@ -144,8 +143,8 @@ impl Issue {
         }
     }
 
-    /// A parameter that is not a number. The legacy schema coerced whatever
-    /// arrived, so an absent value was reported as `nan` too.
+    /// A parameter that is not a number. An absent value is reported as `nan`
+    /// too, since whatever arrived was coerced.
     pub fn not_a_number(path: &str) -> Self {
         Self {
             code: "invalid_type",
@@ -207,9 +206,9 @@ pub fn with_default<'a>(
 
 /// `premises`, the id `/api/jobs` looks up.
 pub fn premises_id(query: &HashMap<String, String>) -> Result<i32, Issue> {
-    // Strictly an id, where zod coerced whatever arrived into a number. That
-    // route answered `premises=42.4` with a 500 from Postgres, which is not worth
-    // reproducing.
+    // Strictly an id, rather than coercing whatever arrives into a number.
+    // `premises=42.4` would otherwise reach Postgres and answer with a 500,
+    // which is not worth reproducing.
     query
         .get("premises")
         .ok_or_else(|| Issue::not_a_number("premises"))
@@ -272,8 +271,8 @@ mod tests {
 
     #[test]
     fn an_absent_premises_id_is_reported_as_an_unreadable_number() {
-        // The legacy schema coerced `undefined` to NaN rather than reporting a
-        // missing parameter.
+        // An absent value is reported as `nan` rather than as a missing
+        // parameter.
         assert_eq!(
             premises_id(&query(&[])).unwrap_err(),
             Issue::not_a_number("premises")
@@ -334,7 +333,7 @@ mod tests {
             -4242
         );
 
-        // Values the legacy coercion accepted but Postgres rejected with a 500.
+        // Values that coercion accepted but Postgres rejected with a 500.
         assert!(premises_id(&query(&[("premises", "42.4")])).is_err());
         assert!(premises_id(&query(&[("premises", "1e3")])).is_err());
         assert!(premises_id(&query(&[("premises", "0x10")])).is_err());
@@ -424,7 +423,7 @@ mod tests {
             parsed + slack >= before && parsed <= after,
             "timestamp {timestamp} is not the time of response"
         );
-        // Millisecond precision, as `Date.prototype.toISOString` produced.
+        // Millisecond precision, in UTC.
         assert!(
             timestamp.ends_with('Z') && timestamp.len() == 24,
             "{timestamp}"

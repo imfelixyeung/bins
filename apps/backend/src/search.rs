@@ -1,7 +1,5 @@
 //! The reads behind the `/api/premises`, `/api/random/premises`, `/api/jobs` and
-//! `/api/nearby` endpoints, ported from the Next.js app's
-//! `functions/search-premises.ts`, `functions/get-random-premises.ts`,
-//! `functions/search-jobs.ts` and `functions/get-postcode-jobs.ts`.
+//! `/api/nearby` endpoints.
 //!
 //! The row structs double as the API response shape, so the field names and
 //! ordering here are what clients see and must not drift.
@@ -25,8 +23,7 @@ const PREMISES_COLUMNS: &str = "id, address_room, address_number, address_street
 /// hundreds of properties.
 const MAX_SORTED_RESULTS: usize = 100;
 
-/// How far `/api/nearby` looks and how many postcodes it answers with. Both are
-/// what the Next.js app asked postcodes.io for, so the map covers the same area.
+/// How far `/api/nearby` looks and how many postcodes it answers with.
 const NEARBY_RADIUS_METRES: f64 = 2_000.0;
 const NEARBY_LIMIT: i64 = 100;
 
@@ -98,8 +95,7 @@ pub struct PostcodeJob {
     pub postcode: String,
 }
 
-/// Timestamps go out in the same shape `Date.prototype.toISOString` produced in
-/// the Next.js app: UTC, always with millisecond precision.
+/// Timestamps go out in UTC, always with millisecond precision.
 pub fn format_timestamp(timestamp: &DateTime<Utc>) -> String {
     timestamp.to_rfc3339_opts(SecondsFormat::Millis, true)
 }
@@ -150,8 +146,7 @@ pub async fn premises(pool: &PgPool, postcode: &str) -> Result<Vec<Premises>> {
 
 /// A premise chosen at random, or `None` when there are no premises at all.
 ///
-/// `ORDER BY random()` has no index to work from, so this reads every row. The
-/// Next.js app did the same, behind a one second cache.
+/// `ORDER BY random()` has no index to work from, so this reads every row.
 pub async fn random_premise(pool: &PgPool) -> Result<Option<Premises>> {
     let sql = AssertSqlSafe(format!(
         "SELECT {PREMISES_COLUMNS} FROM dm_premises ORDER BY random() LIMIT 1"
@@ -295,8 +290,8 @@ fn address_number_sorter(address_number: &Option<String>) -> i64 {
 }
 
 /// Reads the leading run of digits, ignoring surrounding whitespace and an
-/// optional sign, as `parseInt` did. Values that are not a whole number, or
-/// that do not fit an `i64`, yield `None`.
+/// optional sign. Values that are not a whole number, or that do not fit an
+/// `i64`, yield `None`.
 fn parse_leading_int(raw: &str) -> Option<i64> {
     let trimmed = raw.trim_start();
     let bytes = trimmed.as_bytes();

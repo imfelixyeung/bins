@@ -2,10 +2,9 @@
 //! can answer "what is near here" without calling out to anyone.
 //!
 //! The `postcodes` table already has a generated `geography` column with a GiST
-//! index, so this module only has to keep it populated. The Next.js worker did
-//! the same work in `apps/worker/postcodes.ts`: every run it picked one
-//! postcode that had no coordinates yet, asked postcodes.io for that postcode
-//! and its 100 nearest neighbours within 2km, and stored all of them. The
+//! index, so this module only has to keep it populated. Every run picks one
+//! postcode that has no coordinates yet, asks postcodes.io for that postcode
+//! and its 100 nearest neighbours within 2km, and stores all of them. The
 //! neighbours come along for free, so each run fills in a hundred postcodes at a
 //! time and the table crawls towards covering every premise.
 
@@ -18,8 +17,7 @@ use tracing::{info, warn};
 /// Where postcodes.io lives, overridable so the sync can be pointed at a stub.
 const API_URL: &str = "https://api.postcodes.io";
 
-/// How many postcodes to ask for, and how far away they may be. Both match what
-/// the Next.js worker asked for, so the table fills at the same rate.
+/// How many postcodes to ask for, and how far away they may be.
 const LIMIT: usize = 100;
 const RADIUS_METRES: f64 = 2_000.0;
 
@@ -99,7 +97,7 @@ pub async fn sync(pool: &PgPool) -> Result<Option<String>> {
 /// A postcode that has premises but no coordinates yet.
 ///
 /// Picking at random keeps the table filling evenly from one end of the country
-/// to the other, which is what the Next.js worker did with `ORDER BY RANDOM()`.
+/// to the other.
 pub async fn missing_postcode(pool: &PgPool) -> Result<Option<String>> {
     let sql = AssertSqlSafe(
         "SELECT premises.address_postcode FROM dm_premises premises \
@@ -218,8 +216,8 @@ mod tests {
 
     #[test]
     fn rejects_a_result_that_is_missing_a_coordinate() {
-        // The Next.js worker parsed this with zod and threw, which failed the
-        // run and left the postcode for a later attempt.
+        // A result without a longitude is an error, which fails the run and
+        // leaves the postcode for a later attempt.
         let error = parse(r#"{ "result": [{ "postcode": "LS6 2SE", "latitude": 53.8 }] }"#)
             .expect_err("a response without a longitude");
 

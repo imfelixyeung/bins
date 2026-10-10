@@ -1,5 +1,4 @@
-//! The reads and XML behind `/api/sitemaps/premises.xml`, ported from the
-//! Next.js app's `lib/sitemap.ts` and `app/(app)/premises/sitemap.ts`.
+//! The reads and XML behind `/api/sitemaps/premises.xml`.
 //!
 //! One request is either the index of every paged sitemap, or one of those pages
 //! of premise URLs.
@@ -11,7 +10,7 @@ use sqlx::{FromRow, PgPool};
 use crate::search::format_timestamp;
 
 /// How many premises each paged sitemap holds. 50,000 is the most URLs a
-/// sitemap may contain, and is what the Next.js app filled each page with.
+/// sitemap may contain.
 pub const PAGE_SIZE: u32 = 50_000;
 
 /// Where these sitemaps are published. The proxy puts this server behind
@@ -19,7 +18,7 @@ pub const PAGE_SIZE: u32 = 50_000;
 /// have to carry the prefix a crawler will ask for, not the path served here.
 const PUBLIC_PREFIX: &str = "/api";
 
-/// The site the sitemaps describe, matching the Next.js app's `BASE_URL`.
+/// The site the sitemaps describe when `BASE_URL` is not set.
 const DEFAULT_SITE: &str = "https://bins.felixyeung.com";
 
 /// The sitemap namespace every document here is written in.
@@ -43,8 +42,8 @@ fn normalised(site: &str) -> &str {
     site.trim_end_matches('/')
 }
 
-/// Whether the app was started with `SKIP_SITEMAP` set, which is how the
-/// Next.js app was told to leave the sitemaps alone.
+/// Whether the app was started with `SKIP_SITEMAP` set, which leaves the
+/// sitemaps alone.
 pub fn skipped() -> bool {
     skipped_by(std::env::var("SKIP_SITEMAP").ok())
 }
@@ -54,8 +53,8 @@ fn skipped_by(value: Option<String>) -> bool {
     value.is_some_and(|set| !set.is_empty())
 }
 
-/// How many paged sitemaps cover every premise, which is what
-/// `getPremisesSitemapPages` counted. Zero when generation is skipped.
+/// How many paged sitemaps cover every premise. Zero when generation is
+/// skipped.
 pub async fn pages(pool: &PgPool) -> Result<usize> {
     if skipped() {
         return Ok(0);
@@ -72,8 +71,7 @@ pub async fn pages(pool: &PgPool) -> Result<usize> {
         + usize::from(count.rem_euclid(i64::from(PAGE_SIZE)) > 0))
 }
 
-/// One page of premises, oldest id first, which is the order
-/// `getPremisesSitemapPage` read them in. Empty past the last page, and when
+/// One page of premises, oldest id first. Empty past the last page, and when
 /// generation is skipped.
 pub async fn page(pool: &PgPool, page: u32) -> Result<Vec<Premise>> {
     if skipped() {
@@ -153,7 +151,7 @@ fn document(root: &str, entries: &str) -> String {
 }
 
 /// The five entities XML reserves. A URL is the only thing that ever needs
-/// this, but the Next.js app wrote them out unescaped.
+/// this.
 fn escape(value: &str) -> String {
     let mut escaped = String::with_capacity(value.len());
 

@@ -1,11 +1,9 @@
 //! How far each sync has got, recorded in the `sync_runs` table.
 //!
-//! The Next.js worker held this in memory, in the `status` object
-//! `apps/worker/index.ts` answered `/status` with, which went with the process.
-//! A sync here is a `sync` command run by cron instead, so it writes where it
-//! has got to as it goes: `/api/status` can then report a sync that is still
-//! running, and a run that was killed part way through leaves a trace saying so
-//! rather than nothing at all.
+//! Each sync is a `sync` command run by cron, and it writes where it has got to
+//! as it goes: `/api/status` can then report a sync that is still running, and a
+//! run that was killed part way through leaves a trace saying so rather than
+//! nothing at all.
 //!
 //! Only the most recent run of each target is kept, which is all the status page
 //! has ever shown.

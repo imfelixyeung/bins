@@ -71,8 +71,7 @@ impl RowSpec for PremisesRow {
     }
 }
 
-/// The legacy importer derived this in SQL as
-/// `upper(replace(address_postcode, ' ', ''))`.
+/// The same as `upper(replace(address_postcode, ' ', ''))` in SQL.
 pub fn search_postcode(postcode: &str) -> String {
     strip_nuls(postcode).replace(' ', "").to_uppercase()
 }
@@ -144,8 +143,8 @@ mod tests {
 
     #[test]
     fn nul_embedded_in_a_value_is_stripped() {
-        // Matches the legacy importer, which filtered NUL bytes out of the whole
-        // byte stream before splitting on commas.
+        // NUL bytes are filtered out of the whole byte stream before it is split
+        // on commas.
         let row = PremisesRow::parse(&record(&[
             "1",
             "\0",

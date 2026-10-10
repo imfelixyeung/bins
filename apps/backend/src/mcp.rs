@@ -1,10 +1,8 @@
 //! `POST /api/mcp`: the three searches the site makes, offered to MCP clients.
 //!
-//! The tools and the shape of their answers are the ones
-//! `apps/web/src/app/(api)/api/mcp/route.ts` registered through `mcp-handler`,
-//! down to the sentences each answer reads as and the same value again as
-//! structured content. What the Next.js handler got from the protocol is now the
-//! SDK's job, since this is the reference Rust implementation of it.
+//! The tools and the shape of their answers are fixed, down to the sentences
+//! each answer reads as and the same value again as structured content. The
+//! protocol itself is left to the SDK.
 //!
 //! Nothing here is a search of its own: every tool reads through
 //! [`crate::search`], the same module the HTTP endpoints use.
@@ -30,7 +28,7 @@ use crate::search::{self, Premises};
 /// Where the site lives, which `get_premises_permalink` points at.
 const SITE_URL: &str = "https://bins.felixyeung.com";
 
-/// The tools, served on the URL the Next.js handler answered on.
+/// The tools, served at `POST /api/mcp`.
 ///
 /// Sessions and server sent events are left as the SDK has them, because that is
 /// what the handler was serving and clients are written against it. Host
@@ -113,8 +111,7 @@ impl Bins {
             return Ok(unknown(premises_id as u32));
         };
 
-        // The Next.js handler worked each date out against `new Date()`, which is
-        // the server's own day rather than a collection's.
+        // The server's own day, rather than a collection's.
         let today = Local::now().date_naive();
         let collections = Collections {
             jobs: jobs
@@ -271,8 +268,7 @@ struct Page {
     link: String,
 }
 
-/// Where a collection sits relative to today, which is how the Next.js handler
-/// marked each date before answering.
+/// Where a collection sits relative to today.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, JsonSchema)]
 #[serde(rename_all = "PascalCase")]
 enum When {
@@ -293,8 +289,7 @@ impl When {
 }
 
 impl std::fmt::Display for When {
-    /// The names the Next.js handler wrote, which are the ones the schema offers
-    /// a client too.
+    /// The names the schema offers a client.
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         f.write_str(match self {
             Self::Expired => "Expired",

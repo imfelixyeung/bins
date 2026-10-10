@@ -15,8 +15,7 @@ use crate::sitemap;
 
 use super::{ApiError, sitemap_page};
 
-/// How long a response may be reused. The Next.js app cached these for a minute
-/// before serving them again.
+/// How long a response may be reused.
 const CACHE_CONTROL_VALUE: &str = "public, max-age=60";
 
 /// `GET /api/sitemaps/premises.xml` and `GET /api/sitemaps/premises.xml?page=<page>`

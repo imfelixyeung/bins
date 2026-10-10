@@ -1,7 +1,6 @@
 //! Imports from the upstream CSVs, skipped when the file behind them has not
 //! changed, with how far each run got recorded for `GET /api/status`.
 //!
-//! The skip is the one `apps/worker/etag.ts` put in front of its import scripts.
 //! The file is asked about first and only downloaded when the etag differs from
 //! the one stored, which is what leaves the daily cron cheap on the days the
 //! council publishes nothing. The etag is only written once the import has

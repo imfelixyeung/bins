@@ -13,9 +13,7 @@ pub type StatusBody = Json<Envelope<status::Status>>;
 
 /// `GET /api/status`
 ///
-/// Backs the status page. It replaced two things: the page read the `etags`
-/// table through drizzle, and the Next.js worker answered `/status` with the
-/// progress of the run it happened to be in the middle of.
+/// Backs the status page.
 ///
 /// A dataset that has never been synced is answered with null fields rather than
 /// left out, so the page can list every dataset it knows about from one response.
