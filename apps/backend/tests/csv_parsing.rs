@@ -1,4 +1,4 @@
-//! Parsing checks against the sample CSVs in `../data`.
+//! Parsing checks against the fixture CSVs in `tests/fixtures`.
 //!
 //! These assert the behaviour the rest of the app relies on: NUL-marked missing
 //! values, day-first dates, and correct handling of rows that straddle the
@@ -16,7 +16,7 @@ use tokio_util::io::StreamReader;
 
 fn sample(name: &str) -> Vec<u8> {
     let path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-        .join("../data")
+        .join("tests/fixtures")
         .join(name);
     std::fs::read(&path).unwrap_or_else(|err| panic!("reading {}: {err}", path.display()))
 }
