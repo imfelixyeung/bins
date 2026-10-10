@@ -6,6 +6,11 @@ use super::{RowSpec, parse_id, strip_nuls};
 
 pub const DEFAULT_URL: &str = "https://opendata.leeds.gov.uk/downloads/bins/dm_jobs.csv";
 
+/// The table the jobs sync fills, as the `RowSpec` names it.
+pub const fn table() -> &'static str {
+    <JobRow as RowSpec>::TABLE
+}
+
 /// Fields present in the source CSV, in order.
 const CSV_FIELDS: usize = 3;
 

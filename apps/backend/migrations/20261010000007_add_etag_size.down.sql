@@ -1,0 +1,2 @@
+ALTER TABLE etags
+    DROP COLUMN IF EXISTS size;

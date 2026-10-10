@@ -12,20 +12,21 @@ import {
   TableScrollContainer,
 } from "@heroui/react";
 import { useQuery } from "@tanstack/react-query";
+import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
-import { getStatus, type StatusDataset } from "@/v2api/client";
+import { type Dataset, getDatasets } from "@/v2api/client";
 
 /**
- * How often the status is asked for again while a sync is running, in
+ * How often the datasets are asked for again while a sync is running, in
  * milliseconds. A sync of the collections file takes minutes, so the page
  * reports progress rather than waiting for the sync to end.
  */
 const WHILE_SYNCING_INTERVAL = 5_000;
 
 const Page = () => {
-  const statusQuery = useQuery({
-    queryKey: ["getStatus"],
-    queryFn: getStatus,
+  const datasetsQuery = useQuery({
+    queryKey: ["getDatasets"],
+    queryFn: getDatasets,
     refetchInterval: (query) =>
       query.state.data?.datasets.some(
         (dataset) => dataset.sync?.state === "running",
@@ -36,7 +37,7 @@ const Page = () => {
 
   return (
     <div className="container my-16">
-      <h1 className="text-3xl font-semibold">Dataset Status</h1>
+      <h1 className="text-3xl font-semibold">Datasets</h1>
 
       <div className="mt-6">
         <Table>
@@ -44,19 +45,38 @@ const Page = () => {
             <TableContent>
               <TableHeader>
                 <TableColumn isRowHeader>Dataset</TableColumn>
+                <TableColumn>CSV Size</TableColumn>
+                <TableColumn>Mirror Size</TableColumn>
                 <TableColumn>Last Checked</TableColumn>
                 <TableColumn>Last Synced</TableColumn>
                 <TableColumn>Etag</TableColumn>
                 <TableColumn>Sync</TableColumn>
               </TableHeader>
               <TableBody>
-                <TableCollection items={statusQuery.data?.datasets}>
+                <TableCollection items={datasetsQuery.data?.datasets}>
                   {(dataset) => (
                     <TableRow key={dataset.key}>
                       <TableCell className="font-medium">
-                        <Link href={dataset.url} target="_blank">
+                        <Link
+                          href={`/datasets/${dataset.key}`}
+                          className="underline"
+                        >
                           {dataset.name}
                         </Link>
+                        <a
+                          href={dataset.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-muted inline-flex items-center gap-1 ml-2"
+                        >
+                          <ExternalLinkIcon className="size-3" />
+                        </a>
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        {bytes(dataset.csvSize)}
+                      </TableCell>
+                      <TableCell className="font-mono">
+                        {bytes(dataset.dbSize)}
                       </TableCell>
                       <TableCell className="font-mono">
                         {timestamp(dataset.lastChecked)}
@@ -83,6 +103,26 @@ const Page = () => {
 };
 
 /**
+ * A byte count as a human-sized value, or `N/A` when it has never been
+ * measured. The upstream size comes from the CSV's `content-length` header and
+ * the mirror's from the size of the table on disk.
+ */
+const bytes = (value: number | null) => {
+  if (value === null) return "N/A";
+
+  const units = ["B", "KB", "MB", "GB"];
+  let size = value;
+  let unit = 0;
+  while (size >= 1024 && unit < units.length - 1) {
+    size /= 1024;
+    unit += 1;
+  }
+
+  const digits = size >= 100 || unit === 0 ? 0 : size >= 10 ? 1 : 2;
+  return `${size.toFixed(digits)} ${units[unit]}`;
+};
+
+/**
  * A timestamp as an ISO string, or `N/A` when the dataset has never been
  * checked. The API sends these as ISO strings already, so they are put through
  * the date parser rather than shown as they arrive, which is what the page did
@@ -96,7 +136,7 @@ const timestamp = (value: string | null) =>
  * that is still going says so, one that found nothing new says so, and a failure
  * carries the reason it stopped.
  */
-const sync = (run: StatusDataset["sync"]) => {
+const sync = (run: Dataset["sync"]) => {
   if (!run) return "N/A";
 
   switch (run.state) {

@@ -5,6 +5,11 @@ use super::{RowSpec, null_if_empty, nullable, parse_id, strip_nuls};
 
 pub const DEFAULT_URL: &str = "https://opendata.leeds.gov.uk/downloads/bins/dm_premises.csv";
 
+/// The table the premises sync fills, as the `RowSpec` names it.
+pub const fn table() -> &'static str {
+    <PremisesRow as RowSpec>::TABLE
+}
+
 /// Fields present in the source CSV, in order.
 const CSV_FIELDS: usize = 7;
 

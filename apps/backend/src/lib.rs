@@ -1,5 +1,6 @@
 pub mod address;
 pub mod cli;
+pub mod datasets;
 pub mod db;
 pub mod etag;
 pub mod import;
@@ -10,6 +11,5 @@ pub mod search;
 pub mod serve;
 pub mod sitemap;
 pub mod source;
-pub mod status;
 pub mod sync;
 pub mod sync_run;

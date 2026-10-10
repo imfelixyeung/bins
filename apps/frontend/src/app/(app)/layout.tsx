@@ -76,7 +76,10 @@ export default async function RootLayout({
             <div className="container grid md:grid-cols-2 gap-8">
               <div className="max-w-prose">
                 <p>
-                  Data is provided by{" "}
+                  <Link href="/datasets" rel="noreferrer" className="underline">
+                    Data
+                  </Link>{" "}
+                  is provided by{" "}
                   <Link
                     href="https://www.leeds.gov.uk/opendata"
                     rel="noreferrer"

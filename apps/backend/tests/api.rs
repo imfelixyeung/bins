@@ -985,9 +985,9 @@ fn urlencode(value: &str) -> String {
         .collect()
 }
 
-/// The datasets `/api/status` reports on, which are the two the sync commands
+/// The datasets `/api/datasets` reports on, which are the two the sync commands
 /// default to.
-const STATUS_DATASETS: [(&str, &str, &str); 2] = [
+const DATASETS: [(&str, &str, &str); 2] = [
     (
         "jobs",
         "Jobs",
@@ -1000,14 +1000,14 @@ const STATUS_DATASETS: [(&str, &str, &str); 2] = [
     ),
 ];
 
-/// The lock every status test holds while it is reading the datasets above.
+/// The lock every dataset test holds while it is reading the datasets above.
 ///
-/// Unlike the fixtures elsewhere in this file, a status test cannot be given a
-/// dataset of its own: `/api/status` reports on the datasets the sync commands
-/// default to, so these are the rows every status test reads. Tests run
+/// Unlike the fixtures elsewhere in this file, a dataset test cannot be given a
+/// dataset of its own: `/api/datasets` reports on the datasets the sync commands
+/// default to, so these are the rows every dataset test reads. Tests run
 /// concurrently, so this is what keeps them from clearing each other out
 /// mid-request.
-fn status_lock() -> std::sync::Arc<tokio::sync::Mutex<()>> {
+fn datasets_lock() -> std::sync::Arc<tokio::sync::Mutex<()>> {
     static LOCK: std::sync::OnceLock<std::sync::Arc<tokio::sync::Mutex<()>>> =
         std::sync::OnceLock::new();
 
@@ -1023,6 +1023,7 @@ struct Etag {
     etag: Option<String>,
     modified_at: Option<DateTime<Utc>>,
     checked_at: DateTime<Utc>,
+    size: Option<i64>,
 }
 
 /// A `sync_runs` row as a test found it.
@@ -1038,15 +1039,15 @@ struct SyncRun {
     message: Option<String>,
 }
 
-/// The status of the datasets above, as a test finds it and as it leaves it.
+/// The datasets above, as a test finds them and as it leaves them.
 ///
-/// A status test has to write over the rows a real sync left, because the
-/// datasets `/api/status` reports on are the ones the sync commands default to.
-/// They are read out first and written back by [`StatusFixture::restore`], since
-/// the alternative is a test run deleting a real sync's record of the file the
-/// database holds.
-struct StatusFixture {
-    /// Held for the length of the test, so no other status test replaces these
+/// A dataset test has to write over the rows a real sync left, because the
+/// datasets `/api/datasets` reports on are the ones the sync commands default
+/// to. They are read out first and written back by [`DatasetFixture::restore`],
+/// since the alternative is a test run deleting a real sync's record of the
+/// file the database holds.
+struct DatasetFixture {
+    /// Held for the length of the test, so no other dataset test replaces these
     /// rows while the first test is still reading them.
     _lock: tokio::sync::OwnedMutexGuard<()>,
     pool: PgPool,
@@ -1054,24 +1055,25 @@ struct StatusFixture {
     runs: Vec<SyncRun>,
 }
 
-impl StatusFixture {
-    /// Puts the status of the datasets back to how this test found it.
+impl DatasetFixture {
+    /// Puts the datasets back to how this test found it.
     async fn restore(self) {
-        clear_status(&self.pool).await;
+        clear_datasets(&self.pool).await;
 
         for etag in &self.etags {
             sqlx::query(
-                "INSERT INTO etags (id, url, etag, modified_at, checked_at) \
-                 VALUES ($1, $2, $3, $4, $5)",
+                "INSERT INTO etags (id, url, etag, modified_at, checked_at, size) \
+                 VALUES ($1, $2, $3, $4, $5, $6)",
             )
             .bind(etag.id)
             .bind(&etag.url)
             .bind(&etag.etag)
             .bind(etag.modified_at)
             .bind(etag.checked_at)
+            .bind(etag.size)
             .execute(&self.pool)
             .await
-            .expect("restoring an etag a status test replaced");
+            .expect("restoring an etag a dataset test replaced");
         }
 
         for run in &self.runs {
@@ -1090,27 +1092,27 @@ impl StatusFixture {
             .bind(&run.message)
             .execute(&self.pool)
             .await
-            .expect("restoring a sync run a status test replaced");
+            .expect("restoring a sync run a dataset test replaced");
         }
     }
 }
 
-/// Reads the status of the datasets above, clears it for a test to fill in, and
-/// holds the lock until [`StatusFixture::restore`] hands it back.
-async fn status_fixture(pool: &PgPool) -> StatusFixture {
-    let lock = status_lock().lock_owned().await;
+/// Reads the datasets above, clears them for a test to fill in, and holds the
+/// lock until [`DatasetFixture::restore`] hands it back.
+async fn dataset_fixture(pool: &PgPool) -> DatasetFixture {
+    let lock = datasets_lock().lock_owned().await;
 
     let mut etags = Vec::new();
     let mut runs = Vec::new();
-    for (target, _, url) in STATUS_DATASETS {
+    for (target, _, url) in DATASETS {
         etags.extend(
             sqlx::query_as::<_, Etag>(
-                "SELECT id, url, etag, modified_at, checked_at FROM etags WHERE url = $1",
+                "SELECT id, url, etag, modified_at, checked_at, size FROM etags WHERE url = $1",
             )
             .bind(url)
             .fetch_all(pool)
             .await
-            .expect("reading the etags a status test replaces"),
+            .expect("reading the etags a dataset test replaces"),
         );
         runs.extend(
             sqlx::query_as::<_, SyncRun>(
@@ -1120,13 +1122,13 @@ async fn status_fixture(pool: &PgPool) -> StatusFixture {
             .bind(target)
             .fetch_all(pool)
             .await
-            .expect("reading the sync runs a status test replaces"),
+            .expect("reading the sync runs a dataset test replaces"),
         );
     }
 
-    clear_status(pool).await;
+    clear_datasets(pool).await;
 
-    StatusFixture {
+    DatasetFixture {
         _lock: lock,
         pool: pool.clone(),
         etags,
@@ -1134,9 +1136,9 @@ async fn status_fixture(pool: &PgPool) -> StatusFixture {
     }
 }
 
-/// Empties the status of the datasets above.
-async fn clear_status(pool: &PgPool) {
-    for (target, _, url) in STATUS_DATASETS {
+/// Empties the datasets above.
+async fn clear_datasets(pool: &PgPool) {
+    for (target, _, url) in DATASETS {
         sqlx::query("DELETE FROM sync_runs WHERE target = $1")
             .bind(target)
             .execute(pool)
@@ -1150,21 +1152,32 @@ async fn clear_status(pool: &PgPool) {
     }
 }
 
+/// How big the datasets' mirrors are, which depends on which fixtures other
+/// tests have synced into the same database. A null size means the table is
+/// empty, and anything else is a size in bytes.
+fn assert_size_type(value: &Value) {
+    match value.as_i64() {
+        Some(size) => assert!(size > 0, "a table size is positive bytes"),
+        None => assert_eq!(value, &Value::Null, "a table size is null or positive"),
+    }
+}
+
 #[tokio::test]
-async fn status_reports_what_the_status_page_reads() {
+async fn datasets_report_what_the_dataset_page_reads() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let fixtures = status_fixture(&server.pool).await;
+    let fixtures = dataset_fixture(&server.pool).await;
 
     // What a sync leaves behind after importing a file that had changed.
     sqlx::query(
-        "INSERT INTO etags (url, etag, modified_at, checked_at) \
-         VALUES ($1, '\"f01141fe7b54dd1:0\"', $2, $3)",
+        "INSERT INTO etags (url, etag, modified_at, checked_at, size) \
+         VALUES ($1, '\"f01141fe7b54dd1:0\"', $2, $3, $4)",
     )
-    .bind(STATUS_DATASETS[1].2)
+    .bind(DATASETS[1].2)
     .bind(Utc.with_ymd_and_hms(2026, 10, 4, 3, 45, 41).unwrap())
     .bind(Utc.with_ymd_and_hms(2026, 10, 5, 4, 0, 0).unwrap())
+    .bind(170_000_000_i64)
     .execute(&server.pool)
     .await
     .expect("inserting an etag");
@@ -1173,7 +1186,7 @@ async fn status_reports_what_the_status_page_reads() {
          VALUES ($1, $2, 'synced', $3, $4, $5)",
     )
     .bind("premises")
-    .bind(STATUS_DATASETS[1].2)
+    .bind(DATASETS[1].2)
     .bind(Utc.with_ymd_and_hms(2026, 10, 5, 4, 0, 30).unwrap())
     .bind(Utc.with_ymd_and_hms(2026, 10, 5, 4, 1, 2).unwrap())
     .bind(411_468_i64)
@@ -1181,7 +1194,7 @@ async fn status_reports_what_the_status_page_reads() {
     .await
     .expect("inserting a sync run");
 
-    let (status, body) = server.get("/api/status").await;
+    let (status, body) = server.get("/api/datasets").await;
 
     assert_eq!(status, StatusCode::OK);
     assert_eq!(body["success"], true);
@@ -1189,9 +1202,9 @@ async fn status_reports_what_the_status_page_reads() {
     // Both datasets are listed whether or not anything is known about them, so
     // the page does not have to know which ones have been synced.
     let datasets = body["data"]["datasets"].as_array().expect("the datasets");
-    assert_eq!(datasets.len(), STATUS_DATASETS.len());
+    assert_eq!(datasets.len(), DATASETS.len());
 
-    for (dataset, (key, name, url)) in datasets.iter().zip(STATUS_DATASETS) {
+    for (dataset, (key, name, url)) in datasets.iter().zip(DATASETS) {
         assert_eq!(dataset["key"], json!(key));
         assert_eq!(dataset["name"], json!(name));
         assert_eq!(dataset["url"], json!(url));
@@ -1203,16 +1216,21 @@ async fn status_reports_what_the_status_page_reads() {
     // The page called this "last updated": it is when the imported file changed
     // upstream, not when the import ran.
     assert_eq!(synced["lastSynced"], json!("2026-10-04T03:45:41.000Z"));
+    assert_eq!(synced["csvSize"], json!(170000000));
+    assert_size_type(&synced["dbSize"]);
+    assert!(synced["sync"]["id"].as_i64().is_some());
+    assert_eq!(synced["sync"]["source"], json!(DATASETS[1].2));
+    assert_eq!(synced["sync"]["state"], json!("synced"));
     assert_eq!(
-        synced["sync"],
-        json!({
-            "state": "synced",
-            "startedAt": "2026-10-05T04:00:30.000Z",
-            "finishedAt": "2026-10-05T04:01:02.000Z",
-            "rows": 411468,
-            "message": Value::Null,
-        })
+        synced["sync"]["startedAt"],
+        json!("2026-10-05T04:00:30.000Z")
     );
+    assert_eq!(
+        synced["sync"]["finishedAt"],
+        json!("2026-10-05T04:01:02.000Z")
+    );
+    assert_eq!(synced["sync"]["rows"], json!(411468));
+    assert_eq!(synced["sync"]["message"], Value::Null);
 
     // The jobs dataset has not been synced here, so its fields are null rather
     // than missing from the response.
@@ -1220,28 +1238,30 @@ async fn status_reports_what_the_status_page_reads() {
     assert_eq!(unsynced["etag"], Value::Null);
     assert_eq!(unsynced["lastChecked"], Value::Null);
     assert_eq!(unsynced["lastSynced"], Value::Null);
+    assert_eq!(unsynced["csvSize"], Value::Null);
+    assert_size_type(&unsynced["dbSize"]);
     assert_eq!(unsynced["sync"], Value::Null);
 
     fixtures.restore().await;
 }
 
 #[tokio::test]
-async fn status_reports_a_sync_that_is_still_going() {
+async fn datasets_report_a_sync_that_is_still_going() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let fixtures = status_fixture(&server.pool).await;
+    let fixtures = dataset_fixture(&server.pool).await;
 
     // Started but not finished, which is what a long import of the jobs file
     // looks like while it is happening.
     sqlx::query("INSERT INTO sync_runs (target, source, state) VALUES ($1, $2, 'running')")
         .bind("jobs")
-        .bind(STATUS_DATASETS[0].2)
+        .bind(DATASETS[0].2)
         .execute(&server.pool)
         .await
         .expect("inserting a sync run");
 
-    let (status, body) = server.get("/api/status").await;
+    let (status, body) = server.get("/api/datasets").await;
 
     assert_eq!(status, StatusCode::OK);
 
@@ -1255,11 +1275,11 @@ async fn status_reports_a_sync_that_is_still_going() {
 }
 
 #[tokio::test]
-async fn status_reports_a_sync_that_failed() {
+async fn datasets_report_a_sync_that_failed() {
     let Some(server) = TestServer::start().await else {
         return;
     };
-    let fixtures = status_fixture(&server.pool).await;
+    let fixtures = dataset_fixture(&server.pool).await;
 
     // A run that failed before any etag was stored still has to say so, since
     // the page is where a broken sync is looked for.
@@ -1268,13 +1288,13 @@ async fn status_reports_a_sync_that_failed() {
          VALUES ($1, $2, 'failed', now(), $3)",
     )
     .bind("premises")
-    .bind(STATUS_DATASETS[1].2)
+    .bind(DATASETS[1].2)
     .bind("502 Bad Gateway")
     .execute(&server.pool)
     .await
     .expect("inserting a sync run");
 
-    let (status, body) = server.get("/api/status").await;
+    let (status, body) = server.get("/api/datasets").await;
 
     assert_eq!(status, StatusCode::OK);
 
@@ -1284,6 +1304,73 @@ async fn status_reports_a_sync_that_failed() {
     assert_eq!(premises["etag"], Value::Null);
 
     fixtures.restore().await;
+}
+
+#[tokio::test]
+async fn a_dataset_lists_every_sync_run_newest_first() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+    let fixtures = dataset_fixture(&server.pool).await;
+
+    // Three runs of the premises dataset, in reverse chronological order, which
+    // is how the history page reads them back.
+    for (state, seconds, rows) in [
+        ("synced", 12, 411_468_i64),
+        ("unchanged", 13, 0_i64),
+        ("failed", 14, 0_i64),
+    ] {
+        sqlx::query(
+            "INSERT INTO sync_runs (target, source, state, started_at, finished_at, rows, message) \
+             VALUES ($1, $2, $3, $4, $5, $6, $7)",
+        )
+        .bind("premises")
+        .bind(DATASETS[1].2)
+        .bind(state)
+        .bind(Utc.with_ymd_and_hms(2026, 10, 5, 4, 0, seconds).unwrap())
+        .bind(Some(
+            Utc.with_ymd_and_hms(2026, 10, 5, 4, 1, seconds).unwrap(),
+        ))
+        .bind(rows)
+        .bind(Option::<&str>::None)
+        .execute(&server.pool)
+        .await
+        .expect("inserting a sync run");
+    }
+
+    let (status, body) = server.get("/api/datasets/premises").await;
+
+    assert_eq!(status, StatusCode::OK);
+    assert_eq!(body["success"], true);
+
+    let runs = body["data"].as_array().expect("the run history");
+    assert_eq!(runs.len(), 3);
+    assert_eq!(
+        runs.iter()
+            .map(|run| run["state"].as_str().expect("a state"))
+            .collect::<Vec<_>>(),
+        vec!["failed", "unchanged", "synced"],
+        "history reads newest first"
+    );
+    assert_eq!(runs[2]["rows"], json!(411468));
+    assert_eq!(runs[2]["startedAt"], json!("2026-10-05T04:00:12.000Z"));
+
+    fixtures.restore().await;
+}
+
+#[tokio::test]
+async fn the_history_of_a_dataset_this_build_does_not_hold_is_not_found() {
+    let Some(server) = TestServer::start().await else {
+        return;
+    };
+
+    let (status, body) = server.get("/api/datasets/postcodes").await;
+
+    assert_eq!(status, StatusCode::NOT_FOUND);
+    assert_eq!(
+        body,
+        json!({ "error": true, "message": "Dataset not found" })
+    );
 }
 
 /// The protocol revision these tests speak, which is a revision that keeps a

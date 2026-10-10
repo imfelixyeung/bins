@@ -1,12 +1,13 @@
 //! How far each sync has got, recorded in the `sync_runs` table.
 //!
 //! Each sync is a `sync` command run by cron, and it writes where it has got to
-//! as it goes: `/api/status` can then report a sync that is still running, and a
-//! run that was killed part way through leaves a trace saying so rather than
+//! as it goes: `/api/datasets` can then report a sync that is still running, and
+//! a run that was killed part way through leaves a trace saying so rather than
 //! nothing at all.
 //!
-//! Only the most recent run of each target is kept, which is all the status page
-//! has ever shown.
+//! Every run is kept, so the dataset history pages can list what each sync did
+//! over time. The most recent run of a target is still what `/api/datasets`
+//! reports as its last sync.
 
 use anyhow::{Context, Result};
 use chrono::{DateTime, Utc};
@@ -22,7 +23,7 @@ pub const PREMISES: &str = "premises";
 /// The collections [`sync`](crate::sync::jobs) reads a CSV for.
 pub const JOBS: &str = "jobs";
 
-/// Why an unchanged upstream file says so itself, so the status page has
+/// Why an unchanged upstream file says so itself, so the dataset page has
 /// something to read rather than a blank.
 const UNCHANGED: &str = "upstream has not changed, so nothing was imported";
 
@@ -75,18 +76,18 @@ pub enum Outcome {
     Failed(String),
 }
 
-/// The most recent sync of a target, as `/api/status` serves it.
+/// A sync run as `/api/datasets` serves it, both as the last sync of a dataset
+/// and as one row of its history.
 ///
-/// `id`, `target` and `source` are not served: the row is found by its dataset,
-/// and the source is the dataset's own URL unless it was read from a file.
+/// `target` is not served: a run is reached by its dataset, so naming it on
+/// every row would only repeat the page it is on.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Run {
-    #[serde(skip_serializing)]
     pub id: i32,
     #[serde(skip_serializing)]
     pub target: String,
-    #[serde(skip_serializing)]
+    /// What the sync read: the URL of a dataset, or the path of a file.
     pub source: String,
     pub state: State,
     #[serde(serialize_with = "serialize_timestamp")]
@@ -116,7 +117,7 @@ struct Row {
 impl Row {
     /// A run as it is served, where a state this build does not know is reported
     /// as a failure rather than left out: the column only allows the four states
-    /// above, so anything else was written by something else, and the status
+    /// above, so anything else was written by something else, and the dataset
     /// page is more use saying so than answering nothing.
     fn into_run(self) -> Run {
         let state = State::parse(&self.state).unwrap_or_else(|| {
@@ -159,15 +160,6 @@ pub async fn start(pool: &PgPool, target: &str, source: &str) -> Result<Run> {
         .await
         .with_context(|| format!("recording the start of a {target} sync"))?;
 
-    // The run this one replaces is no longer of any use, and there is one of
-    // these per sync, so the table is kept to a row per target.
-    sqlx::query("DELETE FROM sync_runs WHERE target = $1 AND id <> $2")
-        .bind(target)
-        .bind(run.id)
-        .execute(pool)
-        .await
-        .with_context(|| format!("clearing the previous {target} sync"))?;
-
     Ok(run.into_run())
 }
 
@@ -197,13 +189,17 @@ pub async fn finish(pool: &PgPool, run: &Run, outcome: Outcome) -> Result<()> {
 
 /// The most recent run of each of `targets`, where a target that has never been
 /// synced is missing rather than blank.
+///
+/// Every run is kept, so this is the newest row per target rather than the only
+/// row there is.
 pub async fn latest(pool: &PgPool, targets: &[&str]) -> Result<Vec<Run>> {
     if targets.is_empty() {
         return Ok(Vec::new());
     }
 
     let sql = AssertSqlSafe(format!(
-        "SELECT {COLUMNS} FROM sync_runs WHERE target = ANY($1)"
+        "SELECT DISTINCT ON (target) {COLUMNS} FROM sync_runs \
+         WHERE target = ANY($1) ORDER BY target, started_at DESC, id DESC"
     ));
 
     let rows: Vec<Row> = sqlx::query_as(sql)
@@ -211,6 +207,23 @@ pub async fn latest(pool: &PgPool, targets: &[&str]) -> Result<Vec<Run>> {
         .fetch_all(pool)
         .await
         .with_context(|| format!("reading the sync runs of {} targets", targets.len()))?;
+
+    Ok(rows.into_iter().map(Row::into_run).collect())
+}
+
+/// Every run of `target`, newest first, which is what the dataset history page
+/// lists.
+pub async fn history(pool: &PgPool, target: &str) -> Result<Vec<Run>> {
+    let sql = AssertSqlSafe(format!(
+        "SELECT {COLUMNS} FROM sync_runs WHERE target = $1 \
+         ORDER BY started_at DESC, id DESC"
+    ));
+
+    let rows: Vec<Row> = sqlx::query_as(sql)
+        .bind(target)
+        .fetch_all(pool)
+        .await
+        .with_context(|| format!("reading the sync runs of {target}"))?;
 
     Ok(rows.into_iter().map(Row::into_run).collect())
 }
@@ -236,19 +249,21 @@ mod tests {
     }
 
     #[test]
-    fn a_run_is_served_with_the_fields_the_status_page_reads() {
+    fn a_run_is_served_with_the_fields_the_dataset_page_reads() {
         let json = serde_json::to_value(row("synced", None).into_run()).expect("serialising");
 
         assert_eq!(
             json,
             json!({
+                "id": 7,
+                "source": "https://example.com/dm_premises.csv",
                 "state": "synced",
                 "startedAt": "2026-10-05T04:00:00.000Z",
                 "finishedAt": "2026-10-05T04:01:02.000Z",
                 "rows": 411_468,
                 "message": null,
             }),
-            "only the fields the page reads are served"
+            "only the fields the pages read are served"
         );
     }
 
@@ -263,6 +278,8 @@ mod tests {
         assert_eq!(
             json,
             json!({
+                "id": 7,
+                "source": "https://example.com/dm_premises.csv",
                 "state": "running",
                 "startedAt": "2026-10-05T04:00:00.000Z",
                 "finishedAt": null,

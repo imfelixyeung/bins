@@ -113,33 +113,48 @@ export const getNearbyPostcodes = async ({
 export type NearbySchema = NearbyPostcode;
 
 const syncRunSchema = z.object({
+  id: z.number(),
   state: z.enum(["running", "synced", "unchanged", "failed"]),
   startedAt: z.string(),
   finishedAt: z.string().nullable(),
   rows: z.number().nullable(),
   message: z.string().nullable(),
+  source: z.string(),
 });
 
-const statusDatasetSchema = z.object({
+export type SyncRun = z.infer<typeof syncRunSchema>;
+
+const datasetSchema = z.object({
   key: z.string(),
   name: z.string(),
   url: z.string(),
   etag: z.string().nullable(),
   lastChecked: z.string().nullable(),
   lastSynced: z.string().nullable(),
+  csvSize: z.number().nullable(),
+  dbSize: z.number().nullable(),
   sync: syncRunSchema.nullable(),
 });
 
-export type StatusDataset = z.infer<typeof statusDatasetSchema>;
+export type Dataset = z.infer<typeof datasetSchema>;
 
-const datasetStatusSchema = z.object({
-  datasets: z.array(statusDatasetSchema),
+const datasetsSchema = z.object({
+  datasets: z.array(datasetSchema),
 });
-const statusSchema = makeAPISchema(datasetStatusSchema);
-export const getStatus = async () => {
-  return await fetch(`${BASE_URL}/status`)
+const datasetsBodySchema = makeAPISchema(datasetsSchema);
+export const getDatasets = async () => {
+  return await fetch(`${BASE_URL}/datasets`)
     .then((res) => res.json())
-    .then(statusSchema.parseAsync)
+    .then(datasetsBodySchema.parseAsync)
     .then((data) => throwErrorMessage(data).data);
 };
-export type StatusSchema = z.infer<typeof datasetStatusSchema>;
+export type DatasetsSchema = z.infer<typeof datasetsSchema>;
+
+const datasetHistoryBodySchema = makeAPISchema(z.array(syncRunSchema));
+export const getDatasetHistory = async ({ target }: { target: string }) => {
+  return await fetch(`${BASE_URL}/datasets/${target}`)
+    .then((res) => res.json())
+    .then(datasetHistoryBodySchema.parseAsync)
+    .then((data) => throwErrorMessage(data).data);
+};
+export type DatasetHistorySchema = SyncRun[];

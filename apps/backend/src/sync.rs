@@ -1,5 +1,5 @@
 //! Imports from the upstream CSVs, skipped when the file behind them has not
-//! changed, with how far each run got recorded for `GET /api/status`.
+//! changed, with how far each run got recorded for `GET /api/datasets`.
 //!
 //! The file is asked about first and only downloaded when the etag differs from
 //! the one stored, which is what leaves the daily cron cheap on the days the
@@ -68,7 +68,7 @@ pub async fn postcodes() -> Result<()> {
 ///
 /// The run is recorded whether the import worked or not, which is the point of
 /// it: a sync that stops half way through leaves a record saying so, rather than
-/// the status page carrying on as though nothing were happening.
+/// the dataset page carrying on as though nothing were happening.
 async fn dataset<S: RowSpec>(
     pool: &PgPool,
     target: &str,

@@ -6,12 +6,12 @@
 //! than that envelope: `/api/jobs` with a CSV or a calendar when one is asked
 //! for, and the sitemaps with XML, for crawlers.
 
+pub mod datasets;
 pub mod jobs;
 pub mod nearby;
 pub mod premises;
 pub mod random;
 pub mod sitemaps;
-pub mod status;
 
 use std::collections::HashMap;
 
@@ -35,7 +35,8 @@ pub fn router() -> Router<PgPool> {
         .route("/api/premises", get(premises::handler))
         .route("/api/random/premises", get(random::handler))
         .route("/api/sitemaps/premises.xml", get(sitemaps::handler))
-        .route("/api/status", get(status::handler))
+        .route("/api/datasets", get(datasets::handler))
+        .route("/api/datasets/{target}", get(datasets::history))
 }
 
 /// Every successful response is wrapped in this envelope.

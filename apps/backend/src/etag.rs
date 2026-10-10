@@ -13,7 +13,7 @@ use std::time::Duration;
 
 use anyhow::{Context, Result, anyhow};
 use chrono::{DateTime, Utc};
-use reqwest::header::{ETAG, LAST_MODIFIED};
+use reqwest::header::{CONTENT_LENGTH, ETAG, LAST_MODIFIED};
 use sqlx::{FromRow, PgPool};
 use tokio::time::sleep;
 use tracing::warn;
@@ -40,6 +40,9 @@ pub struct Latest {
     /// When the file was asked about, which moves on whether anything changed
     /// or not.
     pub checked_at: DateTime<Utc>,
+    /// The size of the file in bytes, as sent by its `content-length` header.
+    /// Absent for a response that does not carry one.
+    pub size: Option<i64>,
 }
 
 /// What the database remembers about a file.
@@ -51,6 +54,9 @@ pub struct Stored {
     pub modified_at: Option<DateTime<Utc>>,
     /// When the file was last asked about.
     pub checked_at: DateTime<Utc>,
+    /// The size of the file upstream last published, when its `content-length`
+    /// header said so.
+    pub size: Option<i64>,
 }
 
 /// A file compared against what is already stored, which is what a sync acts on.
@@ -80,7 +86,7 @@ pub async fn check(pool: &PgPool, url: &str) -> Result<Check> {
 
 /// What the database holds for `url`, if it holds anything at all.
 pub async fn stored(pool: &PgPool, url: &str) -> Result<Option<Stored>> {
-    sqlx::query_as("SELECT etag, modified_at, checked_at FROM etags WHERE url = $1")
+    sqlx::query_as("SELECT etag, modified_at, checked_at, size FROM etags WHERE url = $1")
         .bind(url)
         .fetch_optional(pool)
         .await
@@ -93,17 +99,19 @@ pub async fn stored(pool: &PgPool, url: &str) -> Result<Option<Stored>> {
 /// etag where it was and the next run imports again.
 pub async fn store(pool: &PgPool, url: &str, latest: &Latest) -> Result<()> {
     sqlx::query(
-        "INSERT INTO etags (url, etag, modified_at, checked_at) \
-         VALUES ($1, $2, $3, $4) \
+        "INSERT INTO etags (url, etag, modified_at, checked_at, size) \
+         VALUES ($1, $2, $3, $4, $5) \
          ON CONFLICT (url) DO UPDATE SET \
              etag = excluded.etag, \
              modified_at = excluded.modified_at, \
-             checked_at = excluded.checked_at",
+             checked_at = excluded.checked_at, \
+             size = excluded.size",
     )
     .bind(url)
     .bind(&latest.etag)
     .bind(latest.modified_at)
     .bind(latest.checked_at)
+    .bind(latest.size)
     .execute(pool)
     .await
     .with_context(|| format!("storing the etag of {url}"))?;
@@ -186,6 +194,7 @@ async fn request(url: &str) -> Result<Latest> {
         modified_at: parse_http_date(modified)
             .with_context(|| format!("reading the last-modified header of {url}"))?,
         checked_at,
+        size: header(headers, CONTENT_LENGTH).and_then(|value| value.trim().parse().ok()),
     })
 }
 
@@ -215,6 +224,7 @@ mod tests {
             etag: etag.to_owned(),
             modified_at: Utc.with_ymd_and_hms(2026, 10, 5, 3, 45, 41).unwrap(),
             checked_at: Utc.with_ymd_and_hms(2026, 10, 5, 4, 0, 0).unwrap(),
+            size: Some(170_000_000),
         }
     }
 
@@ -223,6 +233,7 @@ mod tests {
             etag: etag.map(str::to_owned),
             modified_at: Some(Utc.with_ymd_and_hms(2026, 10, 4, 3, 45, 41).unwrap()),
             checked_at: Utc.with_ymd_and_hms(2026, 10, 5, 4, 0, 0).unwrap(),
+            size: Some(170_000_000),
         }
     }
 
