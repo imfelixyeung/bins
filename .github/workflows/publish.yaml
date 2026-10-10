@@ -22,8 +22,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  frontend:
-    name: frontend
+  publish-frontend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -67,8 +66,7 @@ jobs:
           # manifest entries.
           provenance: false
 
-  backend:
-    name: backend
+  publish-backend:
     runs-on: ubuntu-latest
     permissions:
       contents: read
