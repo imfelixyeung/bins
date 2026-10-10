@@ -1,0 +1,90 @@
+name: ci
+
+# Every check the repo has on the way to main: the frontend's linters, types and
+# build, and the backend's fmt, clippy and API tests. This only has to approve a
+# merge; the publish workflow is the one that ships.
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+  workflow_dispatch:
+
+# A newer push to the same ref supersedes an unfinished run rather than queuing
+# behind it.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci-frontend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: oven-sh/setup-bun@v2
+
+      - name: Install from the root lockfile
+        run: bun install --frozen-lockfile
+
+      - name: Biome style and lint
+        run: bunx biome ci .
+
+      - name: Typecheck
+        working-directory: apps/frontend
+        run: bunx tsc --noEmit
+
+      - name: ESLint
+        working-directory: apps/frontend
+        run: bun run lint
+
+      - name: Build the exported site
+        working-directory: apps/frontend
+        run: bun run build
+
+  ci-backend:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    env:
+      # The API tests run against a real PostGIS database, which is the service
+      # below; they skip themselves when this is missing.
+      TEST_DATABASE_URL: postgres://postgres:postgres@localhost:5432/db
+    services:
+      postgis:
+        image: postgis/postgis:18-3.6
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: db
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d db"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: dtolnay/rust-toolchain@1.99.0
+        with:
+          components: clippy, rustfmt
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: apps/backend
+
+      - name: Format
+        working-directory: apps/backend
+        run: cargo fmt --check
+
+      - name: Lint
+        working-directory: apps/backend
+        run: cargo clippy --all-targets --locked -- -D warnings
+
+      - name: Test
+        working-directory: apps/backend
+        run: cargo test --locked
