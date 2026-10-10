@@ -34,7 +34,7 @@ jobs:
 
       - name: Typecheck
         working-directory: apps/frontend
-        run: bunx tsc --noEmit
+        run: bun check
 
       - name: ESLint
         working-directory: apps/frontend
