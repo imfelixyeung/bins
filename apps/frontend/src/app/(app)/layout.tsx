@@ -6,6 +6,7 @@ import Link from "next/link";
 import ClientOnly from "@/ui/client-only";
 import CopyRight from "@/ui/copyright";
 import ThemeSwitch from "@/ui/theme-switch";
+import { WebMCP } from "@/webmcp";
 import Providers from "../providers";
 
 export const metadata: Metadata = {
@@ -58,6 +59,9 @@ export default async function RootLayout({
     >
       <body>
         <Providers>
+          <ClientOnly>
+            <WebMCP />
+          </ClientOnly>
           <div className="min-h-dvh flex flex-col">
             <header className="border-b h-14 flex flex-col justify-center">
               <nav className="container">

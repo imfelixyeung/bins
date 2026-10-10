@@ -1,10 +1,29 @@
 import { z } from "zod";
 
 const makeAPISchema = <T>(dataSchema: z.ZodType<T>) => {
-  return z.object({
-    success: z.boolean(),
-    data: dataSchema,
-  });
+  return z.union([
+    z.object({
+      success: z.boolean(),
+      data: dataSchema,
+    }),
+    z.object({
+      error: z.boolean(),
+      message: z.string(),
+    }),
+  ]);
+};
+
+const throwErrorMessage = <D>(
+  response: { success: boolean; data: D } | { error: boolean; message: string },
+): { success: true; data: D } => {
+  if ("error" in response) {
+    throw new Error(response.message);
+  }
+  const { success, data } = response;
+  if (!success) {
+    throw new Error("Something went wrong...");
+  }
+  return { success, data };
 };
 
 const premiseSchema = z.object({
@@ -35,11 +54,9 @@ export const getRandomPremises = async () => {
   return await fetch(`${BASE_URL}/random/premises`)
     .then((res) => res.json())
     .then(getRandomPremisesSchema.parseAsync)
-    .then((data) => data.data);
+    .then((data) => throwErrorMessage(data).data);
 };
-export type GetRandomPremisesSchema = z.infer<
-  typeof getRandomPremisesSchema
->["data"];
+export type GetRandomPremisesSchema = Premise;
 
 const searchPremisesSchema = makeAPISchema(z.array(premiseSchema));
 export const searchPremises = async ({ postcode }: { postcode: string }) => {
@@ -48,32 +65,27 @@ export const searchPremises = async ({ postcode }: { postcode: string }) => {
   return await fetch(`${BASE_URL}/premises?${query.toString()}`)
     .then((res) => res.json())
     .then(searchPremisesSchema.parseAsync)
-    .then((data) => data.data);
+    .then((data) => throwErrorMessage(data).data);
 };
-export type SearchPremisesSchema = z.infer<typeof searchPremisesSchema>["data"];
+export type SearchPremisesSchema = Premise[];
 
-const searchJobsSchema = makeAPISchema(
-  premiseSchema.merge(
-    z.object({
-      jobs: jobSchema.array(),
-    }),
-  ),
-);
+const premisesWithJobsSchema = premiseSchema.extend({
+  jobs: jobSchema.array(),
+});
+const searchJobsSchema = makeAPISchema(premisesWithJobsSchema);
 export const searchJobs = async ({ premisesId }: { premisesId: number }) => {
   const query = new URLSearchParams();
   query.set("premises", premisesId.toString());
   return await fetch(`${BASE_URL}/jobs?${query.toString()}`)
     .then((res) => res.json())
     .then(searchJobsSchema.parseAsync)
-    .then((data) => data.data);
+    .then((data) => throwErrorMessage(data).data);
 };
-export type SearchJobsSchema = z.infer<typeof searchJobsSchema>["data"];
+export type SearchJobsSchema = z.infer<typeof premisesWithJobsSchema>;
 
-const postcodeJobSchema = jobSchema.merge(
-  z.object({
-    postcode: z.string(),
-  }),
-);
+const postcodeJobSchema = jobSchema.extend({
+  postcode: z.string(),
+});
 
 const nearbyPostcodeSchema = z.object({
   postcode: z.string(),
@@ -96,9 +108,9 @@ export const getNearbyPostcodes = async ({
   return await fetch(`${BASE_URL}/nearby?${query.toString()}`)
     .then((res) => res.json())
     .then(nearbySchema.parseAsync)
-    .then((data) => data.data);
+    .then((data) => throwErrorMessage(data).data);
 };
-export type NearbySchema = z.infer<typeof nearbySchema>["data"];
+export type NearbySchema = NearbyPostcode;
 
 const syncRunSchema = z.object({
   state: z.enum(["running", "synced", "unchanged", "failed"]),
@@ -120,13 +132,14 @@ const statusDatasetSchema = z.object({
 
 export type StatusDataset = z.infer<typeof statusDatasetSchema>;
 
-const statusSchema = makeAPISchema(
-  z.object({ datasets: z.array(statusDatasetSchema) }),
-);
+const datasetStatusSchema = z.object({
+  datasets: z.array(statusDatasetSchema),
+});
+const statusSchema = makeAPISchema(datasetStatusSchema);
 export const getStatus = async () => {
   return await fetch(`${BASE_URL}/status`)
     .then((res) => res.json())
     .then(statusSchema.parseAsync)
-    .then((data) => data.data);
+    .then((data) => throwErrorMessage(data).data);
 };
-export type StatusSchema = z.infer<typeof statusSchema>["data"];
+export type StatusSchema = z.infer<typeof datasetStatusSchema>;

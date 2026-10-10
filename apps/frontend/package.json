@@ -31,6 +31,7 @@
     "react-hook-form": "^7.64.0",
     "react-map-gl": "^8.1.0",
     "serwist": "^9.2.1",
+    "use-webmcp-tool": "^0.3.0",
     "zod": "4.3.6"
   },
   "devDependencies": {
