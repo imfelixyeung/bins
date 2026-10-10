@@ -146,10 +146,18 @@ pub async fn premises(pool: &PgPool, postcode: &str) -> Result<Vec<Premises>> {
 
 /// A premise chosen at random, or `None` when there are no premises at all.
 ///
-/// `ORDER BY random()` has no index to work from, so this reads every row.
+/// `ORDER BY random()` has no index to work from, so it reads and sorts every
+/// row. Instead one id is picked across the id range and the first premise at or
+/// after it is read, which the primary key index answers in a single lookup. The
+/// pick lands on the maximum id often enough to guarantee a row, so a populated
+/// table always answers. Ids from the feed are near-contiguous, so the pick is
+/// close to uniform; a gap just skews the odds towards the row that follows it.
 pub async fn random_premise(pool: &PgPool) -> Result<Option<Premises>> {
     let sql = AssertSqlSafe(format!(
-        "SELECT {PREMISES_COLUMNS} FROM dm_premises ORDER BY random() LIMIT 1"
+        "SELECT {PREMISES_COLUMNS} FROM dm_premises \
+         WHERE id >= (SELECT floor(random() * (max(id) - min(id) + 1))::int + min(id) \
+                      FROM dm_premises) \
+         ORDER BY id LIMIT 1"
     ));
 
     sqlx::query_as(sql)
