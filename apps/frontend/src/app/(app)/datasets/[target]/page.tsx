@@ -11,7 +11,7 @@ export const generateStaticParams = () => {
   return [{ target: "jobs" }, { target: "premises" }];
 };
 
-const Page = async ({ params }: { params: Promise<{ target: string }> }) => {
+const Page = async ({ params }: PageProps<"/datasets/[target]">) => {
   const { target } = await params;
 
   return (
