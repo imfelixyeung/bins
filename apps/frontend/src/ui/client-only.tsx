@@ -1,17 +1,8 @@
 "use client";
 
-import React from "react";
+import dynamic from "next/dynamic";
+import type React from "react";
 
-const ClientOnly = ({ children }: { children: React.ReactNode }) => {
-  const [mounted, setMounted] = React.useState(false);
+const ClientOnly = ({ children }: { children: React.ReactNode }) => children;
 
-  React.useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) return null;
-
-  return children;
-};
-
-export default ClientOnly;
+export default dynamic(async () => ClientOnly, { ssr: false });

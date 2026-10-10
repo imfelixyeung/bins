@@ -11,19 +11,9 @@ import {
 } from "@heroui/react";
 import { capitalCase } from "change-case";
 import { useTheme } from "next-themes";
-import { useEffect, useState } from "react";
 
 const ThemeSwitch = () => {
-  const [mounted, setMounted] = useState(false);
   const { theme, setTheme, themes } = useTheme();
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  if (!mounted) {
-    return null;
-  }
 
   return (
     <Select

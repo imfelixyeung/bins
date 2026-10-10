@@ -3,6 +3,7 @@ import "@/app/globals.css";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import ClientOnly from "@/ui/client-only";
 import CopyRight from "@/ui/copyright";
 import ThemeSwitch from "@/ui/theme-switch";
 import Providers from "../providers";
@@ -137,7 +138,9 @@ export default async function RootLayout({
               <p>
                 <CopyRight />
               </p>
-              <ThemeSwitch />
+              <ClientOnly>
+                <ThemeSwitch />
+              </ClientOnly>
             </div>
           </footer>
         </Providers>
