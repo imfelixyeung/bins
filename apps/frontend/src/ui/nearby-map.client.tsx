@@ -10,6 +10,7 @@ import {
   TabList,
   TabListContainer,
   Tabs,
+  Typography,
 } from "@heroui/react";
 import { format } from "date-fns";
 import { default as MapGL, Marker } from "react-map-gl/maplibre";
@@ -53,7 +54,9 @@ const NearbyMapClient = ({ nearby }: { nearby: NearbyPostcode[] }) => {
 
   return (
     <section className="my-16">
-      <h2 className="text-2xl font-semibold mb-3">Postcode Map</h2>
+      <Typography.Heading level={2} className="mb-3">
+        Postcode Map
+      </Typography.Heading>
       <div className="rounded-xl overflow-hidden">
         <Tabs selectedKey={selectedDate} onSelectionChange={setSelectedDate}>
           <TabListContainer className="rounded-none ">

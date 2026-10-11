@@ -1,6 +1,8 @@
 "use client";
 
 import {
+  Breadcrumbs,
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -10,10 +12,9 @@ import {
   TableHeader,
   TableRow,
   TableScrollContainer,
+  Typography,
 } from "@heroui/react";
-import { useQuery } from "@tanstack/react-query";
-import Link from "next/link";
-import { getDatasetHistory } from "@/v2api/client";
+import { useDatasetHistoryQuery } from "@/hooks/api";
 
 /**
  * The names the history pages are titled with. The backend serves the keys, but
@@ -25,33 +26,18 @@ const NAMES: Record<string, string> = {
   premises: "Premises",
 };
 
-/**
- * How often the history is asked for again while a sync is running, in
- * milliseconds. A sync of the collections file takes minutes, so the newest row
- * is watched until it settles rather than shown mid-flight.
- */
-const WHILE_SYNCING_INTERVAL = 5_000;
-
 const Page = ({ target }: { target: string }) => {
-  const historyQuery = useQuery({
-    queryKey: ["getDatasetHistory", target],
-    queryFn: () => getDatasetHistory({ target }),
-    refetchInterval: (query) =>
-      query.state.data?.[0]?.state === "running"
-        ? WHILE_SYNCING_INTERVAL
-        : false,
-  });
+  const { data, isLoading } = useDatasetHistoryQuery({ target });
 
   const name = NAMES[target] ?? target;
 
   return (
     <div className="container my-16">
-      <p className="text-muted">
-        <Link href="/datasets" className="underline">
-          Datasets
-        </Link>
-      </p>
-      <h1 className="text-3xl font-semibold mt-2">{name} syncs</h1>
+      <Breadcrumbs>
+        <Breadcrumbs.Item href="/datasets">Datasets</Breadcrumbs.Item>
+        <Breadcrumbs.Item>{name}</Breadcrumbs.Item>
+      </Breadcrumbs>
+      <Typography.Heading className="mt-2">{name} syncs</Typography.Heading>
       <p className="text-muted mt-2">
         Every sync of the {name.toLowerCase()} dataset, newest first.
       </p>
@@ -69,9 +55,19 @@ const Page = ({ target }: { target: string }) => {
                 <TableColumn>Message</TableColumn>
               </TableHeader>
               <TableBody
-                renderEmptyState={() => "This dataset has never been synced."}
+                renderEmptyState={() => (
+                  <div className="flex justify-center items-center py-6 px-2 gap-2 text-muted">
+                    {isLoading ? (
+                      <>
+                        <Spinner /> <span>Loading</span>
+                      </>
+                    ) : (
+                      "This dataset has never been synced."
+                    )}
+                  </div>
+                )}
               >
-                <TableCollection items={historyQuery.data}>
+                <TableCollection items={data}>
                   {(run) => (
                     <TableRow key={run.id}>
                       <TableCell className="font-mono whitespace-nowrap">

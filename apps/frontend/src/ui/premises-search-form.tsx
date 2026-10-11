@@ -22,10 +22,11 @@ import {
   SelectPopover,
   SelectTrigger,
   SelectValue,
+  Spinner,
   TextField,
 } from "@heroui/react";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   CheckIcon,
   DicesIcon,
@@ -41,7 +42,11 @@ import { useEffect, useRef } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { getPresentableFullAddress } from "@/functions/format-address";
-import { getRandomPremises, searchPremises } from "@/v2api/client";
+import {
+  makeUsePremisesJobsQueryOptions,
+  useRandomPremisesQuery,
+  useSearchPremisesQuery,
+} from "@/hooks/api";
 import ClientOnly from "./client-only";
 import RecentPremises from "./recent-premises";
 
@@ -61,19 +66,9 @@ const premisesFormSchema = z.object({
 type PostcodeFormData = z.infer<typeof postcodeFormSchema>;
 type PremisesFormData = z.infer<typeof premisesFormSchema>;
 
-const randomPremiseQueryOption = {
-  queryKey: ["getRandomPremise"],
-  queryFn: getRandomPremises,
-} as const;
-
-const randomPremiseQueryOptionInitialNull = {
-  ...randomPremiseQueryOption,
-  initialData: null,
-};
-
 const PremisesSearchForm = () => {
   const queryClient = useQueryClient();
-  const randomPremisesQuery = useQuery(randomPremiseQueryOptionInitialNull);
+  const randomPremisesQuery = useRandomPremisesQuery();
 
   const router = useRouter();
   const [postcode, setPostcode] = useQueryState("postcode", {
@@ -92,21 +87,27 @@ const PremisesSearchForm = () => {
       premises: "",
     },
   });
-  const { data: premises, isLoading: premisesIsLoading } = useQuery({
-    queryKey: ["premise", postcode],
-    queryFn: () => searchPremises({ postcode }),
-    enabled: postcode.trim().length > 0,
-  });
+  const { data: premises, isLoading: premisesIsLoading } =
+    useSearchPremisesQuery({
+      postcode,
+    });
 
   const selectedPremisesId = premisesForm.watch("premises", "");
 
   useEffect(() => {
     if (!selectedPremisesId) return;
 
+    queryClient
+      .query(
+        makeUsePremisesJobsQueryOptions({
+          premisesId: Number(selectedPremisesId),
+        }),
+      )
+      .catch(() => void null);
     router.prefetch(`/premises?id=${selectedPremisesId}`, {
       kind: PrefetchKind.FULL,
     });
-  }, [router, selectedPremisesId]);
+  }, [queryClient, router, selectedPremisesId]);
 
   const onSubmitPostcode = async (data: PostcodeFormData) => {
     setPostcode(data.postcode);
@@ -117,7 +118,7 @@ const PremisesSearchForm = () => {
   };
 
   const onSupriseMe = async () => {
-    const premises = await queryClient.fetchQuery(randomPremiseQueryOption);
+    const { data: premises } = await randomPremisesQuery.refetch();
 
     if (!premises?.addressPostcode) return;
 
@@ -198,12 +199,12 @@ const PremisesSearchForm = () => {
           </Button>
         </Form>
         {premises && premises && premises.length === 0 && (
-          <div className="mt-8">
-            <p className="text-lg">
+          <p className="mt-1">
+            <ErrorMessage>
               Oops, we {"couldn't"} find any addresses matching your postcode of{" "}
               {postcode}
-            </p>
-          </div>
+            </ErrorMessage>
+          </p>
         )}
         {premises && premises && premises.length > 0 && (
           <Form
@@ -259,7 +260,12 @@ const PremisesSearchForm = () => {
                 </Select>
               )}
             />
-            <Button type="submit" isIconOnly className="shrink-0">
+            <Button
+              type="submit"
+              isIconOnly
+              className="shrink-0"
+              isDisabled={!selectedPremisesId}
+            >
               <CheckIcon size={16} />
               <span className="sr-only">Confirm Address</span>
             </Button>
@@ -272,11 +278,13 @@ const PremisesSearchForm = () => {
               variant="ghost"
               size="sm"
               onClick={onSupriseMe}
-              isDisabled={
-                randomPremisesQuery.isFetching || !randomPremisesQuery.isStale
-              }
+              isDisabled={randomPremisesQuery.isFetching}
             >
-              <DicesIcon size={20} />
+              {randomPremisesQuery.isFetching ? (
+                <Spinner />
+              ) : (
+                <DicesIcon size={20} />
+              )}
               Suprise Me
             </Button>
           </div>

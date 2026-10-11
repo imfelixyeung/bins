@@ -1,6 +1,6 @@
 "use client";
 
-import { Button, Surface } from "@heroui/react";
+import { Button, Surface, Typography } from "@heroui/react";
 import { MapPinHouseIcon, XIcon } from "lucide-react";
 import Link from "next/link";
 import { getTwoLineFullAddress } from "@/functions/format-address";
@@ -13,7 +13,13 @@ const RecentPremises = () => {
 
   return (
     <section className="mt-16">
-      <h2 className="text-lg font-medium text-center">Recents</h2>
+      <Typography.Heading
+        level={2}
+        align="center"
+        className="text-lg font-medium"
+      >
+        Recents
+      </Typography.Heading>
       <div className="mt-3">
         <div className="flex gap-3 flex-col">
           {premises.map((premises) => {
@@ -32,7 +38,13 @@ const RecentPremises = () => {
                     className="after:absolute after:inset-0 grow"
                     prefetch
                   >
-                    <h3 className="font-medium line-clamp-2">{line1}</h3>
+                    <Typography.Heading
+                      level={3}
+                      className="text-base line-clamp-2"
+                      weight="medium"
+                    >
+                      {line1}
+                    </Typography.Heading>
                     <p className="text-sm line-clamp-2 text-muted">{line2}</p>
                   </Link>
                   <button

@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  Spinner,
   Table,
   TableBody,
   TableCell,
@@ -10,34 +11,19 @@ import {
   TableHeader,
   TableRow,
   TableScrollContainer,
+  Typography,
 } from "@heroui/react";
-import { useQuery } from "@tanstack/react-query";
 import { ExternalLinkIcon } from "lucide-react";
 import Link from "next/link";
-import { type Dataset, getDatasets } from "@/v2api/client";
-
-/**
- * How often the datasets are asked for again while a sync is running, in
- * milliseconds. A sync of the collections file takes minutes, so the page
- * reports progress rather than waiting for the sync to end.
- */
-const WHILE_SYNCING_INTERVAL = 5_000;
+import { useDatasetsQuery } from "@/hooks/api";
+import type { Dataset } from "@/v2api/client";
 
 const Page = () => {
-  const datasetsQuery = useQuery({
-    queryKey: ["getDatasets"],
-    queryFn: getDatasets,
-    refetchInterval: (query) =>
-      query.state.data?.datasets.some(
-        (dataset) => dataset.sync?.state === "running",
-      )
-        ? WHILE_SYNCING_INTERVAL
-        : false,
-  });
+  const { data, isLoading } = useDatasetsQuery();
 
   return (
     <div className="container my-16">
-      <h1 className="text-3xl font-semibold">Datasets</h1>
+      <Typography.Heading>Datasets</Typography.Heading>
 
       <div className="mt-6">
         <Table>
@@ -52,8 +38,20 @@ const Page = () => {
                 <TableColumn>Etag</TableColumn>
                 <TableColumn>Sync</TableColumn>
               </TableHeader>
-              <TableBody>
-                <TableCollection items={datasetsQuery.data?.datasets}>
+              <TableBody
+                renderEmptyState={() => (
+                  <div className="flex justify-center items-center py-6 px-2 gap-2 text-muted">
+                    {isLoading ? (
+                      <>
+                        <Spinner /> <span>Loading</span>
+                      </>
+                    ) : (
+                      "No datasets found."
+                    )}
+                  </div>
+                )}
+              >
+                <TableCollection items={data?.datasets}>
                   {(dataset) => (
                     <TableRow key={dataset.key}>
                       <TableCell className="font-medium">

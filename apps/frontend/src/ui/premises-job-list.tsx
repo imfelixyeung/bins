@@ -1,4 +1,10 @@
-import { CardContent, CardHeader, CardTitle, Surface } from "@heroui/react";
+import {
+  CardContent,
+  CardHeader,
+  CardTitle,
+  Surface,
+  Typography,
+} from "@heroui/react";
 import { capitalCase } from "change-case";
 import { format, isAfter } from "date-fns";
 import { Trash2Icon } from "lucide-react";
@@ -67,20 +73,22 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
     <div className="flex flex-col gap-8">
       <div className="flex justify-between gap-8 flex-wrap">
         <section>
-          <h2 className="text-2xl font-semibold">Address</h2>
+          <Typography.Heading level={2}>Address</Typography.Heading>
           <div className="mt-3">
             <Address data={data} />
           </div>
         </section>
         <section>
-          <h2 className="text-2xl font-semibold">At a glance</h2>
+          <Typography.Heading level={2}>At a glance</Typography.Heading>
           <div className="mt-3 relative after:absolute after:inset-x-0 after:bottom-0 after:h-16 after:bg-linear-to-b after:from-transparent after:to-background">
             <DotCalendarBins data={data.jobs} />
           </div>
         </section>
       </div>
       <section className="@container">
-        <h2 className="text-2xl font-semibold mt-3">By Bin</h2>
+        <Typography.Heading level={2} className="mt-3">
+          By Bin
+        </Typography.Heading>
         {jobsByBin.length > 0 ? (
           <div className="mt-3">
             <div className="flex justify-stretch flex-wrap gap-6 flex-col @2xl:flex-row">
@@ -98,7 +106,9 @@ const PremisesJobList = ({ data }: { data: SearchJobsSchema }) => {
         )}
       </section>
       <section className="@container max-w-3xl">
-        <h2 className="text-2xl font-semibold mt-3">Subscribe</h2>
+        <Typography.Heading level={2} className="mt-3">
+          Subscribe
+        </Typography.Heading>
         <p className="text-muted mt-3">
           You can subscribe to the iCalendar feed for this address to
           automatically add and update bin days directly in your preferred
