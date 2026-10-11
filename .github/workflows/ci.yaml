@@ -32,10 +32,6 @@ jobs:
       - name: Biome style and lint
         run: bunx biome ci .
 
-      - name: Typecheck
-        working-directory: apps/frontend
-        run: bun check
-
       - name: ESLint
         working-directory: apps/frontend
         run: bun run lint
@@ -43,6 +39,10 @@ jobs:
       - name: Build the exported site
         working-directory: apps/frontend
         run: bun run build
+
+      - name: Typecheck
+        working-directory: apps/frontend
+        run: bun check
 
   ci-backend:
     runs-on: ubuntu-latest
