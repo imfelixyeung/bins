@@ -5,7 +5,8 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\""
   },
   "workspaces": [
-    "apps/frontend"
+    "apps/frontend",
+    "apps/mobile"
   ],
   "devDependencies": {
     "@biomejs/biome": "2.5.15"
