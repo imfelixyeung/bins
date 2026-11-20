@@ -30,7 +30,7 @@ RUN bun run build
 
 
 # nginx serves the exported files, so the runtime image has no node in it at all.
-FROM nginx:1.29-alpine AS runtime
+FROM nginx:1.31.9-alpine AS runtime
 
 COPY apps/frontend/docker/nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=builder /repo/apps/frontend/out /usr/share/nginx/html
